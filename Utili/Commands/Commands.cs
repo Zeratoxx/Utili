@@ -137,8 +137,9 @@ namespace Utili
                 $"Shard {Program.Client.ShardId + 1} of {Program.TotalShards}\n" +
                 "[Support and Requests Discord](https://discord.gg/WsxqABZ)\n" +
                 "[Bot Invite](https://discordapp.com/api/oauth2/authorize?client_id=655155797260501039&permissions=8&scope=bot)\n" +
+                "[Github](https://github.com/D230Daniel/Utili)\n" +
                 "[Donate](https://www.paypal.me/230Daniel)";
-
+                
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed($"Utili v{Program.VersionNumber}", Content));
         }
 
