@@ -25,7 +25,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.9.17";
+        public static string VersionNumber = "1.10";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
@@ -491,6 +491,9 @@ namespace Utili
         {
             RolePersist RolePersist = new RolePersist();
             Task.Run(() => RolePersist.UserJoin(User));
+
+            JoinMessage JoinMessage = new JoinMessage();
+            Task.Run(() => JoinMessage.JoinMessage_UserJoined(User));
 
             DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}");
             SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now));
