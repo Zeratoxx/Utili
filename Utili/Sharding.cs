@@ -38,12 +38,12 @@ namespace Utili
                     {
                         int Target = Random.Next(0, Shards);
 
-                        if (GetShardData(Target, "Online").Count == 0 & GetShardData(Target, "Reserved").Count == 0)
+                        if (GetShardData(Target, "Online").Count == 0 && GetShardData(Target, "Reserved").Count == 0)
                         {
                             SaveData(Target, "Reserved", DateTime.Now);
                             await Task.Delay(2500);
 
-                            if (GetShardData(Target, "Reserved").Count == 1)
+                            if (GetShardData(Target, "Reserved").Count == 1 && GetShardData(Target, "Online").Count == 0)
                             {
                                 SaveData(Target, "Online", DateTime.Now);
                                 DeleteData(Target, "Reserved");
