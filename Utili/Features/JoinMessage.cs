@@ -17,7 +17,8 @@ namespace Utili
             {
                 var JoinMessage = await GetJoinMessageAsync(User.Guild, User);
 
-                string ChannelData = GetData(User.Guild.Id.ToString(), "JoinMessage-Channel").FirstOrDefault().Value;
+                string ChannelData;
+                try { ChannelData = GetData(User.Guild.Id.ToString(), "JoinMessage-Channel").First().Value; } catch { ChannelData = "DM"; }
                 if (ulong.TryParse(ChannelData, out ulong ChannelID))
                 {
                     ITextChannel Channel = User.Guild.GetTextChannel(ChannelID);
@@ -109,17 +110,17 @@ namespace Utili
         public static string HelpContent =
                 "help - Show this list\n" +
                 "about - Display feature information\n\n" +
-                "**Use \"%user%\" in a text field to replace it with @user**\n" +
-                "title [channel] [message | none] - Set the title of the join message\n" +
-                "footer [channel] [message | none] - Set the footer of the join message\n" +
-                "content [channel] [message | none] - Set the content of the join message\n" +
-                "normalText [channel] [message | none] - Set the text outside of the join message embed\n\n" +
+                "**Use %user% in a text field to replace it with @user**\n" +
+                "title [message | none] - Set the title of the join message\n" +
+                "footer [message | none] - Set the footer of the join message\n" +
+                "content [message | none] - Set the content of the join message\n" +
+                "normalText [message | none] - Set the text outside of the join message embed\n\n" +
                 "**Use \"user\" as your image URL to place it with the user's profile picture**\n" +
-                "image [channel] [url | user | none] - Set the image URL of the join message\n" +
-                "icon [channel] [url | user | none] - Set the icon URL of the join message\n" +
-                "thumbnail [channel] [url | user | none] - Set the thumbnail URL of the join message\n" +
-                "footerImage [channel] [url | user | none] - Set the footer URL of the join message\n" +
-                "colour [channel] [R] [G] [B] - Set the colour of the join message\n\n" +
+                "image [url | user | none] - Set the image URL of the join message\n" +
+                "icon [url | user | none] - Set the icon URL of the join message\n" +
+                "thumbnail [url | user | none] - Set the thumbnail URL of the join message\n" +
+                "footerImage [url | user | none] - Set the footer URL of the join message\n" +
+                "colour [R] [G] [B] - Set the colour of the join message\n\n" +
                 "channel [channel | dm] - Set the channel of the join messages\n" +
                 "preview - Send a preview the join message\n" +
                 "on - Enable the join message\n" +
@@ -130,7 +131,7 @@ namespace Utili
         {
             string Prefix = ".";
             try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel JoinMessage", HelpContent, $"Prefix these commands with {Prefix}notice"));
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Join Message", HelpContent, $"Prefix these commands with {Prefix}joinmessage"));
         }
 
         [Command("")]
@@ -138,13 +139,13 @@ namespace Utili
         {
             string Prefix = ".";
             try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel JoinMessage", HelpContent, $"Prefix these commands with {Prefix}notice"));
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Join Message", HelpContent, $"Prefix these commands with {Prefix}joinmessage"));
         }
 
         [Command("About")]
         public async Task About()
         {
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel JoinMessage", "This feature keeps a customisable message at the bottom of a channel."));
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Join Message", "This feature allows you to send a message in a channel or directly to users when they join the guild"));
         }
 
         [Command("SetTitle"), Alias("Title")]
@@ -362,7 +363,8 @@ namespace Utili
         [Command("Preview")]
         public async Task Preview()
         {
-            await JoinMessage.GetJoinMessageAsync(Context.Guild, Context.User);
+            var Message = await JoinMessage.GetJoinMessageAsync(Context.Guild, Context.User);
+            await Context.Channel.SendMessageAsync(Message.Item1, embed: Message.Item2);
         }
 
         [Command("On"), Alias("Enable")]
