@@ -44,6 +44,7 @@ namespace Utili
                 "logs - Manage message logging feature\n" +
                 "votes - Manage the message voting feature\n" +
                 "notice - Manage the channel notices feature\n" +
+                "joinmessage - Manage the join message feature\n" +
                 "vclink - Manage the VC Link feature\n" +
                 "rolepersist - Manage the role persist feature\n" +
                 "inactive - Manage the inactive role feature\n" +
@@ -61,7 +62,7 @@ namespace Utili
         [Command("Help")]
         public async Task Help(string Category)
         {
-            string[] Categories = { "autopurge", "votes", "spam", "filter", "logs", "antiprofane", "joinrole", "prune", "inactive", "notice", "rolepersist", "vclink", "mirroring" };
+            string[] Categories = { "autopurge", "votes", "spam", "filter", "logs", "antiprofane", "joinrole", "prune", "inactive", "notice", "rolepersist", "vclink", "mirroring", "joinmessage" };
             if (Categories.Contains(Category.ToLower()))
             {
                 string Prefix = ".";
@@ -119,6 +120,10 @@ namespace Utili
 
                     case "mirroring":
                         await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Mirroring", MirroringCommands.HelpContent, $"Prefix these commands with {Prefix}mirroring"));
+                        break;
+
+                    case "joinmessage":
+                        await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Join Message", JoinMessageCommands.HelpContent, $"Prefix these commands with {Prefix}joinmessage"));
                         break;
                 }
             }
