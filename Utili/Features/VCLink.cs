@@ -31,7 +31,8 @@ namespace Utili
                 SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now));
             }
 
-            if (GetData(User.Guild.Id.ToString(), "VCLink-Enabled", "True").Count > 0)
+            bool VCLinkEnabled = GetData(User.Guild.Id.ToString(), "VCLink-Enabled", "True").Count > 0;
+            if (VCLinkEnabled || GetData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Count > 0)
             {
                 #region Remove Before VC
 
@@ -52,32 +53,35 @@ namespace Utili
 
                 #endregion
 
-                #region Add After VC
-                ulong AFKID = 0;
-                try { AFKID = User.Guild.AFKChannel.Id; } catch { }
-                if(After.VoiceChannel != null && After.VoiceChannel.Id != AFKID)
+                if (VCLinkEnabled)
                 {
-                    DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}");
-                    SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now));
-
-                    SocketTextChannel Channel;
-                    try { Channel = User.Guild.GetTextChannel(ulong.Parse(GetData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").First().Value)); }
-                    catch 
+                    #region Add After VC
+                    ulong AFKID = 0;
+                    try { AFKID = User.Guild.AFKChannel.Id; } catch { }
+                    if (After.VoiceChannel != null && After.VoiceChannel.Id != AFKID)
                     {
-                        var Temp = await User.Guild.CreateTextChannelAsync($"VC-{After.VoiceChannel.Name}");
-                        await Task.Delay(100);
-                        Channel = User.Guild.GetTextChannel(Temp.Id);
-                        SaveData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}", Channel.Id.ToString());
+                        DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}");
+                        SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now));
 
-                        if (After.VoiceChannel.CategoryId.HasValue) await Channel.ModifyAsync(x => x.CategoryId = After.VoiceChannel.CategoryId.Value);
-                        await Channel.ModifyAsync(x => x.Topic = $"Automatically made by Utili");
-                        await Channel.AddPermissionOverwriteAsync(User.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
+                        SocketTextChannel Channel;
+                        try { Channel = User.Guild.GetTextChannel(ulong.Parse(GetData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").First().Value)); }
+                        catch
+                        {
+                            var Temp = await User.Guild.CreateTextChannelAsync($"VC-{After.VoiceChannel.Name}");
+                            await Task.Delay(100);
+                            Channel = User.Guild.GetTextChannel(Temp.Id);
+                            SaveData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}", Channel.Id.ToString());
+
+                            if (After.VoiceChannel.CategoryId.HasValue) await Channel.ModifyAsync(x => x.CategoryId = After.VoiceChannel.CategoryId.Value);
+                            await Channel.ModifyAsync(x => x.Topic = $"Automatically made by Utili");
+                            await Channel.AddPermissionOverwriteAsync(User.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
+                        }
+
+                        await Channel.AddPermissionOverwriteAsync(User, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
                     }
 
-                    await Channel.AddPermissionOverwriteAsync(User, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
+                    #endregion
                 }
-
-                #endregion
             }
         }
     }
