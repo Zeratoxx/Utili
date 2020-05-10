@@ -66,7 +66,8 @@ namespace Utili
                     try
                     {
                         ulong RoleID = ulong.Parse(GetData(GuildID.ToString(), "InactiveRole-Role").First().Value);
-                        while (Tasks.Where(x => !x.IsCompleted).Count() >= 20) { await Task.Delay(5000); };
+                        Tasks.RemoveAll(x => x.IsCompleted);
+                        while (Tasks.Count >= (Client.Guilds.Count / 2) + 1) { await Task.Delay(1000); };
                         Tasks.Add(Process(GuildID, RoleID, true));
                     }
                     catch { }

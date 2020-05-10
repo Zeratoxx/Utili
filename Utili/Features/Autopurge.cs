@@ -23,60 +23,67 @@ namespace Utili
 {
     class Autopurge
     {
+        List<Task> Tasks = new List<Task>();
+
         public async Task Run(CancellationToken cancellationToken)
         {
             while (true)
             {
                 try
                 {
-                    await Task.Delay(1500);
+                    await Task.Delay(1000);
+                    Tasks.RemoveAll(x => x.IsCompleted);
+                    if (Tasks.Count < (Client.Guilds.Count / 10) + 1) Tasks.Add(Process());
+                }
+                catch { }
+            }
+        }
 
-                    List<Data> AllChannels = GetData(Type: "Autopurge-Channel");
-                    List<ulong> AllGuilds = new List<ulong>();
+        public async Task Process()
+        {
+            List<Data> AllChannels = GetData(Type: "Autopurge-Channel");
+            List<ulong> AllGuilds = new List<ulong>();
 
-                    foreach (Data Data in AllChannels)
-                    {
-                        if (!AllGuilds.Contains(ulong.Parse(Data.GuildID))) AllGuilds.Add(ulong.Parse(Data.GuildID));
-                    }
+            foreach (Data Data in AllChannels)
+            {
+                if (!AllGuilds.Contains(ulong.Parse(Data.GuildID))) AllGuilds.Add(ulong.Parse(Data.GuildID));
+            }
 
-                    foreach (ulong GuildID in AllGuilds)
+            foreach (ulong GuildID in AllGuilds)
+            {
+                try
+                {
+                    SocketGuild Guild = Client.GetGuild(GuildID);
+                    List<Data> GuildChannels = GetData(GuildID.ToString(), "Autopurge-Channel");
+
+                    foreach (Data Data in GuildChannels)
                     {
                         try
                         {
-                            SocketGuild Guild = Client.GetGuild(GuildID);
-                            List<Data> GuildChannels = GetData(GuildID.ToString(), "Autopurge-Channel");
+                            SocketTextChannel Channel = Guild.GetTextChannel(ulong.Parse(Data.Value));
+                            List<IMessage> MessagesToDelete = new List<IMessage>();
 
-                            foreach (Data Data in GuildChannels)
+                            TimeSpan TimeSpan = TimeSpan.Parse("00:15:00");
+                            try { TimeSpan = TimeSpan.Parse(GetData(GuildID.ToString(), $"Autopurge-Timespan-{Channel.Id}").First().Value); } catch { }
+                            if (TimeSpan == TimeSpan.Parse("00:15:00"))
                             {
                                 try
                                 {
-                                    SocketTextChannel Channel = Guild.GetTextChannel(ulong.Parse(Data.Value));
-                                    List<IMessage> MessagesToDelete = new List<IMessage>();
-
-                                    TimeSpan TimeSpan = TimeSpan.Parse("00:15:00");
-                                    try { TimeSpan = TimeSpan.Parse(GetData(GuildID.ToString(), $"Autopurge-Timespan-{Channel.Id}").First().Value); } catch { }
-                                    if(TimeSpan == TimeSpan.Parse("00:15:00"))
-                                    {
-                                        try 
-                                        {
-                                            DeleteData(Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}");
-                                            SaveData(Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}", TimeSpan.ToString());
-                                            TimeSpan = TimeSpan.Parse(GetData(GuildID.ToString(), $"Autopurge-Timespan").First().Value);
-                                        }
-                                        catch { }
-                                    }
-
-                                    var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
-
-                                    foreach (IMessage Message in Messages)
-                                    {
-                                        if (!Message.IsPinned & DateTime.Now.Subtract(Message.Timestamp.LocalDateTime) > TimeSpan) MessagesToDelete.Add(Message);
-                                    }
-
-                                    await Channel.DeleteMessagesAsync(MessagesToDelete);
+                                    DeleteData(Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}");
+                                    SaveData(Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}", TimeSpan.ToString());
+                                    TimeSpan = TimeSpan.Parse(GetData(GuildID.ToString(), $"Autopurge-Timespan").First().Value);
                                 }
                                 catch { }
                             }
+
+                            var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
+
+                            foreach (IMessage Message in Messages)
+                            {
+                                if (!Message.IsPinned & DateTime.Now.Subtract(Message.Timestamp.LocalDateTime) > TimeSpan) MessagesToDelete.Add(Message);
+                            }
+
+                            await Channel.DeleteMessagesAsync(MessagesToDelete);
                         }
                         catch { }
                     }
