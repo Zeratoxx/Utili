@@ -14,12 +14,11 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@1
-
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
 
 - task: DotNetCoreCLI@2
   inputs:
-    command: 'build'
+    command: 'publish'
+    publishWebProjects: true
+    feedsToUse: config
+    nugetConfigPath: NuGet.config  
+    arguments: '-r linux-x64'
