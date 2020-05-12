@@ -6,7 +6,7 @@ trigger:
 - master
 
 pool:
-  vmImage: 'debian-9'
+  vmImage: 'windows-latest'
 
 variables:
   solution: '**/*.sln'
@@ -18,7 +18,7 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: 'publish'
-    publishWebProjects: true
+    publishWebProjects: false
     feedsToUse: config
     nugetConfigPath: NuGet.config  
     arguments: '-r linux-x64'
