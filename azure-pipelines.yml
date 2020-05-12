@@ -6,7 +6,7 @@ trigger:
 - master
 
 pool:
-  vmImage: 'linux-latest'
+  vmImage: 'linux-x64'
 
 variables:
   solution: '**/*.sln'
