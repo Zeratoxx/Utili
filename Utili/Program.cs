@@ -51,7 +51,7 @@ namespace Utili
                 Console.Clear();
             }
 
-            Console.WriteLine("See output.txt");
+            if(!Debug) Console.WriteLine("See output.txt");
             bool Retry = true;
             while (true)
             {
