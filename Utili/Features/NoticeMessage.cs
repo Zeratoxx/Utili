@@ -55,14 +55,15 @@ namespace Utili
                 try { NewNumber = MessageList.OrderBy(x => x.Item2).Last(x => x.Item1 == Context.Channel.Id).Item2; }
                 catch { NewNumber = 0; }
 
-                if (ThisNumber == NewNumber) await Update(Context.Channel as ITextChannel);
+                if (ThisNumber == NewNumber) await Update(Context.Channel as ITextChannel, true, true);
                 else return;
             }
         }
 
-        public async Task Update(ITextChannel Channel, bool Save = true)
+        public async Task Update(ITextChannel Channel, bool Save = true, bool KnownOn = false)
         {
-            if (GetData($"{Channel.Guild.Id}", $"Notices-Channel", $"{Channel.Id}").Count > 0 || !Save)
+            if (!KnownOn) KnownOn = GetData($"{Channel.Guild.Id}", $"Notices-Channel", $"{Channel.Id}").Count > 0;
+            if (KnownOn || !Save)
             {
                 IMessage NoticeMessage;
                 try

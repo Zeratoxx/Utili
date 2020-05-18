@@ -35,8 +35,9 @@ namespace Utili
                 await SaveMessageAsync(Context);
             }
 
-            // Delete logs older than 30 days to comply with Discord's rules
-            RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE(Timestamp < '{ToSQLTime(DateTime.Now - TimeSpan.FromDays(30))}')");
+            // Every so often, delete logs older than 30 days to comply with Discord's rules
+            Random Random = new Random();
+            if(Random.Next(0, 25) == 10) RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE(Timestamp < '{ToSQLTime(DateTime.Now - TimeSpan.FromDays(30))}')");
         }
 
         public async Task MessageLogs_MessageDeleted(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
@@ -47,7 +48,7 @@ namespace Utili
                 MessageData Message = await GetMessageAsync(PartialMessage.Id);
                 string Content = Decrypt(Message.EncryptedContent, ulong.Parse(Message.GuildID), ulong.Parse(Message.ChannelID));
 
-                if(GetData(Message.GuildID.ToString(), "MessageLogs-Channel", Message.ChannelID.ToString()).Count() > 0)
+                if(Message.ChannelID == Channel.Id.ToString())
                 {
                     RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE ID = {Message.ID}");
                     var LogChannel = Guild.GetTextChannel(ulong.Parse(GetData(Guild.Id.ToString(), "MessageLogs-LogChannel").First().Value));

@@ -468,14 +468,6 @@ namespace Utili
                 Console.WriteLine($"[{DateTime.Now}] [Blacklist] Left {Guild.Name} as it is blacklisted.");
                 await Guild.LeaveAsync();
             }
-
-            foreach(var User in Guild.Users)
-            {
-                DeleteData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}");
-                SaveData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now));
-
-                await Task.Delay(333);
-            }
         }
 
         #endregion

@@ -112,6 +112,42 @@ namespace Utili
             return Data;
         }
 
+        public static List<Data> GetDataWhere(string Where)
+        {
+            List<Data> Data = new List<Data>();
+
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                using (var command = connection.CreateCommand())
+                {
+                    connection.Open();
+
+                    string Command = $"SELECT * FROM Utili WHERE({Where});";
+
+                    command.CommandText = Command;
+                    MySqlDataReader DataReader = null;
+                    try
+                    {
+                        Queries += 1;
+                        DataReader = command.ExecuteReader();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+
+                    while (DataReader.Read())
+                    {
+                        Data New = new Data(DataReader.GetString(1), DataReader.GetString(2), DataReader.GetString(3));
+                        New.ID = DataReader.GetInt32(0);
+                        Data.Add(New);
+                    }
+                }
+            }
+
+            return Data;
+        }
+
         public static void DeleteData(string GuildID = null, string Type = null, string Value = null)
         {
             if (GuildID == null & Type == null & Value == null) throw new Exception();

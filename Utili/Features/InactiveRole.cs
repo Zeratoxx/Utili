@@ -36,12 +36,21 @@ namespace Utili
             var Usr = Context.User as SocketGuildUser;
 
             //Save the data anyway so that if it's ever enabled the bot doesn't mark everyone
-            DeleteData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}");
-            SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now));
 
-            if (GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").Count != 0)
+            try
             {
-                var Role = Context.Guild.GetRole(ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value));
+                RunNonQuery($"UPDATE Utili SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Context.Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{Usr.Id}"), ("Value", ToSQLTime(DateTime.Now)) });
+            }
+            catch
+            {
+                DeleteData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}");
+                SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now));
+            }
+
+            List<Data> InactiveRole = GetData(Context.Guild.Id.ToString(), "InactiveRole-Role");
+            if (InactiveRole.Count != 0)
+            {
+                var Role = Context.Guild.GetRole(ulong.Parse(InactiveRole.First().Value));
 
                 if (Usr.Roles.Contains(Role))
                 {
