@@ -33,7 +33,7 @@ namespace Utili
                 {
                     await Task.Delay(1000);
                     Tasks.RemoveAll(x => x.IsCompleted);
-                    if (Tasks.Count < (Client.Guilds.Count / 10) + 1) Tasks.Add(Process());
+                    if (Tasks.Count < (Client.Guilds.Count / 2) + 1) Tasks.Add(Process());
                 }
                 catch { }
             }
@@ -49,7 +49,16 @@ namespace Utili
                 if (!AllGuilds.Contains(ulong.Parse(Data.GuildID))) AllGuilds.Add(ulong.Parse(Data.GuildID));
             }
 
-            foreach (ulong GuildID in AllGuilds)
+            List<ulong> Shuffled = new List<ulong>();
+            Random Random = new Random();
+            for(int i = 0; i <= AllGuilds.Count; i++)
+            {
+                int Index = Random.Next(0, AllGuilds.Count);
+                Shuffled.Add(AllGuilds.ElementAt(Index));
+                AllGuilds.RemoveAt(Index);
+            }
+
+            foreach (ulong GuildID in Shuffled)
             {
                 try
                 {
