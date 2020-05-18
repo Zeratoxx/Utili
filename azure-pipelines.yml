@@ -19,6 +19,7 @@ steps:
   inputs:
     command: 'publish'
     publishWebProjects: false
+    zipAfterPublish: false
     feedsToUse: config
     nugetConfigPath: NuGet.config  
     arguments: '-r linux-x64'
