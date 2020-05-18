@@ -179,7 +179,9 @@ namespace Utili
             GetData("Ping Test");
             double DBPing = Math.Round((DateTime.Now - Now).TotalMilliseconds);
 
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Pong!", $"Send Latency: {Ping}\nAPI Latency: {APIPing}ms\nDB Latency: {DBPing}ms", $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards}"));
+            TimeSpan Uptime = DateTime.Now - Program.Startup;
+            double DBQueries = Math.Round(Queries / Uptime.TotalSeconds, 2);
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Pong!", $"Send Latency: {Ping}\nAPI Latency: {APIPing}ms\nDB Latency: {DBPing}ms\nDB Queries: {DBQueries}/s", $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards}"));
             
         }
 

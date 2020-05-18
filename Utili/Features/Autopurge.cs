@@ -27,16 +27,16 @@ namespace Utili
 
         public async Task Run(CancellationToken cancellationToken)
         {
-            while (true)
-            {
-                try
-                {
-                    await Task.Delay(1000);
-                    Tasks.RemoveAll(x => x.IsCompleted);
-                    if (Tasks.Count < (Client.Guilds.Count / 2) + 1) Tasks.Add(Process());
-                }
-                catch { }
-            }
+            System.Timers.Timer StartRunthrough = new System.Timers.Timer(1000);
+            StartRunthrough.Elapsed += StartRunthrough_Elapsed;
+            StartRunthrough.AutoReset = true;
+            StartRunthrough.Start();
+        }
+
+        private void StartRunthrough_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            Tasks.RemoveAll(x => x.IsCompleted);
+            if (Tasks.Count < (Client.Guilds.Count / 2) + 5) Tasks.Add(Process());
         }
 
         public async Task Process()
@@ -63,7 +63,7 @@ namespace Utili
                 try
                 {
                     SocketGuild Guild = Client.GetGuild(GuildID);
-                    List<Data> GuildChannels = GetData(GuildID.ToString(), "Autopurge-Channel");
+                    List<Data> GuildChannels = AllChannels.Where(x => x.GuildID == GuildID.ToString()).ToList();
 
                     foreach (Data Data in GuildChannels)
                     {
@@ -74,16 +74,6 @@ namespace Utili
 
                             TimeSpan TimeSpan = TimeSpan.Parse("00:15:00");
                             try { TimeSpan = TimeSpan.Parse(GetData(GuildID.ToString(), $"Autopurge-Timespan-{Channel.Id}").First().Value); } catch { }
-                            if (TimeSpan == TimeSpan.Parse("00:15:00"))
-                            {
-                                try
-                                {
-                                    DeleteData(Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}");
-                                    SaveData(Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}", TimeSpan.ToString());
-                                    TimeSpan = TimeSpan.Parse(GetData(GuildID.ToString(), $"Autopurge-Timespan").First().Value);
-                                }
-                                catch { }
-                            }
 
                             var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
 

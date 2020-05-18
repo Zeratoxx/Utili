@@ -14,6 +14,8 @@ namespace Utili
     {
         public static string ConnectionString = "";
 
+        public static int Queries = 0;
+
         public static void SetConnectionString()
         {
             ConnectionString = $"Server={Config.Database.Server};Database={Config.Database.Database};Uid={Config.Database.Username};Pwd={Config.Database.Password};";
@@ -37,7 +39,8 @@ namespace Utili
                                 command.Parameters.Add(new MySqlParameter(Value.Item1, Value.Item2));
                             }
                         }
-                        
+
+                        Queries += 1;
                         command.ExecuteNonQuery();
                     }
                 }
@@ -89,6 +92,7 @@ namespace Utili
                     MySqlDataReader DataReader = null;
                     try
                     {
+                        Queries += 1;
                         DataReader = command.ExecuteReader();
                     }
                     catch (Exception e)
@@ -157,6 +161,7 @@ namespace Utili
                     MySqlDataReader DataReader = null;
                     try
                     {
+                        Queries += 1;
                         DataReader = command.ExecuteReader();
                     }
                     catch (Exception e)

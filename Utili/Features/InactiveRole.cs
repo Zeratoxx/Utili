@@ -18,6 +18,7 @@ using static Utili.SendMessage;
 using static Utili.Program;
 using static Utili.InactiveRole;
 using static Utili.Json;
+using System.Timers;
 
 namespace Utili
 {
@@ -51,31 +52,51 @@ namespace Utili
 
         public async Task Run(CancellationToken cancellationToken)
         {
-            while (true)
+            System.Timers.Timer StartRunthrough = new System.Timers.Timer(5000);
+            StartRunthrough.Elapsed += StartRunthrough_Elapsed;
+            StartRunthrough.AutoReset = true;
+            StartRunthrough.Start();
+        }
+
+        private void StartRunthrough_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            Tasks.RemoveAll(x => x.IsCompleted);
+            if (Tasks.Count < (Client.Guilds.Count / 15) + 5) Tasks.Add(ProcessAll());
+        }
+
+        public async Task ProcessAll()
+        {
+            List<Data> All = GetData(Type: "InactiveRole-Role");
+            List<ulong> AllGuilds = new List<ulong>();
+
+            foreach (Data Data in All)
             {
-                List<Data> All = GetData(Type: "InactiveRole-Role");
-                List<ulong> AllGuilds = new List<ulong>();
+                if (!AllGuilds.Contains(ulong.Parse(Data.GuildID))) AllGuilds.Add(ulong.Parse(Data.GuildID));
+            }
 
-                foreach (Data Data in All)
-                {
-                    if (!AllGuilds.Contains(ulong.Parse(Data.GuildID))) AllGuilds.Add(ulong.Parse(Data.GuildID));
-                }
+            List<ulong> Shuffled = new List<ulong>();
+            Random Random = new Random();
+            for (int i = 0; i <= AllGuilds.Count; i++)
+            {
+                int Index = Random.Next(0, AllGuilds.Count);
+                Shuffled.Add(AllGuilds.ElementAt(Index));
+                AllGuilds.RemoveAt(Index);
+            }
 
-                foreach (ulong GuildID in AllGuilds)
+            foreach (ulong GuildID in Shuffled)
+            {
+                try
                 {
-                    try
-                    {
-                        ulong RoleID = ulong.Parse(GetData(GuildID.ToString(), "InactiveRole-Role").First().Value);
-                        Tasks.RemoveAll(x => x.IsCompleted);
-                        while (Tasks.Count >= (Client.Guilds.Count / 2) + 1) { await Task.Delay(1000); };
-                        Tasks.Add(Process(GuildID, RoleID, true));
-                    }
-                    catch { }
+                    ulong RoleID = ulong.Parse(GetData(GuildID.ToString(), "InactiveRole-Role").First().Value);
+                    Tasks.RemoveAll(x => x.IsCompleted);
+                    while (Tasks.Count >= (Client.Guilds.Count / 2) + 1) { await Task.Delay(1000); };
+                    Tasks.Add(ProcessGuild(GuildID, RoleID, true));
                 }
+                catch { }
             }
         }
 
-        public static async Task Process(ulong GuildID, ulong RoleID, bool Depth = false)
+        public static async Task ProcessGuild(ulong GuildID, ulong RoleID, bool Depth = false)
         {
             SocketGuild Guild = Client.GetGuild(GuildID);
             SocketRole Role = Guild.GetRole(RoleID);
@@ -176,7 +197,7 @@ namespace Utili
                 SaveData(Context.Guild.Id.ToString(), "InactiveRole-Role", Role.Id.ToString());
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set inactive role", $"Inactive users will be given the {Role.Mention} role\nYour users are now being processed, this may take a while."));
                 ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
-                Tasks.Add(Process(Context.Guild.Id, RoleID, true)); ;
+                await ProcessGuild(Context.Guild.Id, RoleID, true);
             }
         }
 
@@ -208,7 +229,7 @@ namespace Utili
                 SaveData(Context.Guild.Id.ToString(), "InactiveRole-Timespan", Time.ToString());
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set inactive timer", $"After {DisplayTimespan(Time)} of inactivity users will get the role.\nYour users are now being processed, this may take a while."));
                 ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
-                Tasks.Add(Process(Context.Guild.Id, RoleID, true)); ;
+                await ProcessGuild(Context.Guild.Id, RoleID, true);
             }
 
         }
@@ -225,7 +246,7 @@ namespace Utili
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mode set", $"Inactive users will now be given the role and active users will have it taken away from them.\nYour users are now being processed, this may take a while."));
 
                     ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
-                    Tasks.Add(Process(Context.Guild.Id, RoleID, true));
+                    await ProcessGuild(Context.Guild.Id, RoleID, true);
                 }
             }
             else if (Mode.ToLower() == "take")
@@ -237,7 +258,7 @@ namespace Utili
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mode set", $"Active users will now be given the role and inactive users will have it taken away from them.\nYour users are now being processed, this may take a while."));
 
                     ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
-                    Tasks.Add(Process(Context.Guild.Id, RoleID, true));
+                    await ProcessGuild(Context.Guild.Id, RoleID, true);
                 }
             }
             else
@@ -258,7 +279,13 @@ namespace Utili
             try { Role = Context.Guild.GetRole(ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value)); }
             catch { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "No inactive role is set")); return; }
 
-            List<SocketGuildUser> InactiveUsers = Context.Guild.Users.Where(x => x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
+            string Mode = "Give";
+            try { Mode = GetData(Context.Guild.Id.ToString(), "InactiveRole-Mode").First().Value; }
+            catch { }
+
+            List<SocketGuildUser> InactiveUsers = null;
+            if(Mode == "Give") Context.Guild.Users.Where(x => x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
+            else Context.Guild.Users.Where(x => !x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
 
             string Content = "";
             int i = 1;
@@ -293,13 +320,20 @@ namespace Utili
                     try { Role = Context.Guild.GetRole(ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value)); }
                     catch { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "No inactive role is set")); return; }
 
-                    List<SocketGuildUser> InactiveUsers = Context.Guild.Users.Where(x => x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.Username).ToList();
+                    string Mode = "Give";
+                    try { Mode = GetData(Context.Guild.Id.ToString(), "InactiveRole-Mode").First().Value; }
+                    catch { }
 
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Kicking inactive users", $"Kicking {InactiveUsers.Count} users with role {Role.Mention}"));
+                    List<SocketGuildUser> InactiveUsers = null;
+                    if (Mode == "Give") Context.Guild.Users.Where(x => x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
+                    else Context.Guild.Users.Where(x => !x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
+
+                    if(Mode == "Give") await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Kicking inactive users", $"Kicking {InactiveUsers.Count} users with role {Role.Mention}"));
+                    else await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Kicking inactive users", $"Kicking {InactiveUsers.Count} users without the role {Role.Mention}"));
 
                     foreach (var User in InactiveUsers)
                     {
-                        try { await User.KickAsync($"Mass-kick for inactivity executed by {Context.User.Username}#{Context.User.Discriminator}"); }
+                        try { _ = User.KickAsync($"Mass-kick for inactivity executed by {Context.User.Username}#{Context.User.Discriminator}"); }
                         catch { }
                     }
                 }

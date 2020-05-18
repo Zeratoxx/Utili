@@ -34,9 +34,10 @@ namespace Utili
         public static YouTubeService Youtube;
         public static CancellationTokenSource ForceStop;
         public static int TotalShards = 0;
+        public static DateTime Startup = DateTime.Now;
 
-        public static bool Debug = false;
-        public static bool UseTest = false;
+        public static bool Debug = true;
+        public static bool UseTest = true;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -50,6 +51,8 @@ namespace Utili
                 if (Console.ReadKey().Key != ConsoleKey.Y) Environment.Exit(0);
                 Console.Clear();
             }
+
+            Startup = DateTime.Now;
 
             if(!Debug) Console.WriteLine("See output.txt");
             bool Retry = true;
@@ -390,34 +393,31 @@ namespace Utili
 
             #region Start other scripts
 
-            if (Data.GetData(Context.Guild.Id.ToString()).Count() != 0)
-            {
-                MessageLogs MessageLogs = new MessageLogs();
-                Task.Run(() => MessageLogs.MessageLogs_MessageReceived(MessageParam));
+            MessageLogs MessageLogs = new MessageLogs();
+            Task.Run(() => MessageLogs.MessageLogs_MessageReceived(MessageParam));
 
-                SpamFilter SpamFilter = new SpamFilter();
-                Task.Run(() => SpamFilter.SpamFilter_MessageReceived(MessageParam));
+            SpamFilter SpamFilter = new SpamFilter();
+            Task.Run(() => SpamFilter.SpamFilter_MessageReceived(MessageParam));
 
-                Filter Filter = new Filter();
-                Task.Run(() => Filter.Filter_MessageReceived(MessageParam));
+            Filter Filter = new Filter();
+            Task.Run(() => Filter.Filter_MessageReceived(MessageParam));
 
-                AntiProfane AntiProfane = new AntiProfane();
-                Task.Run(() => AntiProfane.AntiProfane_MessageReceived(MessageParam));
+            AntiProfane AntiProfane = new AntiProfane();
+            Task.Run(() => AntiProfane.AntiProfane_MessageReceived(MessageParam));
 
-                Votes Votes = new Votes();
-                Task.Run(() => Votes.Votes_MessageReceived(MessageParam));
+            Votes Votes = new Votes();
+            Task.Run(() => Votes.Votes_MessageReceived(MessageParam));
 
-                InactiveRole InactiveRole = new InactiveRole();
-                Task.Run(() => InactiveRole.InactiveRole_MessageReceived(MessageParam));
+            InactiveRole InactiveRole = new InactiveRole();
+            Task.Run(() => InactiveRole.InactiveRole_MessageReceived(MessageParam));
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                Task.Run(() => NoticeMessage.NoticeMessage_MessageReceived(MessageParam));
+            NoticeMessage NoticeMessage = new NoticeMessage();
+            Task.Run(() => NoticeMessage.NoticeMessage_MessageReceived(MessageParam));
 
-                Mirroring Mirroring = new Mirroring();
-                Task.Run(() => Mirroring.Mirroring_MessageReceived(MessageParam));
+            Mirroring Mirroring = new Mirroring();
+            Task.Run(() => Mirroring.Mirroring_MessageReceived(MessageParam));
 
-                if(LastStatsUpdate < DateTime.Now.AddMinutes(-1)) Task.Run(() => UpdateStats());
-            }
+            if(LastStatsUpdate < DateTime.Now.AddMinutes(-10)) Task.Run(() => UpdateStats());
 
             #endregion
         }
