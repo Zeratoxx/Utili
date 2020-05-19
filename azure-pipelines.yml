@@ -30,3 +30,18 @@ steps:
     webhookKey: 'bqrqx2QXxwfqxYby3smfR1iutltWv39bmQdJPMsqMDJdPLLMD9Z3vazP5SfEkM1AU7vy'
     name: 'hook'
     messageType: 'embeds'
+    embeds: |
+          {
+            "embeds": [
+              {
+                "description": "some stuff",
+                "url": "https://discordapp.com",
+                "color": 4437377,
+                "author": {
+                  "name": "Build Succeeded",
+                  "icon_url": "https://cdn.discordapp.com/embed/avatars/0.png"
+                }
+              }
+            ]
+          }
+        
