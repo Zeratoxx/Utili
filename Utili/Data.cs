@@ -7,11 +7,14 @@ using System.Threading.Tasks;
 using Discord.Commands;
 
 using static Utili.Json;
+using System.Linq;
 
 namespace Utili
 {
     class Data
     {
+        public static List<Data> Cache;
+
         public static string ConnectionString = "";
 
         public static int Queries = 0;
@@ -52,14 +55,28 @@ namespace Utili
             }
         }
 
-        public static void SaveData(string GuildID, string Type, string Value = "")
+        public static void SaveData(string GuildID, string Type, string Value = "", bool IgnoreCache = false)
         {
+            if (!IgnoreCache)
+            {
+                Cache.Add(new Data(GuildID, Type, Value));
+            }
+
             RunNonQuery($"INSERT INTO Utili(GuildID, DataType, DataValue) VALUES(@GuildID, @Type, @Value);", new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
         }
 
-        public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null)
+        public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false)
         {
             List<Data> Data = new List<Data>();
+
+            if (!IgnoreCache)
+            {
+                Data = Cache;
+                if (GuildID != null) Data = Data.Where(x => x.GuildID == GuildID).ToList();
+                if (Type != null) Data = Data.Where(x => x.Type == Type).ToList();
+                if (Value != null) Data = Data.Where(x => x.Value == Value).ToList();
+                return Data;
+            }
 
             using (var connection = new MySqlConnection(ConnectionString))
             {
@@ -67,26 +84,29 @@ namespace Utili
                 {
                     connection.Open();
 
-                    if (GuildID == null & Type == null & Value == null) throw new Exception();
-                    string Command = "SELECT * FROM Utili WHERE(";
-                    if (GuildID != null)
+                    string Command;
+                    if (GuildID == null & Type == null & Value == null) Command = "SELECT * FROM Utili;";
+                    else
                     {
-                        Command += $"GuildID = @GuildID AND ";
-                        command.Parameters.Add(new MySqlParameter("GuildID", GuildID));
+                        Command = "SELECT * FROM Utili WHERE(";
+                        if (GuildID != null)
+                        {
+                            Command += $"GuildID = @GuildID AND ";
+                            command.Parameters.Add(new MySqlParameter("GuildID", GuildID));
+                        }
+                        if (Type != null)
+                        {
+                            Command += $"DataType = @Type AND ";
+                            command.Parameters.Add(new MySqlParameter("Type", Type));
+                        }
+                        if (Value != null)
+                        {
+                            Command += $"DataValue = @Value";
+                            command.Parameters.Add(new MySqlParameter("Value", Value));
+                        }
+                        if (Command.Substring(Command.Length - 5) == " AND ") Command = Command.Substring(0, Command.Length - 5);
+                        Command += ");";
                     }
-                    if (Type != null)
-                    {
-                        Command += $"DataType = @Type AND ";
-                        command.Parameters.Add(new MySqlParameter("Type", Type));
-                    }
-                    if (Value != null)
-                    {
-                        Command += $"DataValue = @Value";
-                        command.Parameters.Add(new MySqlParameter("Value", Value));
-                    }
-                    if (Command.Substring(Command.Length - 5) == " AND ") Command = Command.Substring(0, Command.Length - 5);
-                    Command += ");";
-
 
                     command.CommandText = Command;
                     MySqlDataReader DataReader = null;
@@ -148,9 +168,19 @@ namespace Utili
             return Data;
         }
 
-        public static void DeleteData(string GuildID = null, string Type = null, string Value = null)
+        public static void DeleteData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false)
         {
             if (GuildID == null & Type == null & Value == null) throw new Exception();
+
+            if (!IgnoreCache)
+            {
+                List<Data> ToDelete = Cache;
+                if (GuildID != null) ToDelete = ToDelete.Where(x => x.GuildID == GuildID).ToList();
+                if (Type != null) ToDelete = ToDelete.Where(x => x.Type == Type).ToList();
+                if (Value != null) ToDelete = ToDelete.Where(x => x.Value == Value).ToList();
+                foreach (Data Item in ToDelete) Cache.Remove(Item);
+            }
+
             string Command = "DELETE FROM Utili WHERE(";
             if (GuildID != null)
             {

@@ -25,7 +25,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.10.1";
+        public static string VersionNumber = "1.10.2";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
@@ -187,7 +187,11 @@ namespace Utili
             Client.Ready += Client_Ready;
             Client.Log += Client_Log;
 
-            Console.WriteLine($"\n\n[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
+            Console.WriteLine($"\n[{DateTime.Now}] [Info] Loading cache...");
+            Cache = GetData(IgnoreCache: true);
+            Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items cached");
+
+            Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
 
             string Token;
 
@@ -408,16 +412,16 @@ namespace Utili
             Votes Votes = new Votes();
             Task.Run(() => Votes.Votes_MessageReceived(MessageParam));
 
-            InactiveRole InactiveRole = new InactiveRole();
-            Task.Run(() => InactiveRole.InactiveRole_MessageReceived(MessageParam));
-
             NoticeMessage NoticeMessage = new NoticeMessage();
             Task.Run(() => NoticeMessage.NoticeMessage_MessageReceived(MessageParam));
 
             Mirroring Mirroring = new Mirroring();
             Task.Run(() => Mirroring.Mirroring_MessageReceived(MessageParam));
 
-            if(LastStatsUpdate < DateTime.Now.AddMinutes(-10)) Task.Run(() => UpdateStats());
+            InactiveRole InactiveRole = new InactiveRole();
+            Task.Run(() => InactiveRole.InactiveRole_MessageReceived(MessageParam));
+
+            if (LastStatsUpdate < DateTime.Now.AddMinutes(-10)) Task.Run(() => UpdateStats());
 
             #endregion
         }
