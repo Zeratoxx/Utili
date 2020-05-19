@@ -36,8 +36,8 @@ namespace Utili
         public static int TotalShards = 0;
         public static DateTime Startup = DateTime.Now;
 
-        public static bool Debug = true;
-        public static bool UseTest = true;
+        public static bool Debug = false;
+        public static bool UseTest = false;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
