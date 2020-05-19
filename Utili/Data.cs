@@ -18,6 +18,7 @@ namespace Utili
         public static string ConnectionString = "";
 
         public static int Queries = 0;
+        public static int CacheQueries = 0;
 
         public static void SetConnectionString()
         {
@@ -60,6 +61,7 @@ namespace Utili
             if (!IgnoreCache)
             {
                 Cache.Add(new Data(GuildID, Type, Value));
+                CacheQueries += 1;
             }
 
             RunNonQuery($"INSERT INTO Utili(GuildID, DataType, DataValue) VALUES(@GuildID, @Type, @Value);", new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
@@ -75,6 +77,7 @@ namespace Utili
                 if (GuildID != null) Data = Data.Where(x => x.GuildID == GuildID).ToList();
                 if (Type != null) Data = Data.Where(x => x.Type == Type).ToList();
                 if (Value != null) Data = Data.Where(x => x.Value == Value).ToList();
+                CacheQueries += 1;
                 return Data;
             }
 
@@ -178,7 +181,7 @@ namespace Utili
                 if (GuildID != null) ToDelete = ToDelete.Where(x => x.GuildID == GuildID).ToList();
                 if (Type != null) ToDelete = ToDelete.Where(x => x.Type == Type).ToList();
                 if (Value != null) ToDelete = ToDelete.Where(x => x.Value == Value).ToList();
-                foreach (Data Item in ToDelete) Cache.Remove(Item);
+                foreach (Data Item in ToDelete) { Cache.Remove(Item); CacheQueries += 1; }
             }
 
             string Command = "DELETE FROM Utili WHERE(";

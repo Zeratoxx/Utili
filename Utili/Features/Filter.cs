@@ -35,141 +35,138 @@ namespace Utili
                 if (Context.Message.Embeds.First().Author.Value.Name == "Message deleted") return;
             }
 
-            if(GetDataWhere($"GuildID = '{Context.Guild.Id}' AND DataType LIKE '%Filter-%' AND DataValue = '{Context.Channel.Id}'").Count > 0)
+            if (GetData(Context.Guild.Id.ToString(), "Filter-Images", Context.Channel.Id.ToString()).Count > 0)
             {
-                if (GetData(Context.Guild.Id.ToString(), "Filter-Images", Context.Channel.Id.ToString()).Count > 0)
+                bool Delete = false;
+                if (Message.Attachments.Count == 0) Delete = true;
+                else
                 {
-                    bool Delete = false;
-                    if (Message.Attachments.Count == 0) Delete = true;
-                    else
-                    {
-                        string[] ValidFiles = { "png", "jpg" };
-                        foreach (Attachment Attachment in Message.Attachments) if (!ValidFiles.Contains(Attachment.Filename.Split(".").Last().ToLower())) Delete = true;
-                    }
+                    string[] ValidFiles = { "png", "jpg" };
+                    foreach (Attachment Attachment in Message.Attachments) if (!ValidFiles.Contains(Attachment.Filename.Split(".").Last().ToLower())) Delete = true;
+                }
 
-                    if (Delete)
+                if (Delete)
+                {
+                    await Context.Message.DeleteAsync();
+                    if (Context.User.Id != Program.Client.CurrentUser.Id)
                     {
-                        await Context.Message.DeleteAsync();
-                        if (Context.User.Id != Program.Client.CurrentUser.Id)
-                        {
-                            var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with image files (jpg, png)"));
-                            Thread.Sleep(5000);
-                            await SentMessage.DeleteAsync();
-                        }
+                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with image files (jpg, png)"));
+                        Thread.Sleep(5000);
+                        await SentMessage.DeleteAsync();
+                    }
+                }
+            }
+
+            if (GetData(Context.Guild.Id.ToString(), "Filter-Videos", Context.Channel.Id.ToString()).Count > 0)
+            {
+                bool Delete = false;
+
+                if (Message.Attachments.Count > 0)
+                {
+                    string[] ValidFiles = { "mp4", "mov" };
+                    foreach (Attachment Attachment in Message.Attachments) if (!ValidFiles.Contains(Attachment.Filename.Split(".").Last().ToLower())) Delete = true;
+                }
+                else Delete = true;
+
+                if (Delete)
+                {
+                    foreach (string Word in Message.Content.Split(" "))
+                    {
+                        if (await CheckVideoAsync(Word)) Delete = false;
                     }
                 }
 
-                if (GetData(Context.Guild.Id.ToString(), "Filter-Videos", Context.Channel.Id.ToString()).Count > 0)
+                if (Delete)
                 {
-                    bool Delete = false;
-
-                    if (Message.Attachments.Count > 0)
+                    await Context.Message.DeleteAsync();
+                    if (Context.User.Id != Program.Client.CurrentUser.Id)
                     {
-                        string[] ValidFiles = { "mp4", "mov" };
-                        foreach (Attachment Attachment in Message.Attachments) if (!ValidFiles.Contains(Attachment.Filename.Split(".").Last().ToLower())) Delete = true;
+                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with video files (mov, mp4) or youtube links"));
+                        Thread.Sleep(5000);
+                        await SentMessage.DeleteAsync();
                     }
-                    else Delete = true;
+                }
+            }
 
-                    if (Delete)
-                    {
-                        foreach (string Word in Message.Content.Split(" "))
-                        {
-                            if (await CheckVideoAsync(Word)) Delete = false;
-                        }
-                    }
+            if (GetData(Context.Guild.Id.ToString(), "Filter-Media", Context.Channel.Id.ToString()).Count > 0)
+            {
+                bool Delete = false;
 
-                    if (Delete)
+                if (Message.Attachments.Count > 0)
+                {
+                    string[] ValidFiles = { "png", "jpg", "mp4", "mov", "gif" };
+                    foreach (Attachment Attachment in Message.Attachments) if (!ValidFiles.Contains(Attachment.Filename.Split(".").Last().ToLower())) Delete = true;
+                }
+                else Delete = true;
+
+                if (Delete)
+                {
+                    foreach (string Word in Message.Content.Split(" "))
                     {
-                        await Context.Message.DeleteAsync();
-                        if (Context.User.Id != Program.Client.CurrentUser.Id)
-                        {
-                            var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with video files (mov, mp4) or youtube links"));
-                            Thread.Sleep(5000);
-                            await SentMessage.DeleteAsync();
-                        }
+                        if (await CheckVideoAsync(Word)) Delete = false;
                     }
                 }
 
-                if (GetData(Context.Guild.Id.ToString(), "Filter-Media", Context.Channel.Id.ToString()).Count > 0)
+                if (Delete)
                 {
-                    bool Delete = false;
-
-                    if (Message.Attachments.Count > 0)
+                    await Context.Message.DeleteAsync();
+                    if (Context.User.Id != Program.Client.CurrentUser.Id)
                     {
-                        string[] ValidFiles = { "png", "jpg", "mp4", "mov", "gif" };
-                        foreach (Attachment Attachment in Message.Attachments) if (!ValidFiles.Contains(Attachment.Filename.Split(".").Last().ToLower())) Delete = true;
+                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with media files (png, jpg, mp4, mov, gif) or youtube links"));
+                        Thread.Sleep(5000);
+                        await SentMessage.DeleteAsync();
                     }
-                    else Delete = true;
+                }
+            }
 
-                    if (Delete)
-                    {
-                        foreach (string Word in Message.Content.Split(" "))
-                        {
-                            if (await CheckVideoAsync(Word)) Delete = false;
-                        }
-                    }
+            if (GetData(Context.Guild.Id.ToString(), "Filter-Music", Context.Channel.Id.ToString()).Count > 0)
+            {
+                bool Delete = false;
 
-                    if (Delete)
+                if (Message.Attachments.Count > 0)
+                {
+                    string[] ValidFiles = { "mp3", "wav", "m4a", "flac" };
+                    foreach (Attachment Attachment in Message.Attachments) if (!ValidFiles.Contains(Attachment.Filename.Split(".").Last().ToLower())) Delete = true;
+                }
+                else Delete = true;
+
+                if (Delete)
+                {
+                    foreach (string Word in Message.Content.Split(" "))
                     {
-                        await Context.Message.DeleteAsync();
-                        if (Context.User.Id != Program.Client.CurrentUser.Id)
-                        {
-                            var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with media files (png, jpg, mp4, mov, gif) or youtube links"));
-                            Thread.Sleep(5000);
-                            await SentMessage.DeleteAsync();
-                        }
+                        if (await CheckVideoAsync(Word)) Delete = false;
+
+                        if (Word.ToLower().Contains("spotify.com/")) Delete = false;
+                        if (Word.ToLower().Contains("soundcloud.com/")) Delete = false;
                     }
                 }
 
-                if (GetData(Context.Guild.Id.ToString(), "Filter-Music", Context.Channel.Id.ToString()).Count > 0)
+                if (Delete)
                 {
-                    bool Delete = false;
-
-                    if (Message.Attachments.Count > 0)
+                    await Context.Message.DeleteAsync();
+                    if (Context.User.Id != Program.Client.CurrentUser.Id)
                     {
-                        string[] ValidFiles = { "mp3", "wav", "m4a", "flac" };
-                        foreach (Attachment Attachment in Message.Attachments) if (!ValidFiles.Contains(Attachment.Filename.Split(".").Last().ToLower())) Delete = true;
-                    }
-                    else Delete = true;
-
-                    if (Delete)
-                    {
-                        foreach (string Word in Message.Content.Split(" "))
-                        {
-                            if (await CheckVideoAsync(Word)) Delete = false;
-
-                            if (Word.ToLower().Contains("spotify.com/")) Delete = false;
-                            if (Word.ToLower().Contains("soundcloud.com/")) Delete = false;
-                        }
-                    }
-
-                    if (Delete)
-                    {
-                        await Context.Message.DeleteAsync();
-                        if (Context.User.Id != Program.Client.CurrentUser.Id)
-                        {
-                            var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with music files (mp3, wav, m4a, flac), youtube links, spotify links or soundcloud links"));
-                            Thread.Sleep(5000);
-                            await SentMessage.DeleteAsync();
-                        }
+                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with music files (mp3, wav, m4a, flac), youtube links, spotify links or soundcloud links"));
+                        Thread.Sleep(5000);
+                        await SentMessage.DeleteAsync();
                     }
                 }
+            }
 
-                if (GetData(Context.Guild.Id.ToString(), "Filter-Attachments", Context.Channel.Id.ToString()).Count > 0)
+            if (GetData(Context.Guild.Id.ToString(), "Filter-Attachments", Context.Channel.Id.ToString()).Count > 0)
+            {
+                bool Delete = false;
+
+                if (Message.Attachments.Count == 0) Delete = true;
+
+                if (Delete)
                 {
-                    bool Delete = false;
-
-                    if (Message.Attachments.Count == 0) Delete = true;
-
-                    if (Delete)
+                    await Context.Message.DeleteAsync();
+                    if (Context.User.Id != Program.Client.CurrentUser.Id)
                     {
-                        await Context.Message.DeleteAsync();
-                        if (Context.User.Id != Program.Client.CurrentUser.Id)
-                        {
-                            var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with attachments"));
-                            Thread.Sleep(5000);
-                            await SentMessage.DeleteAsync();
-                        }
+                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with attachments"));
+                        Thread.Sleep(5000);
+                        await SentMessage.DeleteAsync();
                     }
                 }
             }
@@ -277,8 +274,9 @@ namespace Utili
                 if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
                     RemoveFilters(Context.Guild.Id, Channel.Id);
-                    SaveData(Context.Guild.Id.ToString(), "Filter-Images", Channel.Id.ToString());
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Filter enabled", $"Only allowing messages with images in {Channel.Mention}"));
+                    await Task.Delay(500);
+                    SaveData(Context.Guild.Id.ToString(), "Filter-Images", Channel.Id.ToString());
                 }  
             }
         }
@@ -291,8 +289,9 @@ namespace Utili
                 if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
                     RemoveFilters(Context.Guild.Id, Channel.Id);
-                    SaveData(Context.Guild.Id.ToString(), "Filter-Videos", Channel.Id.ToString());
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Filter enabled", $"Only allowing messages with videos in {Channel.Mention}"));
+                    await Task.Delay(500);
+                    SaveData(Context.Guild.Id.ToString(), "Filter-Videos", Channel.Id.ToString());
                 }
             }
         }
@@ -305,8 +304,9 @@ namespace Utili
                 if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
                     RemoveFilters(Context.Guild.Id, Channel.Id);
-                    SaveData(Context.Guild.Id.ToString(), "Filter-Media", Channel.Id.ToString());
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Filter enabled", $"Only allowing messages with images or videos in {Channel.Mention}"));
+                    await Task.Delay(500);
+                    SaveData(Context.Guild.Id.ToString(), "Filter-Media", Channel.Id.ToString());
                 }
             }
         }
@@ -319,8 +319,9 @@ namespace Utili
                 if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
                     RemoveFilters(Context.Guild.Id, Channel.Id);
-                    SaveData(Context.Guild.Id.ToString(), "Filter-Music", Channel.Id.ToString());
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Filter enabled", $"Only allowing messages with music in {Channel.Mention}"));
+                    await Task.Delay(500);
+                    SaveData(Context.Guild.Id.ToString(), "Filter-Music", Channel.Id.ToString());
                 }
             }
         }
@@ -333,8 +334,9 @@ namespace Utili
                 if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
                     RemoveFilters(Context.Guild.Id, Channel.Id);
-                    SaveData(Context.Guild.Id.ToString(), "Filter-Attachments", Channel.Id.ToString());
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Filter enabled", $"Only allowing messages with attachments in {Channel.Mention}"));
+                    await Task.Delay(500);
+                    SaveData(Context.Guild.Id.ToString(), "Filter-Attachments", Channel.Id.ToString());
                 }
             }
         }

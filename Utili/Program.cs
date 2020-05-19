@@ -52,8 +52,6 @@ namespace Utili
                 Console.Clear();
             }
 
-            Startup = DateTime.Now;
-
             if(!Debug) Console.WriteLine("See output.txt");
             bool Retry = true;
             while (true)
@@ -197,7 +195,11 @@ namespace Utili
 
             if (!UseTest) Token = Config.Token;
             else Token = Config.TestToken;
-            
+
+            Startup = DateTime.Now;
+            Queries = 0;
+            CacheQueries = 0;
+
             await Client.LoginAsync(TokenType.Bot, Token);
             await Client.StartAsync();
 

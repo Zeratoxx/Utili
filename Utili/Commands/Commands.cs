@@ -176,12 +176,18 @@ namespace Utili
             catch { Ping = "Failed to test"; }
             
             DateTime Now = DateTime.Now;
-            GetData("Ping Test");
+            GetData("Ping Test", IgnoreCache: true);
             double DBPing = Math.Round((DateTime.Now - Now).TotalMilliseconds);
+
+            Now = DateTime.Now;
+            GetData("Ping Test", IgnoreCache: false);
+            double CachePing = Math.Round((DateTime.Now - Now).TotalMilliseconds);
 
             TimeSpan Uptime = DateTime.Now - Program.Startup;
             double DBQueries = Math.Round(Queries / Uptime.TotalSeconds, 2);
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Pong!", $"Send Latency: {Ping}\nAPI Latency: {APIPing}ms\nDB Latency: {DBPing}ms\nDB Queries: {DBQueries}/s", $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards}"));
+            double CQueries = Math.Round(CacheQueries / Uptime.TotalSeconds, 2);
+
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Pong!", $"Send Latency: {Ping}\nAPI Latency: {APIPing}ms\n\nDB Latency: {DBPing}ms\nDB Queries: {DBQueries}/s\n\nCache Latency: {CachePing}ms\nCache Queries: {CQueries}/s", $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards}"));
             
         }
 
