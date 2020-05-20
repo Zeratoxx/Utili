@@ -27,7 +27,7 @@ namespace Utili
 
         public async Task Run(CancellationToken cancellationToken)
         {
-            System.Timers.Timer StartRunthrough = new System.Timers.Timer(3000);
+            System.Timers.Timer StartRunthrough = new System.Timers.Timer(2000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.AutoReset = true;
             StartRunthrough.Start();
@@ -38,7 +38,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count < 1) Tasks.Add(Process());
+                if (Tasks.Count < 3) Tasks.Add(Process());
             }
             
         }
@@ -53,16 +53,7 @@ namespace Utili
                 if (!AllGuilds.Contains(ulong.Parse(Data.GuildID))) AllGuilds.Add(ulong.Parse(Data.GuildID));
             }
 
-            List<ulong> Shuffled = new List<ulong>();
-            Random Random = new Random();
-            for(int i = 0; i <= AllGuilds.Count; i++)
-            {
-                int Index = Random.Next(0, AllGuilds.Count);
-                Shuffled.Add(AllGuilds.ElementAt(Index));
-                AllGuilds.RemoveAt(Index);
-            }
-
-            foreach (ulong GuildID in Shuffled)
+            foreach (ulong GuildID in AllGuilds)
             {
                 try
                 {

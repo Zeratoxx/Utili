@@ -74,7 +74,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count < 1) Tasks.Add(ProcessAll());
+                if (Tasks.Count < 3) Tasks.Add(ProcessAll());
             }
         }
 
@@ -88,22 +88,13 @@ namespace Utili
                 if (!AllGuilds.Contains(ulong.Parse(Data.GuildID))) AllGuilds.Add(ulong.Parse(Data.GuildID));
             }
 
-            List<ulong> Shuffled = new List<ulong>();
-            Random Random = new Random();
-            for (int i = 0; i <= AllGuilds.Count; i++)
-            {
-                int Index = Random.Next(0, AllGuilds.Count);
-                Shuffled.Add(AllGuilds.ElementAt(Index));
-                AllGuilds.RemoveAt(Index);
-            }
-
-            foreach (ulong GuildID in Shuffled)
+            foreach (ulong GuildID in AllGuilds)
             {
                 try
                 {
                     ulong RoleID = ulong.Parse(GetData(GuildID.ToString(), "InactiveRole-Role").First().Value);
                     Tasks.RemoveAll(x => x.IsCompleted);
-                    while (Tasks.Count >= (Client.Guilds.Count / 2) + 1) { await Task.Delay(1000); };
+                    while (Tasks.Count >= 15) { await Task.Delay(1000); };
                     Tasks.Add(ProcessGuild(GuildID, RoleID, true));
                 }
                 catch { }
@@ -137,7 +128,7 @@ namespace Utili
                             bool Inactive = false;
                             DateTime LastThing = DateTime.MinValue;
 
-                            try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}").First().Value); }
+                            try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true).First().Value); }
                             catch { Inactive = true; }
 
                             if (DateTime.Now - LastThing > Threshold) Inactive = true;
@@ -152,7 +143,7 @@ namespace Utili
                                 bool Inactive = true;
                                 DateTime LastThing = DateTime.MinValue;
 
-                                try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}").First().Value); }
+                                try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true).First().Value); }
                                 catch { Inactive = true; }
 
                                 if (DateTime.Now - LastThing < Threshold) Inactive = false;

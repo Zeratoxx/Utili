@@ -34,7 +34,6 @@ namespace Utili
         public static YouTubeService Youtube;
         public static CancellationTokenSource ForceStop;
         public static int TotalShards = 0;
-        public static DateTime Startup = DateTime.Now;
         public static bool Ready = false;
 
         public static bool Debug = false;
@@ -189,7 +188,8 @@ namespace Utili
             Client.Log += Client_Log;
 
             Console.WriteLine($"\n[{DateTime.Now}] [Info] Loading cache...");
-            Cache = GetData(IgnoreCache: true);
+            Cache = GetData(IgnoreCache: true).ToHashSet();
+            Cache.RemoveWhere(x => x.Type.Contains("InactiveRole-Timer-"));
             Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items cached");
 
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
@@ -199,7 +199,7 @@ namespace Utili
             if (!UseTest) Token = Config.Token;
             else Token = Config.TestToken;
 
-            Startup = DateTime.Now;
+            QueryTimer = DateTime.Now;
             Queries = 0;
             CacheQueries = 0;
 
@@ -243,6 +243,16 @@ namespace Utili
                     ForceStop.Cancel(); 
                 }
             }
+
+            // Do data stuff because I was too lazy to make a new timer
+
+            TimeSpan Uptime = DateTime.Now - QueryTimer;
+            try { QueriesPerSecond = Math.Round(Queries / Uptime.TotalSeconds, 2); } catch { QueriesPerSecond = 0; }
+            try { CacheQueriesPerSecond = Math.Round(CacheQueries / Uptime.TotalSeconds, 2); } catch { CacheQueriesPerSecond = 0; }
+
+            QueryTimer = DateTime.Now;
+            Queries = 0;
+            CacheQueries = 0;
         }
 
         private async Task Client_Log(LogMessage Message)

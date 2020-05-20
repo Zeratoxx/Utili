@@ -183,12 +183,7 @@ namespace Utili
             GetData("Ping Test", IgnoreCache: false);
             double CachePing = Math.Round((DateTime.Now - Now).TotalMilliseconds);
 
-            TimeSpan Uptime = DateTime.Now - Program.Startup;
-            double DBQueries = Math.Round(Queries / Uptime.TotalSeconds, 2);
-            double CQueries = Math.Round(CacheQueries / Uptime.TotalSeconds, 2);
-
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Pong!", $"Send Latency: {Ping}\nAPI Latency: {APIPing}ms\n\nDB Latency: {DBPing}ms\nDB Queries: {DBQueries}/s\n\nCache Latency: {CachePing}ms\nCache Queries: {CQueries}/s", $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards}"));
-            
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Pong!", $"Send Latency: {Ping}\nAPI Latency: {APIPing}ms\n\nDB Latency: {DBPing}ms\nDB Queries: {QueriesPerSecond}/s\n\nCache Latency: {CachePing}ms\nCache Queries: {CacheQueriesPerSecond}/s", $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards}"));
         }
 
         [Command("Vote")]

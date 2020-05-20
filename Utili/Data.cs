@@ -13,12 +13,16 @@ namespace Utili
 {
     class Data
     {
-        public static List<Data> Cache;
+        public static HashSet<Data> Cache;
 
         public static string ConnectionString = "";
 
         public static int Queries = 0;
         public static int CacheQueries = 0;
+        public static DateTime QueryTimer = DateTime.Now;
+
+        public static double QueriesPerSecond = 0;
+        public static double CacheQueriesPerSecond = 0;
 
         public static void SetConnectionString()
         {
@@ -60,7 +64,7 @@ namespace Utili
         {
             if (!IgnoreCache)
             {
-                Cache.Add(new Data(GuildID, Type, Value));
+                try { Cache.Add(new Data(GuildID, Type, Value)); } catch { };
                 CacheQueries += 1;
             }
 
@@ -69,16 +73,16 @@ namespace Utili
 
         public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false)
         {
-            List<Data> Data = new List<Data>();
+            HashSet<Data> Data = new HashSet<Data>();
 
             if (!IgnoreCache)
             {
                 Data = Cache;
-                if (GuildID != null) Data = Data.Where(x => x.GuildID == GuildID).ToList();
-                if (Type != null) Data = Data.Where(x => x.Type == Type).ToList();
-                if (Value != null) Data = Data.Where(x => x.Value == Value).ToList();
+                if (GuildID != null) Data = Data.Where(x => x.GuildID == GuildID).ToHashSet();
+                if (Type != null) Data = Data.Where(x => x.Type == Type).ToHashSet();
+                if (Value != null) Data = Data.Where(x => x.Value == Value).ToHashSet();
                 CacheQueries += 1;
-                return Data;
+                return Data.ToList();
             }
 
             using (var connection = new MySqlConnection(ConnectionString))
@@ -132,7 +136,7 @@ namespace Utili
                 }
             }
 
-            return Data;
+            return Data.ToList();
         }
 
         public static List<Data> GetDataWhere(string Where)
@@ -177,10 +181,10 @@ namespace Utili
 
             if (!IgnoreCache)
             {
-                List<Data> ToDelete = Cache;
-                if (GuildID != null) ToDelete = ToDelete.Where(x => x.GuildID == GuildID).ToList();
-                if (Type != null) ToDelete = ToDelete.Where(x => x.Type == Type).ToList();
-                if (Value != null) ToDelete = ToDelete.Where(x => x.Value == Value).ToList();
+                HashSet<Data> ToDelete = Cache;
+                if (GuildID != null) ToDelete = ToDelete.Where(x => x.GuildID == GuildID).ToHashSet();
+                if (Type != null) ToDelete = ToDelete.Where(x => x.Type == Type).ToHashSet();
+                if (Value != null) ToDelete = ToDelete.Where(x => x.Value == Value).ToHashSet();
                 foreach (Data Item in ToDelete) { Cache.Remove(Item); CacheQueries += 1; }
             }
 
