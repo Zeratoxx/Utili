@@ -40,6 +40,8 @@ namespace Utili
             try
             {
                 RunNonQuery($"UPDATE Utili SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Context.Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{Usr.Id}"), ("Value", ToSQLTime(DateTime.Now)) });
+                DeleteData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", CacheOnly: true);
+                SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now), CacheOnly: true);
             }
             catch
             {
@@ -61,7 +63,7 @@ namespace Utili
 
         public async Task Run(CancellationToken cancellationToken)
         {
-            System.Timers.Timer StartRunthrough = new System.Timers.Timer(5000);
+            System.Timers.Timer StartRunthrough = new System.Timers.Timer(10000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.AutoReset = true;
             StartRunthrough.Start();
@@ -69,8 +71,11 @@ namespace Utili
 
         private void StartRunthrough_Elapsed(object sender, ElapsedEventArgs e)
         {
-            Tasks.RemoveAll(x => x.IsCompleted);
-            if (Tasks.Count < (Client.Guilds.Count / 15) + 5) Tasks.Add(ProcessAll());
+            if (Ready)
+            {
+                Tasks.RemoveAll(x => x.IsCompleted);
+                if (Tasks.Count < 1) Tasks.Add(ProcessAll());
+            }
         }
 
         public async Task ProcessAll()

@@ -56,7 +56,7 @@ namespace Utili
             }
         }
 
-        public static void SaveData(string GuildID, string Type, string Value = "", bool IgnoreCache = false)
+        public static void SaveData(string GuildID, string Type, string Value = "", bool IgnoreCache = false, bool CacheOnly = false)
         {
             if (!IgnoreCache)
             {
@@ -64,7 +64,7 @@ namespace Utili
                 CacheQueries += 1;
             }
 
-            RunNonQuery($"INSERT INTO Utili(GuildID, DataType, DataValue) VALUES(@GuildID, @Type, @Value);", new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
+            if(!CacheOnly) RunNonQuery($"INSERT INTO Utili(GuildID, DataType, DataValue) VALUES(@GuildID, @Type, @Value);", new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
         }
 
         public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false)
@@ -171,7 +171,7 @@ namespace Utili
             return Data;
         }
 
-        public static void DeleteData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false)
+        public static void DeleteData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, bool CacheOnly = false)
         {
             if (GuildID == null & Type == null & Value == null) throw new Exception();
 
@@ -184,23 +184,26 @@ namespace Utili
                 foreach (Data Item in ToDelete) { Cache.Remove(Item); CacheQueries += 1; }
             }
 
-            string Command = "DELETE FROM Utili WHERE(";
-            if (GuildID != null)
+            if (!CacheOnly)
             {
-                Command += $"GuildID = @GuildID AND ";
-            }
-            if (Type != null)
-            {
-                Command += $"DataType = @Type AND ";
-            }
-            if (Value != null)
-            {
-                Command += $"DataValue = @Value";
-            }
-            if (Command.Substring(Command.Length - 5) == " AND ") Command = Command.Substring(0, Command.Length - 5);
-            Command += ");";
+                string Command = "DELETE FROM Utili WHERE(";
+                if (GuildID != null)
+                {
+                    Command += $"GuildID = @GuildID AND ";
+                }
+                if (Type != null)
+                {
+                    Command += $"DataType = @Type AND ";
+                }
+                if (Value != null)
+                {
+                    Command += $"DataValue = @Value";
+                }
+                if (Command.Substring(Command.Length - 5) == " AND ") Command = Command.Substring(0, Command.Length - 5);
+                Command += ");";
 
-            RunNonQuery(Command, new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
+                RunNonQuery(Command, new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
+            }
         }
 
         public static async Task SaveMessageAsync(SocketCommandContext Context)

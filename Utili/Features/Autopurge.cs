@@ -27,7 +27,7 @@ namespace Utili
 
         public async Task Run(CancellationToken cancellationToken)
         {
-            System.Timers.Timer StartRunthrough = new System.Timers.Timer(1000);
+            System.Timers.Timer StartRunthrough = new System.Timers.Timer(3000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.AutoReset = true;
             StartRunthrough.Start();
@@ -35,8 +35,12 @@ namespace Utili
 
         private void StartRunthrough_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            Tasks.RemoveAll(x => x.IsCompleted);
-            if (Tasks.Count < (Client.Guilds.Count / 2) + 5) Tasks.Add(Process());
+            if (Ready)
+            {
+                Tasks.RemoveAll(x => x.IsCompleted);
+                if (Tasks.Count < 1) Tasks.Add(Process());
+            }
+            
         }
 
         public async Task Process()

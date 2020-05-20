@@ -35,6 +35,7 @@ namespace Utili
         public static CancellationTokenSource ForceStop;
         public static int TotalShards = 0;
         public static DateTime Startup = DateTime.Now;
+        public static bool Ready = false;
 
         public static bool Debug = false;
         public static bool UseTest = false;
@@ -90,6 +91,8 @@ namespace Utili
 
         private async Task MainAsync()
         {
+            Ready = false;
+
             if (!LoadConfig()) GenerateNewConfig();
             SetConnectionString();
 
@@ -214,16 +217,16 @@ namespace Utili
                 _ = Sharding.UpdateShardMessage();
             }
 
+            var Timer = new System.Timers.Timer(30000);
+            Timer.Elapsed += CheckReliability;
+            Timer.Start();
+
             Autopurge Autopurge = new Autopurge();
             InactiveRole InactiveRole = new InactiveRole();
 
             CancellationToken cancelAutos = new CancellationToken();
             _ = Autopurge.Run(cancelAutos);
             _ = InactiveRole.Run(cancelAutos);
-
-            var Timer = new System.Timers.Timer(30000);
-            Timer.Elapsed += CheckReliability;
-            Timer.Start();
 
             ForceStop = new CancellationTokenSource();
             await Task.Delay(-1, ForceStop.Token);
@@ -294,6 +297,8 @@ namespace Utili
 
             AntiProfane AntiProfane = new AntiProfane();
             Task.Run(() => AntiProfane.AntiProfane_Ready());
+
+            Ready = true;
         }
 
         #endregion
