@@ -36,8 +36,8 @@ namespace Utili
         public static int TotalShards = 0;
         public static bool Ready = false;
 
-        public static bool Debug = true;
-        public static bool UseTest = true;
+        public static bool Debug = false;
+        public static bool UseTest = false;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -221,6 +221,10 @@ namespace Utili
             Timer.Elapsed += CheckReliability;
             Timer.Start();
 
+            var Timer2 = new System.Timers.Timer(10000);
+            Timer2.Elapsed += UpdateLatency;
+            Timer2.Start();
+
             Autopurge Autopurge = new Autopurge();
             InactiveRole InactiveRole = new InactiveRole();
 
@@ -230,6 +234,51 @@ namespace Utili
 
             ForceStop = new CancellationTokenSource();
             await Task.Delay(-1, ForceStop.Token);
+        }
+
+        private async void UpdateLatency(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            TimeSpan Uptime = DateTime.Now - QueryTimer;
+            try { QueriesPerSecond = Math.Round(Queries / Uptime.TotalSeconds, 2); } catch { QueriesPerSecond = 0; }
+            try { CacheQueriesPerSecond = Math.Round(CacheQueries / Uptime.TotalSeconds, 2); } catch { CacheQueriesPerSecond = 0; }
+
+            try
+            {
+                DateTime Now = DateTime.Now;
+                GetData("Ping Test", IgnoreCache: true);
+                DBLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+
+                DatabaseItems = GetData(IgnoreCache: true).Count();
+            }
+            catch { DBLatency = -1; };
+
+            try
+            {
+                DateTime Now = DateTime.Now;
+                GetData("Ping Test");
+                CacheLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+
+                CacheItems = Cache.Count;
+            }
+            catch { CacheLatency = -1; };
+
+            try
+            {
+                DateTime Now = DateTime.Now;
+                var Sent = await Client.GetGuild(682882628168450079).GetTextChannel(713125991563919492).SendMessageAsync("Testing send latency...");
+                SendLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+
+                Now = DateTime.Now;
+                await Sent.ModifyAsync(x => x.Content = "Testing edit latency...");
+                EditLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+
+                await Sent.DeleteAsync();
+            }
+            catch { SendLatency = -1; };
+
+            QueryTimer = DateTime.Now;
+            Queries = 0;
+            CacheQueries = 0;
         }
 
         private async void CheckReliability(object sender, System.Timers.ElapsedEventArgs e)
@@ -243,16 +292,6 @@ namespace Utili
                     ForceStop.Cancel(); 
                 }
             }
-
-            // Do data stuff because I was too lazy to make a new timer
-
-            TimeSpan Uptime = DateTime.Now - QueryTimer;
-            try { QueriesPerSecond = Math.Round(Queries / Uptime.TotalSeconds, 2); } catch { QueriesPerSecond = 0; }
-            try { CacheQueriesPerSecond = Math.Round(CacheQueries / Uptime.TotalSeconds, 2); } catch { CacheQueriesPerSecond = 0; }
-
-            QueryTimer = DateTime.Now;
-            Queries = 0;
-            CacheQueries = 0;
         }
 
         private async Task Client_Log(LogMessage Message)
@@ -521,8 +560,8 @@ namespace Utili
             JoinMessage JoinMessage = new JoinMessage();
             Task.Run(() => JoinMessage.JoinMessage_UserJoined(User));
 
-            DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}");
-            SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now));
+            DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true);
+            SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true);
 
             var Role = User.Guild.GetRole(ulong.Parse(Data.GetData(User.Guild.Id.ToString(), "JoinRole").First().Value));
             await User.AddRoleAsync(Role);

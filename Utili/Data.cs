@@ -23,6 +23,12 @@ namespace Utili
 
         public static double QueriesPerSecond = 0;
         public static double CacheQueriesPerSecond = 0;
+        public static int DBLatency = 0;
+        public static int DatabaseItems = 0;
+        public static int CacheLatency = 0;
+        public static int CacheItems = 0;
+        public static int SendLatency = 0;
+        public static int EditLatency = 0;
 
         public static void SetConnectionString()
         {

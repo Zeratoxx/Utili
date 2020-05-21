@@ -40,13 +40,11 @@ namespace Utili
             try
             {
                 RunNonQuery($"UPDATE Utili SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Context.Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{Usr.Id}"), ("Value", ToSQLTime(DateTime.Now)) });
-                DeleteData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", CacheOnly: true);
-                SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now), CacheOnly: true);
             }
             catch
             {
-                DeleteData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}");
-                SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now));
+                DeleteData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", IgnoreCache: true);
+                SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true);
             }
 
             List<Data> InactiveRole = GetData(Context.Guild.Id.ToString(), "InactiveRole-Role");
@@ -63,9 +61,8 @@ namespace Utili
 
         public async Task Run(CancellationToken cancellationToken)
         {
-            System.Timers.Timer StartRunthrough = new System.Timers.Timer(10000);
+            System.Timers.Timer StartRunthrough = new System.Timers.Timer(30000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
-            StartRunthrough.AutoReset = true;
             StartRunthrough.Start();
         }
 
@@ -74,7 +71,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count < 3) Tasks.Add(ProcessAll());
+                if (Tasks.Count < 5) Tasks.Add(ProcessAll());
             }
         }
 
@@ -93,9 +90,7 @@ namespace Utili
                 try
                 {
                     ulong RoleID = ulong.Parse(GetData(GuildID.ToString(), "InactiveRole-Role").First().Value);
-                    Tasks.RemoveAll(x => x.IsCompleted);
-                    while (Tasks.Count >= 15) { await Task.Delay(1000); };
-                    Tasks.Add(ProcessGuild(GuildID, RoleID, true));
+                    await ProcessGuild(GuildID, RoleID, true);
                 }
                 catch { }
             }

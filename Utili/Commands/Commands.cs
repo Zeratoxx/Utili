@@ -19,6 +19,7 @@ using static Utili.SendMessage;
 using static Utili.Json;
 using DiscordBotsList.Api;
 using Newtonsoft.Json.Linq;
+using MySql.Data.MySqlClient.Memcached;
 
 namespace Utili
 {
@@ -159,31 +160,21 @@ namespace Utili
             }
         }
 
-        [Command("Ping")]
+        [Command("Ping"), Alias("Status")]
         public async Task Ping()
         {
-            int APIPing = Program.Client.Latency;
+            int Send = SendLatency;
+            int Edit = EditLatency;
+            int API = Program.Client.Latency;
+            int Database = DBLatency;
+            int Cache = CacheLatency;
 
-            string Ping;
-            try
-            {
-                DateTime Now2 = DateTime.Now;
-                var Message = await Context.Channel.SendMessageAsync("Testing send latency...");
-                double PingS = Math.Round((DateTime.Now - Now2).TotalMilliseconds);
-                await Message.DeleteAsync();
-                Ping = PingS.ToString() + "ms";
-            }
-            catch { Ping = "Failed to test"; }
-            
-            DateTime Now = DateTime.Now;
-            GetData("Ping Test", IgnoreCache: true);
-            double DBPing = Math.Round((DateTime.Now - Now).TotalMilliseconds);
+            var Embed = GetLargeEmbed("Pong!", "", Footer: $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards} | Shard serving {Program.Client.Guilds.Count} guilds").ToEmbedBuilder();
+            Embed.AddField("**Discord**", $"API: {API}ms\nSend: {Send}ms\nEdit: {Edit}ms", true);
+            Embed.AddField("**Database**", $"Ping: {Database}ms\nQueries: {QueriesPerSecond}/s\nItems: {DatabaseItems}", true);
+            Embed.AddField("**Cache**", $"Ping: {Cache}ms\nQueries: {CacheQueriesPerSecond}/s\nItems: {CacheItems}", true);
 
-            Now = DateTime.Now;
-            GetData("Ping Test", IgnoreCache: false);
-            double CachePing = Math.Round((DateTime.Now - Now).TotalMilliseconds);
-
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Pong!", $"Send Latency: {Ping}\nAPI Latency: {APIPing}ms\n\nDB Latency: {DBPing}ms\nDB Queries: {QueriesPerSecond}/s\n\nCache Latency: {CachePing}ms\nCache Queries: {CacheQueriesPerSecond}/s", $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards}"));
+            await Context.Channel.SendMessageAsync(embed: Embed.Build());
         }
 
         [Command("Vote")]
