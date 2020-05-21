@@ -289,8 +289,8 @@ namespace Utili
             catch { }
 
             List<SocketGuildUser> InactiveUsers = null;
-            if(Mode == "Give") Context.Guild.Users.Where(x => x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
-            else Context.Guild.Users.Where(x => !x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
+            if(Mode == "Give") InactiveUsers = Context.Guild.Users.Where(x => x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
+            else InactiveUsers = Context.Guild.Users.Where(x => !x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
 
             string Content = "";
             int i = 1;
@@ -330,15 +330,15 @@ namespace Utili
                     catch { }
 
                     List<SocketGuildUser> InactiveUsers = null;
-                    if (Mode == "Give") Context.Guild.Users.Where(x => x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
-                    else Context.Guild.Users.Where(x => !x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
+                    if (Mode == "Give") InactiveUsers = Context.Guild.Users.Where(x => x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
+                    else InactiveUsers = Context.Guild.Users.Where(x => !x.Roles.Contains(Role)).Where(x => !x.IsBot).OrderBy(x => x.JoinedAt).ToList();
 
                     if(Mode == "Give") await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Kicking inactive users", $"Kicking {InactiveUsers.Count} users with role {Role.Mention}"));
                     else await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Kicking inactive users", $"Kicking {InactiveUsers.Count} users without the role {Role.Mention}"));
 
                     foreach (var User in InactiveUsers)
                     {
-                        try { _ = User.KickAsync($"Mass-kick for inactivity executed by {Context.User.Username}#{Context.User.Discriminator}"); }
+                        try { _ = User.KickAsync($"Mass kick for inactivity executed by {Context.User.Username}#{Context.User.Discriminator} ({Context.User.Id})"); }
                         catch { }
                     }
                 }

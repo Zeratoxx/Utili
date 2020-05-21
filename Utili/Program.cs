@@ -25,7 +25,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.10.2";
+        public static string VersionNumber = "1.10.3";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
@@ -36,8 +36,8 @@ namespace Utili
         public static int TotalShards = 0;
         public static bool Ready = false;
 
-        public static bool Debug = false;
-        public static bool UseTest = false;
+        public static bool Debug = true;
+        public static bool UseTest = true;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -370,18 +370,6 @@ namespace Utili
 
                         try
                         {
-                            #region Command Logging
-
-                            StreamWriter sw;
-                            if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
-                            else sw = File.AppendText("Command Log.txt");
-
-                            sw.WriteLine($"[{DateTime.Now}] [Command] [{Context.Guild.Name} | {Context.Guild.Id}] [{Context.Channel.Name} | {Context.Channel.Id}] [{Context.User} | {Context.User.Id}] {Context.Message.Content}");
-
-                            sw.Close();
-
-                            #endregion
-
                             var Result = await Commands.ExecuteAsync(Context, ArgPos, null);
 
                             if (!Result.IsSuccess)
@@ -392,10 +380,35 @@ namespace Utili
                                 }
                                 #region Command Logging
 
+                                StreamWriter sw;
+                                if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
+                                else sw = File.AppendText("Command Log.txt");
+
+                                sw.WriteLine($"[{DateTime.Now}] [Command] [{Context.Guild.Name} | {Context.Guild.Id}] [{Context.Channel.Name} | {Context.Channel.Id}] [{Context.User} | {Context.User.Id}] {Context.Message.Content}");
+
+                                sw.Close();
+
+                                #endregion
+                                #region Command Error Logging
+
                                 if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
                                 else sw = File.AppendText("Command Log.txt");
 
                                 sw.WriteLine($"[{DateTime.Now}] [Command] [Error] {Result.ErrorReason}");
+
+                                sw.Close();
+
+                                #endregion
+                            }
+                            else
+                            {
+                                #region Command Logging
+
+                                StreamWriter sw;
+                                if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
+                                else sw = File.AppendText("Command Log.txt");
+
+                                sw.WriteLine($"[{DateTime.Now}] [Command] [{Context.Guild.Name} | {Context.Guild.Id}] [{Context.Channel.Name} | {Context.Channel.Id}] [{Context.User} | {Context.User.Id}] {Context.Message.Content}");
 
                                 sw.Close();
 

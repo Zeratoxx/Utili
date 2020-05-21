@@ -25,6 +25,8 @@ namespace Utili
     {
         public async Task Client_UserVoiceStateUpdated(SocketGuildUser User, SocketVoiceState Before, SocketVoiceState After)
         {
+            if (Before.VoiceChannel == After.VoiceChannel) return;
+
             if (After.VoiceChannel != null)
             {
                 DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}");
@@ -44,8 +46,8 @@ namespace Utili
                         await Channel.RemovePermissionOverwriteAsync(User);
                         if (User.Guild.Users.Where(x => x.VoiceChannel != null).Where(x => x.VoiceChannel.Id == Before.VoiceChannel.Id).Count() == 0)
                         {
-                            await Channel.DeleteAsync();
                             DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}");
+                            await Channel.DeleteAsync();
                         }
                     }
                     catch { };
