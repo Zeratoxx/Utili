@@ -25,7 +25,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.10.3";
+        public static string VersionNumber = "1.10.4";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
