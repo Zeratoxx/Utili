@@ -25,7 +25,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.10.4";
+        public static string VersionNumber = "1.10.5";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
@@ -416,28 +416,30 @@ namespace Utili
                                 if (Result.ErrorReason != "Unknown command.")
                                 {
                                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+
+                                    #region Command Logging
+
+                                    StreamWriter sw;
+                                    if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
+                                    else sw = File.AppendText("Command Log.txt");
+
+                                    sw.WriteLine($"[{DateTime.Now}] [Command] [{Context.Guild.Name} | {Context.Guild.Id}] [{Context.Channel.Name} | {Context.Channel.Id}] [{Context.User} | {Context.User.Id}] {Context.Message.Content}");
+
+                                    sw.Close();
+
+                                    #endregion
+                                    #region Command Error Logging
+
+                                    if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
+                                    else sw = File.AppendText("Command Log.txt");
+
+                                    sw.WriteLine($"[{DateTime.Now}] [Command] [Error] {Result.ErrorReason}");
+
+                                    sw.Close();
+
+                                    #endregion
                                 }
-                                #region Command Logging
 
-                                StreamWriter sw;
-                                if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
-                                else sw = File.AppendText("Command Log.txt");
-
-                                sw.WriteLine($"[{DateTime.Now}] [Command] [{Context.Guild.Name} | {Context.Guild.Id}] [{Context.Channel.Name} | {Context.Channel.Id}] [{Context.User} | {Context.User.Id}] {Context.Message.Content}");
-
-                                sw.Close();
-
-                                #endregion
-                                #region Command Error Logging
-
-                                if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
-                                else sw = File.AppendText("Command Log.txt");
-
-                                sw.WriteLine($"[{DateTime.Now}] [Command] [Error] {Result.ErrorReason}");
-
-                                sw.Close();
-
-                                #endregion
                             }
                             else
                             {

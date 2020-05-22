@@ -35,7 +35,7 @@ namespace Utili
             ConnectionString = $"Server={Config.Database.Server};Database={Config.Database.Database};Uid={Config.Database.Username};Pwd={Config.Database.Password};";
         }
 
-        public static string RunNonQuery(string Command, (string, string)[] Values = null)
+        public static int RunNonQuery(string Command, (string, string)[] Values = null)
         {
             try
             {
@@ -55,14 +55,13 @@ namespace Utili
                         }
 
                         Queries += 1;
-                        command.ExecuteNonQuery();
+                        return command.ExecuteNonQuery();
                     }
                 }
-                return "Success";
             }
             catch (Exception e)
             {
-                return e.Message;
+                return 0;
             }
         }
 

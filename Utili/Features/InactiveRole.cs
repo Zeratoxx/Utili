@@ -37,13 +37,9 @@ namespace Utili
 
             //Save the data anyway so that if it's ever enabled the bot doesn't mark everyone
 
-            try
+            int RowsAffected = RunNonQuery($"UPDATE Utili SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Context.Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{Usr.Id}"), ("Value", ToSQLTime(DateTime.Now)) });
+            if(RowsAffected == 0)
             {
-                RunNonQuery($"UPDATE Utili SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Context.Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{Usr.Id}"), ("Value", ToSQLTime(DateTime.Now)) });
-            }
-            catch
-            {
-                DeleteData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", IgnoreCache: true);
                 SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true);
             }
 
@@ -101,6 +97,10 @@ namespace Utili
             SocketGuild Guild = Client.GetGuild(GuildID);
             SocketRole Role = Guild.GetRole(RoleID);
 
+            SocketRole ImmuneRole = null;
+            try { ImmuneRole = Guild.GetRole(ulong.Parse(GetData(Guild.Id.ToString(), "InactiveRole-ImmuneRole").First().Value)); }
+            catch { };
+
             TimeSpan Threshold;
             try { Threshold = TimeSpan.Parse(GetData(Guild.Id.ToString(), "InactiveRole-Timespan").First().Value); }
             catch { Threshold = TimeSpan.FromDays(30); }
@@ -128,6 +128,8 @@ namespace Utili
 
                             if (DateTime.Now - LastThing > Threshold) Inactive = true;
 
+                            if (ImmuneRole != null) if (User.Roles.Contains(ImmuneRole)) Inactive = false;
+
                             if (Inactive && Mode == "Give") await User.AddRoleAsync(Role);
                             if (Inactive && Mode == "Take") await User.RemoveRoleAsync(Role);
                         }
@@ -143,6 +145,8 @@ namespace Utili
 
                                 if (DateTime.Now - LastThing < Threshold) Inactive = false;
 
+                                if (ImmuneRole != null) if (User.Roles.Contains(ImmuneRole)) Inactive = false;
+
                                 if (!Inactive && Mode == "Give") await User.RemoveRoleAsync(Role);
                                 if (!Inactive && Mode == "Take") await User.AddRoleAsync(Role);
                             }
@@ -157,14 +161,15 @@ namespace Utili
     [Group("Inactive")]
     public class InactiveRoleCommands : ModuleBase<SocketCommandContext>
     {
-            public static string HelpContent =
-                    "help - Show this list\n" +
-                    "about - Display feature information\n" +
-                    "role [role | none] - Set the role to be given to inactive users\n" +
-                    "time [timespan] - After this time period of inactivity users receive the role\n" +
-                    "mode [give | take] - Set whether the role is given to or taken from inactive users\n" +
-                    "list [page] - Lists inactive users\n" +
-                    "kick - Kick all inactive users";
+        public static string HelpContent =
+                "help - Show this list\n" +
+                "about - Display feature information\n" +
+                "role [role | none] - Set the role to be given to or taken from inactive users\n" +
+                "time [timespan] - Set the time threshold for inactivity\n" +
+                "immunerole [role | none] - Users with this role will not be marked as inactive\n" +
+                "mode [give | take] - Set whether the role is given to or taken from inactive users\n" +
+                "list [page] - Lists inactive users\n" +
+                "kick - Kick all inactive users";
 
         [Command("Help")]
         public async Task Help()
@@ -210,6 +215,38 @@ namespace Utili
                 {
                     DeleteData(Context.Guild.Id.ToString(), "InactiveRole-Role");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Removed inactive role", $"Users currently with this role won't have it removed from them"));
+                }
+            }
+            else
+            {
+                string Prefix = ".";
+                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+            }
+        }
+
+        [Command("ImmuneRole")]
+        public async Task ImmuneRole(IRole Role)
+        {
+            if (Permission(Context.User, Context.Channel))
+            {
+                DeleteData(Context.Guild.Id.ToString(), "InactiveRole-ImmuneRole");
+                SaveData(Context.Guild.Id.ToString(), "InactiveRole-ImmuneRole", Role.Id.ToString());
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set immune role", $"Users with the {Role.Mention} role will never be marked as inactive.\nYour users are now being processed, this may take a while."));
+                ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
+                await ProcessGuild(Context.Guild.Id, RoleID, true);
+            }
+        }
+
+        [Command("ImmuneRole"), Alias("Setrole", "Set")]
+        public async Task ImmuneRole(string None)
+        {
+            if (None.ToLower() == "none")
+            {
+                if (Permission(Context.User, Context.Channel))
+                {
+                    DeleteData(Context.Guild.Id.ToString(), "InactiveRole-ImmuneRole");
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Removed immune role", $"All users can now be marked as inactive.\nYour users are now being processed, this may take a while."));
                 }
             }
             else
