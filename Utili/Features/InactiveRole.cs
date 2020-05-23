@@ -37,10 +37,10 @@ namespace Utili
 
             //Save the data anyway so that if it's ever enabled the bot doesn't mark everyone
 
-            int RowsAffected = RunNonQuery($"UPDATE Utili SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Context.Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{Usr.Id}"), ("Value", ToSQLTime(DateTime.Now)) });
+            int RowsAffected = RunNonQuery($"UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Context.Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{Usr.Id}"), ("Value", ToSQLTime(DateTime.Now)) });
             if(RowsAffected == 0)
             {
-                SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true);
+                SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
             }
 
             List<Data> InactiveRole = GetData(Context.Guild.Id.ToString(), "InactiveRole-Role");
@@ -123,7 +123,7 @@ namespace Utili
                             bool Inactive = false;
                             DateTime LastThing = DateTime.MinValue;
 
-                            try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true).First().Value); }
+                            try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
                             catch { Inactive = true; }
 
                             if (DateTime.Now - LastThing > Threshold) Inactive = true;
@@ -140,7 +140,7 @@ namespace Utili
                                 bool Inactive = true;
                                 DateTime LastThing = DateTime.MinValue;
 
-                                try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true).First().Value); }
+                                try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
                                 catch { Inactive = true; }
 
                                 if (DateTime.Now - LastThing < Threshold) Inactive = false;

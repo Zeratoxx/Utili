@@ -65,7 +65,7 @@ namespace Utili
             }
         }
 
-        public static void SaveData(string GuildID, string Type, string Value = "", bool IgnoreCache = false, bool CacheOnly = false)
+        public static void SaveData(string GuildID, string Type, string Value = "", bool IgnoreCache = false, bool CacheOnly = false, string Table = "Utili")
         {
             if (!IgnoreCache)
             {
@@ -73,10 +73,10 @@ namespace Utili
                 CacheQueries += 1;
             }
 
-            if(!CacheOnly) RunNonQuery($"INSERT INTO Utili(GuildID, DataType, DataValue) VALUES(@GuildID, @Type, @Value);", new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
+            if(!CacheOnly) RunNonQuery($"INSERT INTO {Table}(GuildID, DataType, DataValue) VALUES(@GuildID, @Type, @Value);", new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
         }
 
-        public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false)
+        public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
         {
             HashSet<Data> Data = new HashSet<Data>();
 
@@ -97,10 +97,10 @@ namespace Utili
                     connection.Open();
 
                     string Command;
-                    if (GuildID == null & Type == null & Value == null) Command = "SELECT * FROM Utili;";
+                    if (GuildID == null & Type == null & Value == null) Command = $"SELECT * FROM {Table};";
                     else
                     {
-                        Command = "SELECT * FROM Utili WHERE(";
+                        Command = $"SELECT * FROM {Table} WHERE(";
                         if (GuildID != null)
                         {
                             Command += $"GuildID = @GuildID AND ";
@@ -180,7 +180,7 @@ namespace Utili
             return Data;
         }
 
-        public static void DeleteData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, bool CacheOnly = false)
+        public static void DeleteData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, bool CacheOnly = false, string Table = "Utili")
         {
             if (GuildID == null & Type == null & Value == null) throw new Exception();
 
@@ -195,7 +195,7 @@ namespace Utili
 
             if (!CacheOnly)
             {
-                string Command = "DELETE FROM Utili WHERE(";
+                string Command = $"DELETE FROM {Table} WHERE(";
                 if (GuildID != null)
                 {
                     Command += $"GuildID = @GuildID AND ";

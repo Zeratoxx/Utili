@@ -29,8 +29,8 @@ namespace Utili
 
             if (After.VoiceChannel != null)
             {
-                DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true);
-                SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true);
+                DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
+                SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
             }
 
             bool VCLinkEnabled = GetData(User.Guild.Id.ToString(), "VCLink-Enabled", "True").Count > 0;
@@ -62,9 +62,6 @@ namespace Utili
                     try { AFKID = User.Guild.AFKChannel.Id; } catch { }
                     if (After.VoiceChannel != null && After.VoiceChannel.Id != AFKID)
                     {
-                        DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true);
-                        SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true);
-
                         SocketTextChannel Channel;
                         try { Channel = User.Guild.GetTextChannel(ulong.Parse(GetData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").First().Value)); }
                         catch

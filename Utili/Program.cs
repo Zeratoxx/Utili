@@ -25,7 +25,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.10.5";
+        public static string VersionNumber = "1.10.6";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
@@ -189,7 +189,6 @@ namespace Utili
 
             Console.WriteLine($"\n[{DateTime.Now}] [Info] Loading cache...");
             Cache = GetData(IgnoreCache: true).ToHashSet();
-            Cache.RemoveWhere(x => x.Type.Contains("InactiveRole-Timer-"));
             Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items cached");
 
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
@@ -562,8 +561,8 @@ namespace Utili
             JoinMessage JoinMessage = new JoinMessage();
             Task.Run(() => JoinMessage.JoinMessage_UserJoined(User));
 
-            DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true);
-            SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true);
+            DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
+            SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
 
             var Role = User.Guild.GetRole(ulong.Parse(Data.GetData(User.Guild.Id.ToString(), "JoinRole").First().Value));
             await User.AddRoleAsync(Role);
