@@ -55,11 +55,16 @@ namespace Utili
             }
         }
 
-        public async Task Run(CancellationToken cancellationToken)
+        public async Task Run(CancellationToken CancellationToken)
         {
             System.Timers.Timer StartRunthrough = new System.Timers.Timer(30000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
+
+            await Task.Delay(-1, CancellationToken);
+
+            StartRunthrough.Stop();
+            Console.WriteLine($"[{DateTime.Now}] [Info] InactiveRole killed");
         }
 
         private void StartRunthrough_Elapsed(object sender, ElapsedEventArgs e)

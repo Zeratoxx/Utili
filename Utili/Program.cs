@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 using Discord;
 using Discord.WebSocket;
@@ -25,7 +26,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.10.6";
+        public static string VersionNumber = "1.10.7";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
@@ -60,6 +61,7 @@ namespace Utili
                 {
                     if (Retry)
                     {
+                        Thread.Sleep(5000);
                         Retry = false;
                         ForceStop = new CancellationTokenSource();
                         new Program().MainAsync().GetAwaiter().GetResult();
@@ -99,6 +101,8 @@ namespace Utili
             {
                 await Client.StopAsync();
                 await GlobalClient.StopAsync();
+                Client.Dispose();
+                GlobalClient.Dispose();
             }
             catch { }
 
@@ -135,7 +139,7 @@ namespace Utili
             {
                 Client = new DiscordSocketClient(new DiscordSocketConfig
                 {
-                    LogLevel = LogSeverity.Debug,
+                    LogLevel = LogSeverity.Info,
                     MessageCacheSize = 100,
                     ShardId = ShardID,
                     TotalShards = TotalShards,
@@ -216,7 +220,7 @@ namespace Utili
                 _ = Sharding.UpdateShardMessage();
             }
 
-            var Timer = new System.Timers.Timer(30000);
+            var Timer = new System.Timers.Timer(5000);
             Timer.Elapsed += CheckReliability;
             Timer.Start();
 
@@ -227,12 +231,21 @@ namespace Utili
             Autopurge Autopurge = new Autopurge();
             InactiveRole InactiveRole = new InactiveRole();
 
-            CancellationToken cancelAutos = new CancellationToken();
-            _ = Autopurge.Run(cancelAutos);
-            _ = InactiveRole.Run(cancelAutos);
+            CancellationTokenSource cancelAutos = new CancellationTokenSource();
+            _ = Autopurge.Run(cancelAutos.Token);
+            _ = InactiveRole.Run(cancelAutos.Token);
 
             ForceStop = new CancellationTokenSource();
             await Task.Delay(-1, ForceStop.Token);
+
+            cancelAutos.Cancel();
+
+            Timer.Stop();
+            Timer.Dispose();
+            Timer2.Stop();
+            Timer2.Dispose();
+
+
         }
 
         private async void UpdateLatency(object sender, System.Timers.ElapsedEventArgs e)
@@ -247,7 +260,7 @@ namespace Utili
                 GetData("Ping Test", IgnoreCache: true);
                 DBLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
 
-                DatabaseItems = GetData(IgnoreCache: true).Count();
+                DatabaseItems = GetData(IgnoreCache: true).Count() + GetData(IgnoreCache: true, Table: "Utili_InactiveTimers").Count();
             }
             catch { DBLatency = -1; };
 
@@ -284,9 +297,10 @@ namespace Utili
         {
             if(Client.ConnectionState != ConnectionState.Connected)
             {
-                await Task.Delay(20000);
+                await Task.Delay(20000, ForceStop.Token);
                 if (Client.ConnectionState != ConnectionState.Connected) 
                 {
+                    if (ForceStop.IsCancellationRequested) return;
                     Console.WriteLine($"[{DateTime.Now}] [Info] Detected client in a crashed state: Script terminated");
                     ForceStop.Cancel(); 
                 }
