@@ -26,6 +26,8 @@ namespace Utili
     {
         public static List<Task> Tasks = new List<Task>();
 
+        public static System.Timers.Timer StartRunthrough;
+
         public async Task InactiveRole_MessageReceived(SocketMessage MessageParam)
         {
             var Message = MessageParam as SocketUserMessage;
@@ -55,16 +57,11 @@ namespace Utili
             }
         }
 
-        public async Task Run(CancellationToken CancellationToken)
+        public async Task Run()
         {
-            System.Timers.Timer StartRunthrough = new System.Timers.Timer(30000);
+            StartRunthrough = new System.Timers.Timer(30000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
-
-            await Task.Delay(-1, CancellationToken);
-
-            StartRunthrough.Stop();
-            Console.WriteLine($"[{DateTime.Now}] [Info] InactiveRole killed");
         }
 
         private void StartRunthrough_Elapsed(object sender, ElapsedEventArgs e)
@@ -72,7 +69,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count < 5) Tasks.Add(ProcessAll());
+                if (Tasks.Count < GetMaxWorkers()) Tasks.Add(ProcessAll());
             }
         }
 

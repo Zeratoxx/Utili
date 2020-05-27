@@ -26,7 +26,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.10.7";
+        public static string VersionNumber = "1.10.8";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
@@ -55,15 +55,17 @@ namespace Utili
 
             if(!Debug) Console.WriteLine("See output.txt");
             bool Retry = true;
+
             while (true)
             {
                 try
                 {
                     if (Retry)
                     {
-                        Thread.Sleep(5000);
+                        Console.WriteLine($"[{DateTime.Now}] [Info] Starting MainAsync.");
                         Retry = false;
                         ForceStop = new CancellationTokenSource();
+                        Ready = false;
                         new Program().MainAsync().GetAwaiter().GetResult();
                     }
                 }
@@ -71,12 +73,13 @@ namespace Utili
                 {
                     try
                     {
-                        if (Client.ConnectionState == ConnectionState.Disconnected)
+                        if (Client.ConnectionState != ConnectionState.Connected)
                         {
-                            Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n{e.InnerException.Message}\n\nRestarting...\n\n");
+                            if(e.InnerException == null) Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n\n");
+                            else Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n{e.InnerException.Message}\n\nRestarting...\n\n");
                             
                             Retry = true;
-                            Thread.Sleep(10000);
+                            Thread.Sleep(5000);
                         }
                         else Console.WriteLine($"[{DateTime.Now}] [Exception] {e.Message}");
                     }
@@ -84,7 +87,7 @@ namespace Utili
                     {
                         Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n");
                         Retry = true;
-                        Thread.Sleep(10000);
+                        Thread.Sleep(5000);
                     }
                 }
             }
@@ -220,32 +223,42 @@ namespace Utili
                 _ = Sharding.UpdateShardMessage();
             }
 
-            var Timer = new System.Timers.Timer(5000);
-            Timer.Elapsed += CheckReliability;
-            Timer.Start();
-
-            var Timer2 = new System.Timers.Timer(10000);
-            Timer2.Elapsed += UpdateLatency;
-            Timer2.Start();
+            var LatencyTimer = new System.Timers.Timer(10000);
+            LatencyTimer.Elapsed += UpdateLatency;
+            LatencyTimer.Start();
 
             Autopurge Autopurge = new Autopurge();
             InactiveRole InactiveRole = new InactiveRole();
 
-            CancellationTokenSource cancelAutos = new CancellationTokenSource();
-            _ = Autopurge.Run(cancelAutos.Token);
-            _ = InactiveRole.Run(cancelAutos.Token);
+            _ = Autopurge.Run();
+            _ = InactiveRole.Run();
 
             ForceStop = new CancellationTokenSource();
-            await Task.Delay(-1, ForceStop.Token);
 
-            cancelAutos.Cancel();
+            var ReliabilityTimer = new System.Timers.Timer(5000);
+            ReliabilityTimer.Elapsed += CheckReliability;
+            ReliabilityTimer.Start();
 
-            Timer.Stop();
-            Timer.Dispose();
-            Timer2.Stop();
-            Timer2.Dispose();
+            try { await Task.Delay(-1, ForceStop.Token); } catch { }
 
+            try { ForceStop.Cancel(); } catch { }
 
+            try { ReliabilityTimer.Stop(); } catch { }
+            try { ReliabilityTimer.Dispose(); } catch { }
+
+            try { await Client.StopAsync(); } catch { };
+            try { Client.Dispose(); } catch { };
+
+            Autopurge.StartRunthrough.Stop();
+
+            try { LatencyTimer.Stop(); } catch { }
+            try { LatencyTimer.Dispose(); } catch { }
+
+            Ready = false;
+
+            Console.WriteLine($"[{DateTime.Now}] [Info] MainAsync will terminate with an error in 5 seconds.");
+            await Task.Delay(5000);
+            throw new Exception("MainAsync was terminated.");
         }
 
         private async void UpdateLatency(object sender, System.Timers.ElapsedEventArgs e)
@@ -295,13 +308,19 @@ namespace Utili
 
         private async void CheckReliability(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if(Client.ConnectionState != ConnectionState.Connected)
+            if(Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
             {
-                await Task.Delay(20000, ForceStop.Token);
-                if (Client.ConnectionState != ConnectionState.Connected) 
+                try { await Task.Delay(10000, ForceStop.Token); } catch { }
+
+                if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000) 
                 {
-                    if (ForceStop.IsCancellationRequested) return;
-                    Console.WriteLine($"[{DateTime.Now}] [Info] Detected client in a crashed state: Script terminated");
+                    if (ForceStop.IsCancellationRequested || !Ready)
+                    {
+                        return;
+                    }
+
+                    Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{Client.ConnectionState} {Client.Latency}]");
+                    Ready = false;
                     ForceStop.Cancel(); 
                 }
             }

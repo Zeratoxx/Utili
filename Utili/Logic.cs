@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using static Utili.SendMessage;
 using static Utili.Json;
+using static Utili.Data;
 using System.Threading.Tasks;
 using System.Diagnostics;
 
@@ -203,6 +204,15 @@ namespace Utili
             try { return new Emoji(Input); } catch { };
 
             return null;
+        }
+
+        public static int GetMaxWorkers()
+        {
+            if (DBLatency < 500) return 5;
+            else if (DBLatency < 1000) return 3;
+            else if (DBLatency < 2000) return 2;
+            else if (DBLatency < 5000) return 1;
+            else return 0;
         }
 
         public static string Base64Encode(string plainText)

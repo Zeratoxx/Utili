@@ -25,17 +25,13 @@ namespace Utili
     {
         List<Task> Tasks = new List<Task>();
 
-        public async Task Run(CancellationToken CancellationToken)
+        public static System.Timers.Timer StartRunthrough;
+
+        public async Task Run()
         {
-            System.Timers.Timer StartRunthrough = new System.Timers.Timer(5000);
+            StartRunthrough = new System.Timers.Timer(5000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
-            StartRunthrough.AutoReset = true;
             StartRunthrough.Start();
-
-            await Task.Delay(-1, CancellationToken);
-
-            StartRunthrough.Stop();
-            Console.WriteLine($"[{DateTime.Now}] [Info] Autopurge killed");
         }
 
         private void StartRunthrough_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -43,7 +39,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count <= 3) Tasks.Add(Process());
+                if (Tasks.Count <= GetMaxWorkers()) Tasks.Add(Process());
             }
         }
 
@@ -78,7 +74,7 @@ namespace Utili
 
                             foreach (IMessage Message in Messages)
                             {
-                                if (!Message.IsPinned & DateTime.Now - Message.Timestamp.DateTime > TimeSpan) MessagesToDelete.Add(Message);
+                                if (!Message.IsPinned & DateTime.Now - Message.Timestamp.LocalDateTime > TimeSpan) MessagesToDelete.Add(Message);
                             }
 
                             await Channel.DeleteMessagesAsync(MessagesToDelete);
