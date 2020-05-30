@@ -126,7 +126,15 @@ namespace Utili
                             DateTime LastThing = DateTime.MinValue;
 
                             try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
-                            catch { Inactive = true; }
+                            catch 
+                            { 
+                                LastThing = Guild.GetUser(Client.CurrentUser.Id).JoinedAt.Value.LocalDateTime;
+                                int RowsAffected = RunNonQuery($"UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{User.Id}"), ("Value", ToSQLTime(LastThing)) });
+                                if (RowsAffected == 0)
+                                {
+                                    SaveData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(LastThing), IgnoreCache: true, Table: "Utili_InactiveTimers");
+                                }
+                            }
 
                             if (DateTime.Now - LastThing > Threshold) Inactive = true;
 
@@ -143,7 +151,15 @@ namespace Utili
                                 DateTime LastThing = DateTime.MinValue;
 
                                 try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
-                                catch { Inactive = true; }
+                                catch
+                                {
+                                    LastThing = Guild.GetUser(Client.CurrentUser.Id).JoinedAt.Value.LocalDateTime;
+                                    int RowsAffected = RunNonQuery($"UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{User.Id}"), ("Value", ToSQLTime(LastThing)) });
+                                    if (RowsAffected == 0)
+                                    {
+                                        SaveData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(LastThing), IgnoreCache: true, Table: "Utili_InactiveTimers");
+                                    }
+                                }
 
                                 if (DateTime.Now - LastThing < Threshold) Inactive = false;
 

@@ -26,7 +26,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.10.8";
+        public static string VersionNumber = "1.10.9";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
@@ -250,6 +250,7 @@ namespace Utili
             try { Client.Dispose(); } catch { };
 
             Autopurge.StartRunthrough.Stop();
+            InactiveRole.StartRunthrough.Stop();
 
             try { LatencyTimer.Stop(); } catch { }
             try { LatencyTimer.Dispose(); } catch { }
@@ -432,7 +433,7 @@ namespace Utili
                     int ArgPos = 0;
 
                     string Prefix = ".";
-                    try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                    try { Prefix = GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
 
                     if (UseTest) Prefix = "-";
 
