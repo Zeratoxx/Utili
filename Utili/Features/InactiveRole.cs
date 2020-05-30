@@ -128,7 +128,7 @@ namespace Utili
                             try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
                             catch 
                             { 
-                                LastThing = Guild.GetUser(Client.CurrentUser.Id).JoinedAt.Value.LocalDateTime;
+                                LastThing = DateTime.Now;
                                 int RowsAffected = RunNonQuery($"UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{User.Id}"), ("Value", ToSQLTime(LastThing)) });
                                 if (RowsAffected == 0)
                                 {
@@ -153,7 +153,7 @@ namespace Utili
                                 try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
                                 catch
                                 {
-                                    LastThing = Guild.GetUser(Client.CurrentUser.Id).JoinedAt.Value.LocalDateTime;
+                                    LastThing = DateTime.Now;
                                     int RowsAffected = RunNonQuery($"UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{User.Id}"), ("Value", ToSQLTime(LastThing)) });
                                     if (RowsAffected == 0)
                                     {
