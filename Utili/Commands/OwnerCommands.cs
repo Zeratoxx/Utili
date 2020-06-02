@@ -232,5 +232,16 @@ namespace Utili
 
             }
         }
+
+        [Command("ForceCrash")]
+        public async Task ForceCrash()
+        {
+            if (OwnerPermission(Context.User, Context.Channel))
+            {
+                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated via force crash command.");
+                Program.Ready = false;
+                Program.ForceStop.Cancel();
+            }  
+        }
     }
 }

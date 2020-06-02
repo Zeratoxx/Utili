@@ -30,7 +30,7 @@ namespace Utili
             if (GetData(Context.Guild.Id.ToString(), "Votes-Channel", Context.Channel.Id.ToString()).Count > 0)
             {
                 bool React = false;
-                if (GetData(Context.Guild.Id.ToString(), "Votes-Mode", "attachments").Count > 0)
+                if (GetData(Context.Guild.Id.ToString(), "Votes-Mode", "Attachments").Count > 0)
                 {
                     if (Message.Attachments.Count > 0 || Message.Content.Contains("youtube.com/watch?v=") || Message.Content.Contains("discordapp.com/attachment") || Message.Content.Contains("youtu.be/")) React = true;
                 }

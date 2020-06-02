@@ -66,7 +66,7 @@ namespace Utili
 
         public static async Task KeepConnection()
         {
-            while (true)
+            while (!Program.ForceStop.IsCancellationRequested)
             {
                 try
                 {
@@ -84,7 +84,7 @@ namespace Utili
                 }
                 catch { };
 
-                await Task.Delay(10000);
+                await Task.Delay(1000);
             }
         }
 
@@ -130,26 +130,28 @@ namespace Utili
 
         public static async Task FlushDisconnected(bool loop = true)
         {
-            while (loop)
+            if (loop)
             {
-                try
+                while (!Program.ForceStop.IsCancellationRequested)
                 {
-                    var ShardData = GetShardData(-1, "Online");
-                    ShardData.AddRange(GetShardData(-1, "Reserved"));
-
-                    ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(20));
-
-                    foreach (var OldData in ShardData)
+                    try
                     {
-                        DeleteData(OldData.ID);
+                        var ShardData = GetShardData(-1, "Online");
+                        ShardData.AddRange(GetShardData(-1, "Reserved"));
+
+                        ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(20));
+
+                        foreach (var OldData in ShardData)
+                        {
+                            DeleteData(OldData.ID);
+                        }
                     }
+                    catch { };
+
+                    await Task.Delay(1000);
                 }
-                catch { };
-
-                await Task.Delay(1000);
             }
-
-            if (!loop)
+            else
             {
                 try
                 {
