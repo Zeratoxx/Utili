@@ -144,54 +144,6 @@ namespace Utili
             }
         }
 
-        [Command("Blacklist")]
-        public async Task Blacklist(ulong GuildID, [Remainder] string Reason = "No reason provided.")
-        {
-            if (OwnerPermission(Context.User, Context.Channel))
-            {
-                DeleteData(GuildID.ToString(), "Blacklist");
-                SaveData(GuildID.ToString(), "Blacklist");
-
-                SocketGuild Guild = Program.GlobalClient.GetGuild(GuildID);
-
-                SocketGuildUser GuildOwner = Guild.Owner;
-
-                try
-                {
-                    await GuildOwner.SendMessageAsync(embed: GetEmbed("No", "Guild blacklisted", $"{Guild.Name} has been manually permanently blacklisted.\n" +
-                        $"You can not re-invite the bot to this guild until it has been removed from the blacklist.\n" +
-                        $"Responsible moderator: {Context.User}\n" +
-                        $"Reason: {Reason}\n" +
-                        $"[Support Discord](https://discord.gg/WsxqABZ)"));
-                }
-                catch
-                {
-                    SocketTextChannel DefaultChannel = Guild.DefaultChannel;
-
-                    await DefaultChannel.SendMessageAsync($"{GuildOwner.Mention}, I couldn't DM you this message.", embed: GetEmbed("No", "Guild blacklisted", $"{Guild.Name} has been manually permanently blacklisted.\n" +
-                        $"You can not re-invite the bot to this guild until it has been removed from the blacklist.\n" +
-                        $"Responsible moderator: {Context.User}\n" +
-                        $"Reason: {Reason}\n" +
-                        $"[Support Discord](https://discord.gg/WsxqABZ)"));
-                }
-
-                await Guild.LeaveAsync();
-
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Guild blacklisted"));
-            }
-        }
-
-        [Command("Unblacklist")]
-        public async Task Unblacklist(ulong GuildID)
-        {
-            if (OwnerPermission(Context.User, Context.Channel))
-            {
-                DeleteData(GuildID.ToString(), "Blacklist");
-
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Guild removed from blacklist"));
-            }
-        }
-
         [Command("AddVoteLink")]
         public async Task AddVoteLink(string Title, string Content)
         {

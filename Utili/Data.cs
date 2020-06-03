@@ -180,6 +180,11 @@ namespace Utili
             return Data;
         }
 
+        public static void DeleteDataWhere(string Where, string Table)
+        {
+            RunNonQuery($"DELETE FROM {Table} WHERE {Where};");
+        }
+
         public static void DeleteData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, bool CacheOnly = false, string Table = "Utili")
         {
             if (GuildID == null & Type == null & Value == null) throw new Exception();

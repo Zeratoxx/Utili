@@ -324,13 +324,14 @@ namespace Utili
                 {
                     DeleteData(Context.Guild.Id.ToString());
                     RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE GuildID = '{Context.Guild.Id}'");
+                    DeleteData(Context.Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
 
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "All data deleted", "Utili is now storing no data on your guild."));
                 }
                 else
                 {
                     string Prefix = ".";
-                    try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                    try { Prefix = GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "WARNING", $"This command will delete **all** data that Utili has stored on {Context.Guild.Name}!\nThis includes all configuration data, all message logs, and all activity information.\n\nUse `{Prefix}deletedata confirm` to confirm this action."));
                 }
             }

@@ -178,7 +178,6 @@ namespace Utili
             });
 
             Client.MessageReceived += Commence_MessageReceived;
-            Client.JoinedGuild += Commence_JoinedGuild;
             Client.MessageDeleted += Commence_MessageDelete;
             Client.MessageUpdated += Commence_MessageUpdated;
             Client.UserJoined += Commence_UserJoin;
@@ -186,6 +185,8 @@ namespace Utili
             Client.UserVoiceStateUpdated += Commence_UserVoiceStateUpdated;
             Client.ChannelCreated += Commence_ChannelCreated;
             Client.ReactionAdded += Commence_ReactionAdded;
+            Client.JoinedGuild += Commence_ClientJoin;
+            Client.LeftGuild += Commence_ClientLeave;
 
             Commands.AddTypeReader(typeof(TimeSpan), new TimespanTypeReader());
 
@@ -346,36 +347,6 @@ namespace Utili
             });
 
             UpdateStats();
-
-            #region Blacklist
-
-            foreach (var Guild in Client.Guilds)
-            {
-                if (Data.GetData(Guild.Id.ToString(), "Blacklist").Count > 0)
-                {
-                    SocketGuildUser GuildOwner = Guild.Owner;
-
-                    try
-                    {
-                        await GuildOwner.SendMessageAsync(embed: GetEmbed("No", "Guild blacklisted", $"{Guild.Name} was previously flagged as a malicious guild and is permanently blacklisted.\n" +
-                            $"You can not re-invite the bot to this guild until it has been removed from the blacklist.\n" +
-                            $"[Support Discord](https://discord.gg/WsxqABZ)"));
-                    }
-                    catch
-                    {
-                        SocketTextChannel DefaultChannel = Guild.DefaultChannel;
-
-                        await DefaultChannel.SendMessageAsync($"{GuildOwner.Mention}, I couldn't DM you this message.", embed: GetEmbed("No", "Guild blacklisted", $"{Guild.Name} was previously flagged as a malicious guild and is permanently blacklisted.\n" +
-                            $"You can not re-invite the bot to this guild until it has been removed from the blacklist.\n" +
-                            $"[Support Discord](https://discord.gg/WsxqABZ)"));
-                    }
-
-                    Console.WriteLine($"[{DateTime.Now}] [Blacklist] Left {Guild.Name} as it is blacklisted.");
-                    await Guild.LeaveAsync();
-                }
-            }
-
-            #endregion
 
             AntiProfane AntiProfane = new AntiProfane();
             Task.Run(() => AntiProfane.AntiProfane_Ready());
@@ -546,40 +517,6 @@ namespace Utili
 
         #endregion
 
-        #region Join Guild
-        private async Task Commence_JoinedGuild(SocketGuild Guild)
-        {
-            _ = Client_JoinedGuild(Guild);
-        }
-
-        private async Task Client_JoinedGuild(SocketGuild Guild)
-        {
-            if (Data.GetData(Guild.Id.ToString(), "Blacklist").Count > 0)
-            {
-                SocketGuildUser GuildOwner = Guild.Owner;
-
-                try
-                {
-                    await GuildOwner.SendMessageAsync(embed: GetEmbed("No", "Guild blacklisted", $"{Guild.Name} was previously flagged as a malicious guild and is permanently blacklisted.\n" +
-                        $"You can not re-invite the bot to this guild until it has been removed from the blacklist.\n" +
-                        $"[Support Discord](https://discord.gg/WsxqABZ)"));
-                }
-                catch
-                {
-                    SocketTextChannel DefaultChannel = Guild.DefaultChannel;
-
-                    await DefaultChannel.SendMessageAsync($"{GuildOwner.Mention}, I couldn't DM you this message.", embed: GetEmbed("No", "Guild blacklisted", $"{Guild.Name} was previously flagged as a malicious guild and is permanently blacklisted.\n" +
-                        $"You can not re-invite the bot to this guild until it has been removed from the blacklist.\n" +
-                        $"[Support Discord](https://discord.gg/WsxqABZ)"));
-                }
-
-                Console.WriteLine($"[{DateTime.Now}] [Blacklist] Left {Guild.Name} as it is blacklisted.");
-                await Guild.LeaveAsync();
-            }
-        }
-
-        #endregion
-
         #region User Join
 
         private async Task Commence_UserJoin(SocketGuildUser User)
@@ -604,6 +541,26 @@ namespace Utili
 
         #endregion
 
+        #region Client Join
+
+        private async Task Commence_ClientJoin(SocketGuild Guild)
+        {
+            Task.Run(() => Client_ClientJoin(Guild));
+        }
+
+        private async Task Client_ClientJoin(SocketGuild Guild)
+        {
+            DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
+            DateTime StartTime = DateTime.Now;
+            foreach(var User in Guild.Users)
+            {
+                SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(StartTime), IgnoreCache: true, Table: "Utili_InactiveTimers");
+                await Task.Delay(100);
+            }
+        }
+
+        #endregion
+
         #region User Leave
 
         private async Task Commence_UserLeft(SocketGuildUser User)
@@ -613,9 +570,27 @@ namespace Utili
 
         private async Task Client_UserLeft(SocketGuildUser User)
         {
+            DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
+
             RolePersist RolePersist = new RolePersist();
             Task.Run(() => RolePersist.UserLeft(User));
         }
+        #endregion
+
+        #region Client Leave
+
+        private async Task Commence_ClientLeave(SocketGuild Guild)
+        {
+            Task.Run(() => Client_ClientLeave(Guild));
+        }
+
+        private async Task Client_ClientLeave(SocketGuild Guild)
+        {
+            DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
+            RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE GuildID = '{Guild.Id}'");
+            DeleteData(Guild.Id.ToString());
+        }
+
         #endregion
 
         #region Voice Updated

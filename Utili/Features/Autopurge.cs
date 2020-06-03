@@ -17,7 +17,7 @@ using static Utili.Logic;
 using static Utili.SendMessage;
 using static Utili.Program;
 using static Utili.Json;
-
+using Renci.SshNet.Messages;
 
 namespace Utili
 {
@@ -70,13 +70,17 @@ namespace Utili
                             TimeSpan TimeSpan = TimeSpan.Parse("00:15:00");
                             try { TimeSpan = TimeSpan.Parse(GetData(GuildID.ToString(), $"Autopurge-Timespan-{Channel.Id}").First().Value); } catch { }
 
-                            var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
+                            bool BotsOnly = false;
+                            if (GetData(Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots").Count > 0) BotsOnly = true;
 
-                            foreach (IMessage Message in Messages)
-                            {
-                                if (!Message.IsPinned & DateTime.Now - Message.Timestamp.LocalDateTime > TimeSpan) MessagesToDelete.Add(Message);
-                            }
+                            var Messages = await Channel.GetMessagesAsync(5000).FlattenAsync();
 
+                            MessagesToDelete.AddRange(Messages);
+
+                            if (BotsOnly) MessagesToDelete.RemoveAll(x => !x.Author.IsBot);
+                            MessagesToDelete.RemoveAll(x => DateTime.Now - x.Timestamp.LocalDateTime > TimeSpan);
+                            MessagesToDelete.RemoveAll(x => x.IsPinned);
+                            
                             await Channel.DeleteMessagesAsync(MessagesToDelete);
                         }
                         catch { }
@@ -94,6 +98,7 @@ namespace Utili
                 "help - Show this list\n" +
                 "about - Display feature information\n" +
                 "time [channel] [timespan] - Set the age at which messages are deleted in a channel\n" +
+                "mode [channe] [all|bots] - Set whether all messages or bot messages are deleted\n" +
                 "on [channel] - Enable autopurge in a channel\n" +
                 "off [channel] - Disable autopurge in a channel";
 
@@ -127,6 +132,26 @@ namespace Utili
                 DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}");
                 SaveData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}", Time.ToString());
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge time", $"Messages older than {DisplayTimespan(Time)} will be deleted.\nThis setting is only for {Channel.Mention}.\nNote that messages are only purged every so often so this timer may not be completely accurate."));
+            }
+        }
+
+        [Command("Mode")]
+        public async Task Mode(ITextChannel Channel, string Mode)
+        {
+            if (Permission(Context.User, Context.Channel))
+            {
+                if(Mode.ToLower() == "all")
+                {
+                    DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}");
+                    SaveData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "All");
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge mode", $"All messages (except pinned messages) will be deleted."));
+                }
+                else if(Mode.ToLower() == "bots" || Mode.ToLower() == "bot")
+                {
+                    DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}");
+                    SaveData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots");
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge mode", $"All messages sent by bots (except pinned messages) will be deleted."));
+                }
             }
         }
 

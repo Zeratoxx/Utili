@@ -19,6 +19,7 @@ using static Utili.Program;
 using static Utili.InactiveRole;
 using static Utili.Json;
 using System.Timers;
+using System.Runtime.ExceptionServices;
 
 namespace Utili
 {
@@ -69,7 +70,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count < GetMaxWorkers()) Tasks.Add(ProcessAll());
+                if (Tasks.Count <= (GetMaxWorkers()-1)/2) Tasks.Add(ProcessAll());
             }
         }
 
@@ -120,53 +121,35 @@ namespace Utili
                         bool HasRole = User.Roles.Contains(Role);
                         if (Mode == "Take") HasRole = !HasRole;
 
-                        if (!HasRole) //Inversed if other mode selected
+                        bool ChangeRoles = true;
+                        bool Inactive = false;
+                        DateTime LastThing = DateTime.MinValue;
+
+                        try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
+                        catch { ChangeRoles = false; }
+
+                        if (ChangeRoles)
                         {
-                            bool Inactive = false;
-                            DateTime LastThing = DateTime.MinValue;
-
-                            try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
-                            catch 
-                            { 
-                                LastThing = DateTime.Now;
-                                int RowsAffected = RunNonQuery($"UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{User.Id}"), ("Value", ToSQLTime(LastThing)) });
-                                if (RowsAffected == 0)
-                                {
-                                    SaveData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(LastThing), IgnoreCache: true, Table: "Utili_InactiveTimers");
-                                }
-                            }
-
-                            if (DateTime.Now - LastThing > Threshold) Inactive = true;
-
-                            if (ImmuneRole != null) if (User.Roles.Contains(ImmuneRole)) Inactive = false;
-
-                            if (Inactive && Mode == "Give") await User.AddRoleAsync(Role);
-                            if (Inactive && Mode == "Take") await User.RemoveRoleAsync(Role);
-                        }
-                        else
-                        {
-                            if (Depth)
+                            if (!HasRole) //Inversed if other mode selected
                             {
-                                bool Inactive = true;
-                                DateTime LastThing = DateTime.MinValue;
-
-                                try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
-                                catch
-                                {
-                                    LastThing = DateTime.Now;
-                                    int RowsAffected = RunNonQuery($"UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{User.Id}"), ("Value", ToSQLTime(LastThing)) });
-                                    if (RowsAffected == 0)
-                                    {
-                                        SaveData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(LastThing), IgnoreCache: true, Table: "Utili_InactiveTimers");
-                                    }
-                                }
-
-                                if (DateTime.Now - LastThing < Threshold) Inactive = false;
+                                if (DateTime.Now - LastThing > Threshold) Inactive = true;
 
                                 if (ImmuneRole != null) if (User.Roles.Contains(ImmuneRole)) Inactive = false;
 
-                                if (!Inactive && Mode == "Give") await User.RemoveRoleAsync(Role);
-                                if (!Inactive && Mode == "Take") await User.AddRoleAsync(Role);
+                                if (Inactive && Mode == "Give") await User.AddRoleAsync(Role);
+                                if (Inactive && Mode == "Take") await User.RemoveRoleAsync(Role);
+                            }
+                            else
+                            {
+                                if (Depth)
+                                {
+                                    if (DateTime.Now - LastThing < Threshold) Inactive = false;
+
+                                    if (ImmuneRole != null) if (User.Roles.Contains(ImmuneRole)) Inactive = false;
+
+                                    if (!Inactive && Mode == "Give") await User.RemoveRoleAsync(Role);
+                                    if (!Inactive && Mode == "Take") await User.AddRoleAsync(Role);
+                                }
                             }
                         }
                     }
