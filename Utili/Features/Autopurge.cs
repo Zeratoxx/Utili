@@ -73,14 +73,15 @@ namespace Utili
                             bool BotsOnly = false;
                             if (GetData(Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots").Count > 0) BotsOnly = true;
 
-                            var Messages = await Channel.GetMessagesAsync(5000).FlattenAsync();
+                            var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
 
                             MessagesToDelete.AddRange(Messages);
 
                             if (BotsOnly) MessagesToDelete.RemoveAll(x => !x.Author.IsBot);
-                            MessagesToDelete.RemoveAll(x => DateTime.Now - x.Timestamp.LocalDateTime > TimeSpan);
+                            MessagesToDelete.RemoveAll(x => DateTime.Now - x.Timestamp.LocalDateTime < TimeSpan);
+                            MessagesToDelete.RemoveAll(x => DateTime.Now - x.Timestamp.LocalDateTime >= TimeSpan.FromHours(335)); // 14 days - 1 hr
                             MessagesToDelete.RemoveAll(x => x.IsPinned);
-                            
+
                             await Channel.DeleteMessagesAsync(MessagesToDelete);
                         }
                         catch { }
