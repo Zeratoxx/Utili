@@ -228,7 +228,7 @@ namespace Utili
             string Prefix = ".";
             try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}mirroring [from channel] [to channel]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}mirroring mirror [from channel] [to channel]"));
         }
     }
 }
