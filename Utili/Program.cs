@@ -37,8 +37,8 @@ namespace Utili
         public static int TotalShards = 0;
         public static bool Ready = false;
 
-        public static bool Debug = true;
-        public static bool UseTest = true;
+        public static bool Debug = false;
+        public static bool UseTest = false;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -274,10 +274,8 @@ namespace Utili
                 DateTime Now = DateTime.Now;
                 GetData("Ping Test", IgnoreCache: true);
                 DBLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
-
-                DatabaseItems = GetData(IgnoreCache: true).Count() + GetData(IgnoreCache: true, Table: "Utili_InactiveTimers").Count();
             }
-            catch { DBLatency = -1; };
+            catch { };
 
             try
             {

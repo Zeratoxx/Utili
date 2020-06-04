@@ -171,7 +171,7 @@ namespace Utili
 
             var Embed = GetLargeEmbed("Pong!", "", Footer: $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards} | Shard serving {Program.Client.Guilds.Count} guilds").ToEmbedBuilder();
             Embed.AddField("**Discord**", $"API: {API}ms\nSend: {Send}ms\nEdit: {Edit}ms", true);
-            Embed.AddField("**Database**", $"Ping: {Database}ms\nQueries: {QueriesPerSecond}/s\nItems: {DatabaseItems}", true);
+            Embed.AddField("**Database**", $"Ping: {Database}ms\nQueries: {QueriesPerSecond}/s", true);
             Embed.AddField("**Cache**", $"Ping: {Cache}ms\nQueries: {CacheQueriesPerSecond}/s\nItems: {CacheItems}", true);
 
             await Context.Channel.SendMessageAsync(embed: Embed.Build());

@@ -60,7 +60,7 @@ namespace Utili
 
         public async Task Run()
         {
-            StartRunthrough = new System.Timers.Timer(30000);
+            StartRunthrough = new System.Timers.Timer(60000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
         }
@@ -136,19 +136,20 @@ namespace Utili
 
                                 if (ImmuneRole != null) if (User.Roles.Contains(ImmuneRole)) Inactive = false;
 
-                                if (Inactive && Mode == "Give") await User.AddRoleAsync(Role);
-                                if (Inactive && Mode == "Take") await User.RemoveRoleAsync(Role);
+                                if (Inactive && Mode == "Give") _ = User.AddRoleAsync(Role);
+                                if (Inactive && Mode == "Take") _ = User.RemoveRoleAsync(Role);
                             }
                             else
                             {
+                                Inactive = true;
                                 if (Depth)
                                 {
                                     if (DateTime.Now - LastThing < Threshold) Inactive = false;
 
                                     if (ImmuneRole != null) if (User.Roles.Contains(ImmuneRole)) Inactive = false;
 
-                                    if (!Inactive && Mode == "Give") await User.RemoveRoleAsync(Role);
-                                    if (!Inactive && Mode == "Take") await User.AddRoleAsync(Role);
+                                    if (!Inactive && Mode == "Give") _ = User.RemoveRoleAsync(Role);
+                                    if (!Inactive && Mode == "Take") _ = User.AddRoleAsync(Role);
                                 }
                             }
                         }
