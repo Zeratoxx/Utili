@@ -12,3 +12,5 @@ I politely request that you do not copy all of my code and claim it as your own.
 + [Github](https://github.com/D230Daniel/Utili)
 
 + [Donate](https://www.paypal.me/230Daniel)
+
+[![Utili](https://botsfordiscord.com/api/bot/655155797260501039/widget)](https://botsfordiscord.com/bot/655155797260501039)
