@@ -44,7 +44,9 @@ namespace Utili
                     Key = ""
                 },
                 DiscordBotListKey = "",
-                BotsForDiscordKey = ""
+                BotsForDiscordKey = "",
+                BotsOnDiscordKey = "",
+                DiscordBoatsKey = ""
             };
 
             JsonSerializerOptions Options = new JsonSerializerOptions();
@@ -89,6 +91,8 @@ namespace Utili
         public YoutubeInfo Youtube { get; set; }
         public string DiscordBotListKey { get; set; }
         public string BotsForDiscordKey { get; set; }
+        public string BotsOnDiscordKey { get; set; }
+        public string DiscordBoatsKey { get; set; }
     }
 
     class DatabaseInfo

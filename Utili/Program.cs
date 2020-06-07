@@ -21,6 +21,7 @@ using System.Net.Http;
 using System.Net;
 using Google.Apis.YouTube.v3;
 using Google.Apis.Services;
+using System.Net.Http.Headers;
 
 namespace Utili
 {
@@ -38,7 +39,7 @@ namespace Utili
         public static bool Ready = false;
 
         public static bool Debug = false;
-        public static bool UseTest = false;
+        public static bool UseTest = true;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -95,6 +96,7 @@ namespace Utili
 
         private async Task MainAsync()
         {
+            UpdateStats();
             Ready = false;
 
             if (!LoadConfig()) GenerateNewConfig();
@@ -505,12 +507,54 @@ namespace Utili
 
         private async Task UpdateStats()
         {
+            if (UseTest) return;
+
             LastStatsUpdate = DateTime.Now;
+
+            #region top.gg
 
             AuthDiscordBotListApi API = new AuthDiscordBotListApi(655155797260501039, Config.DiscordBotListKey);
             var Me = await API.GetMeAsync();
-            if (Me.Id != Client.CurrentUser.Id) return;
-            await Me.UpdateStatsAsync(GlobalClient.Guilds.Count);
+            try { await Me.UpdateStatsAsync(GlobalClient.Guilds.Count); } catch { }
+
+            #endregion
+
+            #region Bots For Discord
+            HttpClient HttpClient = new HttpClient();
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.BotsForDiscordKey);
+
+            var Content = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("server_count", GlobalClient.Guilds.Count.ToString()),
+            });
+
+            try { await HttpClient.PostAsync("https://botsfordiscord.com/api/bot/655155797260501039", Content); } catch { };
+            #endregion
+
+            #region Bots On Discord
+
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.BotsOnDiscordKey);
+
+            Content = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("guildCount", GlobalClient.Guilds.Count.ToString()),
+            });
+
+            try { await HttpClient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/655155797260501039/guilds", Content); } catch { };
+            #endregion
+
+            #region Discord Boats
+
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.DiscordBoatsKey);
+
+            Content = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("server_count", GlobalClient.Guilds.Count.ToString()),
+            });
+
+            try { await HttpClient.PostAsync("https://discord.boats/api/bot/655155797260501039", Content); } catch { };
+
+            #endregion
         }
 
         #endregion
@@ -537,9 +581,9 @@ namespace Utili
             await User.AddRoleAsync(Role);
         }
 
-        #endregion
+#endregion
 
-        #region Client Join
+#region Client Join
 
         private async Task Commence_ClientJoin(SocketGuild Guild)
         {
@@ -557,9 +601,9 @@ namespace Utili
             }
         }
 
-        #endregion
+#endregion
 
-        #region User Leave
+#region User Leave
 
         private async Task Commence_UserLeft(SocketGuildUser User)
         {
@@ -573,9 +617,9 @@ namespace Utili
             RolePersist RolePersist = new RolePersist();
             Task.Run(() => RolePersist.UserLeft(User));
         }
-        #endregion
+#endregion
 
-        #region Client Leave
+#region Client Leave
 
         private async Task Commence_ClientLeave(SocketGuild Guild)
         {
@@ -589,9 +633,9 @@ namespace Utili
             DeleteData(Guild.Id.ToString());
         }
 
-        #endregion
+#endregion
 
-        #region Voice Updated
+#region Voice Updated
 
         private async Task Commence_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
         {
@@ -605,9 +649,9 @@ namespace Utili
             Task.Run(() => VCLink.Client_UserVoiceStateUpdated(User, Before, After));
         }
 
-        #endregion
+#endregion
 
-        #region Channel Created
+#region Channel Created
 
         private async Task Commence_ChannelCreated(SocketChannel Channel)
         {
@@ -620,9 +664,9 @@ namespace Utili
             Task.Run(() => MessageLogs.MessageLogs_ChannelCreated(Channel));
         }
 
-        #endregion
+#endregion
 
-        #region Messages
+#region Messages
 
         public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
         {
@@ -642,6 +686,6 @@ namespace Utili
             Task.Run(() => Votes.Votes_ReactionAdded(Message, Channel, Reaction));
         }
 
-        #endregion
+#endregion
     }
 }
