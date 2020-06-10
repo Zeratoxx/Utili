@@ -21,6 +21,7 @@ using static Utili.SendMessage;
 using static Utili.Json;
 using Discord.Rest;
 using Google.Apis.YouTube.v3.Data;
+using System.Net.Sockets;
 
 namespace Utili
 {
@@ -116,7 +117,9 @@ namespace Utili
                 "enable [from channel] [to guild id] [to channel id] - Create a cross-guild mirroring link\n" +
                 "disable [from channel] [to channel] - Remove a mirroring link\n" +
                 "disable [from channel] [to guild id] [to channel id] - Remove a cross-guild mirroring link\n" +
-                "clear [channel] - Remove all mirroring links which involve this channel\n";
+                "clear [channel] - Remove all mirroring links which involve this channel\n\n" +
+                "allowPublic [channel] - Allow anyone to mirror this channel to their own guild\n" +
+                "disallowPublic [channel] - Stop allowing anyone to mirror this channel to their own guild\n";
 
         [Command("Help")]
         public async Task Help()
@@ -170,15 +173,23 @@ namespace Utili
         [Command("Mirror"), Alias("Enable")]
         public async Task Mirror(ITextChannel From, ulong ToGuildID, ulong ToID)
         {
-            if (Permission(Context.User, Context.Channel))
+            bool PublicAllowed = false;
+            if (GetData(Context.Guild.Id.ToString(), "Mirroring-Public", From.Id.ToString()).Count > 0) PublicAllowed = true;
+
+            bool Allowed = PublicAllowed;
+            if (!Allowed) Allowed = Permission(Context.User, Context.Channel);
+
+            if (Allowed)
             {
-                SocketGuild ToGuild = null;
-                ITextChannel To = null;
+                SocketGuild ToGuild;
+                ITextChannel To;
                 try
                 {
                     ToGuild = Program.Client.GetGuild(ToGuildID);
                     To = ToGuild.GetTextChannel(ToID);
                     if (ToGuild.Id == Context.Guild.Id) throw new Exception();
+
+                    if (!(Context.User as SocketGuildUser).GetPermissions(From).ViewChannel) throw new Exception();
                 }
                 catch
                 {
@@ -248,6 +259,29 @@ namespace Utili
                     }
                 }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Cleared mirroring links", $"Removed {Links} mirroring links which sent from or to this channel."));
+            }
+        }
+
+        [Command("AllowPublic")]
+        public async Task AllowPublic(ITextChannel Channel)
+        {
+            if(Permission(Context.User, Context.Channel))
+            {
+                DeleteData(Context.Guild.Id.ToString(), "Mirroring-Public", Channel.Id.ToString());
+                SaveData(Context.Guild.Id.ToString(), "Mirroring-Public", Channel.Id.ToString());
+
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Public mirroring allowed", "Anyone who can view this channel can now create a permanent mirroring link to their own guilds. Disable this immediately if you ever use this channel to send sensitive information."));
+            }
+        }
+
+        [Command("DisallowPublic")]
+        public async Task DisallowPublic(ITextChannel Channel)
+        {
+            if (Permission(Context.User, Context.Channel))
+            {
+                DeleteData(Context.Guild.Id.ToString(), "Mirroring-Public", Channel.Id.ToString());
+
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Public mirroring disallowed", "Any existing mirroring links have not been removed. Now, only people with the manage guild permission on this guild can create mirroring links to their own guilds."));
             }
         }
     }
