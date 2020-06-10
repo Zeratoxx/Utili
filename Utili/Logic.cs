@@ -14,13 +14,14 @@ namespace Utili
 {
     class Logic
     {
-        public static bool Permission(SocketUser User, ISocketMessageChannel Channel)
+        public static bool Permission(SocketUser User, ISocketMessageChannel Channel, bool CrossGuild = false)
         {
             SocketGuildUser user = User as SocketGuildUser;
             if (user.GuildPermissions.ManageGuild == true) return true;
             else
             {
-                Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission to use that command"));
+                if(!CrossGuild) Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission to use that command"));
+                else Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission in that guild to use that command"));
                 return false;
             }
         }

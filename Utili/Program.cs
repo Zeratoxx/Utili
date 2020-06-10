@@ -27,7 +27,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.10.10";
+        public static string VersionNumber = "1.11";
 
         public static DiscordSocketClient Client;
         public static DiscordSocketClient GlobalClient;
@@ -39,7 +39,7 @@ namespace Utili
         public static bool Ready = false;
 
         public static bool Debug = false;
-        public static bool UseTest = true;
+        public static bool UseTest = false;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -96,7 +96,6 @@ namespace Utili
 
         private async Task MainAsync()
         {
-            UpdateStats();
             Ready = false;
 
             if (!LoadConfig()) GenerateNewConfig();
@@ -340,6 +339,7 @@ namespace Utili
         {
             Console.WriteLine($"[{DateTime.Now}] [Info] Logged in as bot user {Client.CurrentUser} ({Client.CurrentUser.Id})");
 
+            await Client.SetGameAsync(".help", null, ActivityType.Watching);
             Youtube = new YouTubeService(new BaseClientService.Initializer()
             {
                 ApplicationName = Config.Youtube.ApplicationName,
@@ -583,109 +583,109 @@ namespace Utili
 
 #endregion
 
-#region Client Join
+        #region Client Join
 
-        private async Task Commence_ClientJoin(SocketGuild Guild)
-        {
-            Task.Run(() => Client_ClientJoin(Guild));
-        }
+                private async Task Commence_ClientJoin(SocketGuild Guild)
+                {
+                    Task.Run(() => Client_ClientJoin(Guild));
+                }
 
-        private async Task Client_ClientJoin(SocketGuild Guild)
-        {
-            DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
-            DateTime StartTime = DateTime.Now;
-            foreach(var User in Guild.Users)
-            {
-                SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(StartTime), IgnoreCache: true, Table: "Utili_InactiveTimers");
-                await Task.Delay(100);
-            }
-        }
+                private async Task Client_ClientJoin(SocketGuild Guild)
+                {
+                    DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
+                    DateTime StartTime = DateTime.Now;
+                    foreach(var User in Guild.Users)
+                    {
+                        SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(StartTime), IgnoreCache: true, Table: "Utili_InactiveTimers");
+                        await Task.Delay(100);
+                    }
+                }
 
-#endregion
+        #endregion
 
-#region User Leave
+        #region User Leave
 
-        private async Task Commence_UserLeft(SocketGuildUser User)
-        {
-            Task.Run(() => Client_UserLeft(User));
-        }
+                private async Task Commence_UserLeft(SocketGuildUser User)
+                {
+                    Task.Run(() => Client_UserLeft(User));
+                }
 
-        private async Task Client_UserLeft(SocketGuildUser User)
-        {
-            DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
+                private async Task Client_UserLeft(SocketGuildUser User)
+                {
+                    DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
 
-            RolePersist RolePersist = new RolePersist();
-            Task.Run(() => RolePersist.UserLeft(User));
-        }
-#endregion
+                    RolePersist RolePersist = new RolePersist();
+                    Task.Run(() => RolePersist.UserLeft(User));
+                }
+        #endregion
 
-#region Client Leave
+        #region Client Leave
 
-        private async Task Commence_ClientLeave(SocketGuild Guild)
-        {
-            Task.Run(() => Client_ClientLeave(Guild));
-        }
+                private async Task Commence_ClientLeave(SocketGuild Guild)
+                {
+                    Task.Run(() => Client_ClientLeave(Guild));
+                }
 
-        private async Task Client_ClientLeave(SocketGuild Guild)
-        {
-            DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
-            RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE GuildID = '{Guild.Id}'");
-            DeleteData(Guild.Id.ToString());
-        }
+                private async Task Client_ClientLeave(SocketGuild Guild)
+                {
+                    DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
+                    RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE GuildID = '{Guild.Id}'");
+                    DeleteData(Guild.Id.ToString());
+                }
 
-#endregion
+        #endregion
 
-#region Voice Updated
+        #region Voice Updated
 
-        private async Task Commence_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
-        {
-            Task.Run(() => Client_UserVoiceStateUpdated(UserParam, Before, After));
-        }
+                private async Task Commence_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
+                {
+                    Task.Run(() => Client_UserVoiceStateUpdated(UserParam, Before, After));
+                }
 
-        private async Task Client_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
-        {
-            SocketGuildUser User = UserParam as SocketGuildUser;
-            VCLink VCLink = new VCLink();
-            Task.Run(() => VCLink.Client_UserVoiceStateUpdated(User, Before, After));
-        }
+                private async Task Client_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
+                {
+                    SocketGuildUser User = UserParam as SocketGuildUser;
+                    VCLink VCLink = new VCLink();
+                    Task.Run(() => VCLink.Client_UserVoiceStateUpdated(User, Before, After));
+                }
 
-#endregion
+        #endregion
 
-#region Channel Created
+        #region Channel Created
 
-        private async Task Commence_ChannelCreated(SocketChannel Channel)
-        {
-            Task.Run(() => Client_ChannelCreated(Channel));
-        }
+                private async Task Commence_ChannelCreated(SocketChannel Channel)
+                {
+                    Task.Run(() => Client_ChannelCreated(Channel));
+                }
 
-        private async Task Client_ChannelCreated(SocketChannel Channel)
-        {
-            MessageLogs MessageLogs = new MessageLogs();
-            Task.Run(() => MessageLogs.MessageLogs_ChannelCreated(Channel));
-        }
+                private async Task Client_ChannelCreated(SocketChannel Channel)
+                {
+                    MessageLogs MessageLogs = new MessageLogs();
+                    Task.Run(() => MessageLogs.MessageLogs_ChannelCreated(Channel));
+                }
 
-#endregion
+        #endregion
 
-#region Messages
+        #region Messages
 
-        public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
-        {
-            MessageLogs MessageLogs = new MessageLogs();
-            Task.Run(() => MessageLogs.MessageLogs_MessageDeleted(PartialMessage, Channel));
-        }
+                public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
+                {
+                    MessageLogs MessageLogs = new MessageLogs();
+                    Task.Run(() => MessageLogs.MessageLogs_MessageDeleted(PartialMessage, Channel));
+                }
 
-        public async Task Commence_MessageUpdated(Cacheable<IMessage, ulong> PartialMessage, SocketMessage NewMessage, ISocketMessageChannel Channel)
-        {
-            MessageLogs MessageLogs = new MessageLogs();
-            Task.Run(() => MessageLogs.MessageLogs_MessageEdited(PartialMessage, NewMessage, Channel));
-        }
+                public async Task Commence_MessageUpdated(Cacheable<IMessage, ulong> PartialMessage, SocketMessage NewMessage, ISocketMessageChannel Channel)
+                {
+                    MessageLogs MessageLogs = new MessageLogs();
+                    Task.Run(() => MessageLogs.MessageLogs_MessageEdited(PartialMessage, NewMessage, Channel));
+                }
 
-        public async Task Commence_ReactionAdded(Cacheable<IUserMessage, ulong> Message, ISocketMessageChannel Channel, SocketReaction Reaction)
-        {
-            Votes Votes = new Votes();
-            Task.Run(() => Votes.Votes_ReactionAdded(Message, Channel, Reaction));
-        }
+                public async Task Commence_ReactionAdded(Cacheable<IUserMessage, ulong> Message, ISocketMessageChannel Channel, SocketReaction Reaction)
+                {
+                    Votes Votes = new Votes();
+                    Task.Run(() => Votes.Votes_ReactionAdded(Message, Channel, Reaction));
+                }
 
-#endregion
+        #endregion
     }
 }
