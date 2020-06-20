@@ -139,7 +139,7 @@ namespace Utili
         {
             string Content =
                 "By 230Daniel#1920\n" +
-                $"In {Program.GlobalClient.Guilds.Count} servers\n" +
+                $"In {Program.Shards.Guilds.Count} servers\n" +
                 $"Shard {Program.Client.ShardId + 1} of {Program.TotalShards}\n" +
                 "[Support and Requests Discord](https://discord.gg/WsxqABZ)\n" +
                 "[Bot Invite](https://discordapp.com/api/oauth2/authorize?client_id=655155797260501039&permissions=8&scope=bot)\n" +
@@ -167,12 +167,11 @@ namespace Utili
             int Edit = EditLatency;
             int API = Program.Client.Latency;
             int Database = DBLatency;
-            int Cache = CacheLatency;
 
-            var Embed = GetLargeEmbed("Pong!", "", Footer: $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards} | Shard serving {Program.Client.Guilds.Count} guilds").ToEmbedBuilder();
+            var Embed = GetLargeEmbed("Pong!", "", Footer: $"Shard { Program.Client.ShardId + 1} of { Program.TotalShards} | Shard serving {Program.Client.Guilds.Count} guilds of {Program.Shards.Guilds.Count} total.").ToEmbedBuilder();
             Embed.AddField("**Discord**", $"API: {API}ms\nSend: {Send}ms\nEdit: {Edit}ms", true);
             Embed.AddField("**Database**", $"Ping: {Database}ms\nQueries: {QueriesPerSecond}/s", true);
-            Embed.AddField("**Cache**", $"Ping: {Cache}ms\nQueries: {CacheQueriesPerSecond}/s\nItems: {CacheItems}", true);
+            Embed.AddField("**Cache**", $"\nItems: {CacheItems}\nQueries: {CacheQueriesPerSecond}/s", true);
 
             await Context.Channel.SendMessageAsync(embed: Embed.Build());
         }
@@ -206,7 +205,7 @@ namespace Utili
                     {
                         Votes += 1;
                         string Name = Voter.Username;
-                        try { Name = Program.GlobalClient.GetUser(Voter.Id).ToString(); } catch { }
+                        try { Name = Program.Shards.GetUser(Voter.Id).ToString(); } catch { }
 
                         if (TopVoters.FindIndex(x => x.Item1 == Name) >= 0)
                         {
@@ -245,7 +244,7 @@ namespace Utili
                             Votes += 1;
                             try
                             {
-                                IUser User = Program.GlobalClient.GetUser(ulong.Parse(Voter.ToString()));
+                                IUser User = Program.Shards.GetUser(ulong.Parse(Voter.ToString()));
                                 string Name = User.ToString();
 
                                 if (TopVoters.FindIndex(x => x.Item1 == Name) >= 0)

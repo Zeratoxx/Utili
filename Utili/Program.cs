@@ -22,6 +22,8 @@ using System.Net;
 using Google.Apis.YouTube.v3;
 using Google.Apis.Services;
 using System.Net.Http.Headers;
+using Renci.SshNet;
+using System.Net.Mail;
 
 namespace Utili
 {
@@ -30,8 +32,7 @@ namespace Utili
         public static string VersionNumber = "1.11.1";
 
         public static DiscordSocketClient Client;
-        public static DiscordSocketClient GlobalClient;
-        public static DiscordSocketClient ShardsClient;
+        public static DiscordShardedClient Shards;
         private CommandService Commands;
         public static YouTubeService Youtube;
         public static CancellationTokenSource ForceStop;
@@ -39,8 +40,8 @@ namespace Utili
         public static bool Ready = false;
         public static bool FirstStart = true;
 
-        public static bool Debug = false;
-        public static bool UseTest = false;
+        public static bool Debug = true;
+        public static bool UseTest = true;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -105,33 +106,14 @@ namespace Utili
             try
             {
                 await Client.StopAsync();
-                await GlobalClient.StopAsync();
+                await Shards.StopAsync();
                 Client.Dispose();
-                GlobalClient.Dispose();
+                Shards.Dispose();
             }
             catch { }
 
-            int ShardID = 0;
-            TotalShards = 1;
-
-            if (!UseTest)
-            {
-                TotalShards = await Sharding.GetTotalShards();
-                await Sharding.GetShardID();
-            }
-
-
             if (!Debug)
             {
-                Client = new DiscordSocketClient(new DiscordSocketConfig
-                {
-                    LogLevel = LogSeverity.Info,
-                    MessageCacheSize = 100,
-                    ShardId = ShardID,
-                    TotalShards = TotalShards,
-                    ConnectionTimeout = 15000
-                });
-
                 StreamWriter outputFile = null;
 
                 if (!File.Exists("Output.txt")) outputFile = File.CreateText("Output.txt");
@@ -140,16 +122,17 @@ namespace Utili
                 Console.SetOut(outputFile);
                 Console.SetError(outputFile);
             }
-            else
+
+            int ShardID = 1;
+            TotalShards = 2;
+
+            if (!UseTest)
             {
-                Client = new DiscordSocketClient(new DiscordSocketConfig
-                {
-                    LogLevel = LogSeverity.Info,
-                    MessageCacheSize = 100,
-                    ShardId = ShardID,
-                    TotalShards = TotalShards,
-                    ConnectionTimeout = 15000
-                });
+
+                TotalShards = await Sharding.GetTotalShards();
+                Console.WriteLine($"Waiting for a shard to become available (0-{TotalShards - 1})");
+                ShardID = await Sharding.GetShardID();
+                Console.WriteLine($"Found available shard {ShardID}");
             }
 
             if (!UseTest)
@@ -158,19 +141,15 @@ namespace Utili
                 _ = Sharding.FlushDisconnected();
             }
 
-            GlobalClient = new DiscordSocketClient(new DiscordSocketConfig
+            Shards = new DiscordShardedClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Critical,
-                MessageCacheSize = 100
+                LogLevel = LogSeverity.Info,
+                MessageCacheSize = 100,
+                TotalShards = TotalShards,
+                ConnectionTimeout = 15000
             });
 
-            ShardsClient = new DiscordSocketClient(new DiscordSocketConfig
-            {
-                LogLevel = LogSeverity.Critical,
-                MessageCacheSize = 0
-            });
-
-            ShardsClient.Log += Client_Log;
+            Client = Shards.GetShard(ShardID);
 
             Commands = new CommandService(new CommandServiceConfig
             {
@@ -197,21 +176,6 @@ namespace Utili
             Client.Ready += Client_Ready;
             Client.Log += Client_Log;
 
-            if (FirstStart)
-            {
-                Console.WriteLine($"\n[{DateTime.Now}] [Info] Loading cache...");
-                Cache = GetData(IgnoreCache: true).ToHashSet();
-                Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items cached");
-
-                FirstStart = true;
-            }
-            else
-            {
-                Console.WriteLine($"\n[{DateTime.Now}] [Info] Skipped cache loading as this is not the first startup");
-
-            }
-
-
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
 
             string Token;
@@ -223,17 +187,8 @@ namespace Utili
             Queries = 0;
             CacheQueries = 0;
 
-            await Client.LoginAsync(TokenType.Bot, Token);
-            await Client.StartAsync();
-
-            await GlobalClient.LoginAsync(TokenType.Bot, Token);
-            await GlobalClient.StartAsync();
-
-            if (!UseTest)
-            {
-                await ShardsClient.LoginAsync(TokenType.Bot, Config.ShardsToken);
-                await ShardsClient.StartAsync();
-            }
+            await Shards.LoginAsync(TokenType.Bot, Token);
+            await Shards.StartAsync();
 
             var LatencyTimer = new System.Timers.Timer(10000);
             LatencyTimer.Elapsed += UpdateLatency;
@@ -288,15 +243,7 @@ namespace Utili
             }
             catch { };
 
-            try
-            {
-                DateTime Now = DateTime.Now;
-                GetData("Ping Test");
-                CacheLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
-
-                CacheItems = Cache.Count;
-            }
-            catch { CacheLatency = -1; };
+            CacheItems = Cache.Count;
 
             try
             {
@@ -348,6 +295,19 @@ namespace Utili
         private async Task Client_Ready()
         {
             Console.WriteLine($"[{DateTime.Now}] [Info] Logged in as bot user {Client.CurrentUser} ({Client.CurrentUser.Id})");
+
+            if (FirstStart)
+            {
+                List<string> ValidGuildIDs = new List<string>();
+                foreach (var Guild in Client.Guilds) ValidGuildIDs.Add(Guild.Id.ToString());
+
+                Console.WriteLine($"[{DateTime.Now}] [Info] Loading cache...");
+                Cache = GetData(IgnoreCache: true).Where(x => ValidGuildIDs.Contains(x.GuildID)).ToHashSet();
+                Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items loaded.");
+
+                FirstStart = false;
+            }
+            else Console.WriteLine($"\n[{DateTime.Now}] [Info] Skipped cache loading as this is not the first startup");
 
             await Client.SetGameAsync(".help", null, ActivityType.Watching);
             Youtube = new YouTubeService(new BaseClientService.Initializer()
@@ -525,7 +485,7 @@ namespace Utili
 
             AuthDiscordBotListApi API = new AuthDiscordBotListApi(655155797260501039, Config.DiscordBotListKey);
             var Me = await API.GetMeAsync();
-            try { await Me.UpdateStatsAsync(GlobalClient.Guilds.Count); } catch { }
+            try { await Me.UpdateStatsAsync(Shards.Guilds.Count); } catch { }
 
             #endregion
 
@@ -535,7 +495,7 @@ namespace Utili
 
             var Content = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("server_count", GlobalClient.Guilds.Count.ToString()),
+                new KeyValuePair<string, string>("server_count", Shards.Guilds.Count.ToString()),
             });
 
             try { await HttpClient.PostAsync("https://botsfordiscord.com/api/bot/655155797260501039", Content); } catch { };
@@ -547,7 +507,7 @@ namespace Utili
 
             Content = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("guildCount", GlobalClient.Guilds.Count.ToString()),
+                new KeyValuePair<string, string>("guildCount", Shards.Guilds.Count.ToString()),
             });
 
             try { await HttpClient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/655155797260501039/guilds", Content); } catch { };
@@ -559,7 +519,7 @@ namespace Utili
 
             Content = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("server_count", GlobalClient.Guilds.Count.ToString()),
+                new KeyValuePair<string, string>("server_count", Shards.Guilds.Count.ToString()),
             });
 
             try { await HttpClient.PostAsync("https://discord.boats/api/bot/655155797260501039", Content); } catch { };
