@@ -248,7 +248,7 @@ namespace Utili
             try
             {
                 DateTime Now = DateTime.Now;
-                var Sent = await Client.GetGuild(682882628168450079).GetTextChannel(713125991563919492).SendMessageAsync("Testing send latency...");
+                var Sent = await Shards.GetGuild(682882628168450079).GetTextChannel(713125991563919492).SendMessageAsync("Testing send latency...");
                 SendLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
 
                 Now = DateTime.Now;
@@ -257,7 +257,7 @@ namespace Utili
 
                 await Sent.DeleteAsync();
             }
-            catch { SendLatency = -1; };
+            catch { SendLatency = 0; EditLatency = 0; };
 
             QueryTimer = DateTime.Now;
             Queries = 0;

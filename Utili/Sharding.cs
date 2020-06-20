@@ -110,7 +110,7 @@ namespace Utili
                         {
                             DeleteData(OldData.ID);
 
-                            if (!OfflineShardIDs.Contains(OldData.ShardID))
+                            if (!OfflineShardIDs.Contains(OldData.ShardID) && Program.Ready)
                             {
                                 AllowOnlineNotification = false;
                                 OfflineShardIDs.Add(OldData.ShardID);
@@ -120,7 +120,7 @@ namespace Utili
                             }
                         }
 
-                        if (AllowOnlineNotification)
+                        if (AllowOnlineNotification && Program.Ready)
                         {
                             foreach (int OfflineShardID in OfflineShardIDs)
                             {
