@@ -29,9 +29,8 @@ namespace Utili
     {
         public static string VersionNumber = "1.11.1";
 
+        public static DiscordShardedClient GlobalClient;
         public static DiscordSocketClient Client;
-        public static DiscordSocketClient GlobalClient;
-        public static DiscordSocketClient ShardsClient;
         private CommandService Commands;
         public static YouTubeService Youtube;
         public static CancellationTokenSource ForceStop;
@@ -39,8 +38,8 @@ namespace Utili
         public static bool Ready = false;
         public static bool FirstStart = true;
 
-        public static bool Debug = false;
-        public static bool UseTest = false;
+        public static bool Debug = true;
+        public static bool UseTest = true;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -119,7 +118,16 @@ namespace Utili
                 TotalShards = await Sharding.GetTotalShards();
                 await Sharding.GetShardID();
             }
-            
+
+            int[] ShardIDs = new int[] { ShardID };
+
+            GlobalClient = new DiscordShardedClient(ShardIDs, new DiscordSocketConfig 
+            {
+                LogLevel = LogSeverity.Info,
+                MessageCacheSize = 100,
+                TotalShards = TotalShards,
+                ConnectionTimeout = 15000
+            });
 
             if (!Debug)
             {
@@ -157,20 +165,6 @@ namespace Utili
                 _ = Sharding.KeepConnection();
                 _ = Sharding.FlushDisconnected();
             }
-
-            GlobalClient = new DiscordSocketClient(new DiscordSocketConfig
-            {
-                LogLevel = LogSeverity.Critical,
-                MessageCacheSize = 100
-            });
-
-            ShardsClient = new DiscordSocketClient(new DiscordSocketConfig
-            {
-                LogLevel = LogSeverity.Critical,
-                MessageCacheSize = 0
-            });
-
-            ShardsClient.Log += Client_Log;
 
             Commands = new CommandService(new CommandServiceConfig
             {
@@ -228,14 +222,6 @@ namespace Utili
 
             await GlobalClient.LoginAsync(TokenType.Bot, Token);
             await GlobalClient.StartAsync();
-
-            if (!UseTest)
-            {
-                await ShardsClient.LoginAsync(TokenType.Bot, Config.ShardsToken);
-                await ShardsClient.StartAsync();
-
-                _ = Sharding.UpdateShardMessage();
-            }
 
             var LatencyTimer = new System.Timers.Timer(10000);
             LatencyTimer.Elapsed += UpdateLatency;

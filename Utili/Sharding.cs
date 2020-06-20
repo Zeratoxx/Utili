@@ -88,46 +88,6 @@ namespace Utili
             }
         }
 
-        public static async Task UpdateShardMessage()
-        {
-            using (var Client = Program.ShardsClient)
-            {
-                while (true)
-                {
-                    try
-                    {
-                        string MessageContent = "";
-                        int Online = 0;
-
-                        for (int i = 0; i < await GetTotalShards(); i++)
-                        {
-                            if (GetShardData(i, "Online").Count > 0) { MessageContent += $"Shard {i + 1}: Online\n"; Online += 1; }
-                            else MessageContent += $"Shard {i + 1}: Offline\n";
-                        }
-
-
-                        var Message = await Client.GetGuild(682882628168450079).GetTextChannel(696987038531977227).GetMessageAsync(697046877031366717) as IUserMessage;
-
-                        bool Case2 = true;
-                        try { Case2 = Message.Embeds.First().Description != MessageContent; }
-                        catch { }
-
-                        if (Message.Embeds.Count == 0 || Case2)
-                        {
-                            EmbedBuilder Embed = new EmbedBuilder();
-                            if (Online == await GetTotalShards()) Embed = GetLargeEmbed("Shards", MessageContent).ToEmbedBuilder();
-                            else Embed = GetLargeEmbed("Shards", MessageContent).ToEmbedBuilder().WithColor(181, 67, 67);
-
-                            await Message.ModifyAsync(x => { x.Embed = Embed.Build(); x.Content = ""; });
-                        }
-                    }
-                    catch { }
-
-                    await Task.Delay(30000);
-                }
-            }
-        }
-
         public static async Task FlushDisconnected(bool loop = true)
         {
             if (loop)
