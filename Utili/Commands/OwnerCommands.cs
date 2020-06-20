@@ -25,7 +25,7 @@ namespace Utili
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                var Servers = Program.GlobalClient.Guilds.OrderBy(x => x.Name);
+                var Servers = Program.Shards.Guilds.OrderBy(x => x.Name);
 
                 int OldNumber = Number;
                 Number = (Number - 1) * 10;
@@ -140,7 +140,7 @@ namespace Utili
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                await Context.Channel.SendMessageAsync(embed: Logic.GuildInfo(Program.GlobalClient.GetGuild(GuildID)));
+                await Context.Channel.SendMessageAsync(embed: Logic.GuildInfo(Program.Shards.GetGuild(GuildID)));
             }
         }
 

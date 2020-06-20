@@ -19,6 +19,7 @@ using DiscordBotsList.Api;
 using System.Net.Http;
 using System.Net;
 using MySql.Data.MySqlClient;
+using System.Net.Mail;
 
 namespace Utili
 {
@@ -88,6 +89,8 @@ namespace Utili
             }
         }
 
+        public static List<int> OfflineShardIDs = new List<int>();
+
         public static async Task FlushDisconnected(bool loop = true)
         {
             if (loop)
@@ -96,6 +99,8 @@ namespace Utili
                 {
                     try
                     {
+                        bool AllowOnlineNotification = true;
+
                         var ShardData = GetShardData(-1, "Online");
                         ShardData.AddRange(GetShardData(-1, "Reserved"));
 
@@ -104,6 +109,27 @@ namespace Utili
                         foreach (var OldData in ShardData)
                         {
                             DeleteData(OldData.ID);
+
+                            if (!OfflineShardIDs.Contains(OldData.ShardID))
+                            {
+                                AllowOnlineNotification = false;
+                                OfflineShardIDs.Add(OldData.ShardID);
+                                await Program.Shards.GetUser(218613903653863427).SendMessageAsync(embed: GetEmbed("No", "Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nLots of love, shard {Program.Client.ShardId}."));
+
+                                SendEmail(Config.EmailInfo.Username, $"Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nLots of love, shard {Program.Client.ShardId}");
+                            }
+                        }
+
+                        if (AllowOnlineNotification)
+                        {
+                            foreach (int OfflineShardID in OfflineShardIDs)
+                            {
+                                if (ShardData.Where(x => x.ShardID == OfflineShardID).Count() > 0)
+                                {
+                                    await Program.Shards.GetUser(218613903653863427).SendMessageAsync(embed: GetEmbed("Yes", "Shard online", $"Shard {OfflineShardID} has sent a heartbeat.\nLots of love, shard {Program.Client.ShardId}."));
+                                    OfflineShardIDs.Remove(OfflineShardID);
+                                }
+                            }
                         }
                     }
                     catch { };

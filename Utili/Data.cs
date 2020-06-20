@@ -8,6 +8,9 @@ using Discord.Commands;
 
 using static Utili.Json;
 using System.Linq;
+using System.Web.Http.Results;
+using System.Net.Mail;
+using System.Net;
 
 namespace Utili
 {
@@ -24,7 +27,6 @@ namespace Utili
         public static double QueriesPerSecond = 0;
         public static double CacheQueriesPerSecond = 0;
         public static int DBLatency = 0;
-        public static int CacheLatency = 0;
         public static int CacheItems = 0;
         public static int SendLatency = 0;
         public static int EditLatency = 0;
@@ -78,6 +80,9 @@ namespace Utili
         public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
         {
             HashSet<Data> Data = new HashSet<Data>();
+
+            try { if (!Program.Client.Guilds.Select(x => x.Id).Contains(ulong.Parse(GuildID))) IgnoreCache = true; }
+            catch { }
 
             if (!IgnoreCache)
             {
@@ -276,6 +281,33 @@ namespace Utili
         public static string ToSQLTime(DateTime Time)
         {
             return $"{Time.Year.ToString("0000")}-{Time.Month.ToString("00")}-{Time.Day.ToString("00")} {Time.Hour.ToString("00")}:{Time.Minute.ToString("00")}:{Time.Second.ToString("00")}";
+        }
+
+        public static void SendEmail(string To, string Subject, string Content)
+        {
+            var fromAddress = new MailAddress(Config.EmailInfo.Username, "Utili Notifications");
+            var toAddress = new MailAddress(To, To);
+            string fromPassword = Config.EmailInfo.Password;
+            string subject = Subject;
+            string body = Content;
+
+            var smtp = new SmtpClient
+            {
+                Host = "smtp.gmail.com",
+                Port = 587,
+                EnableSsl = true,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+            };
+            using (var message = new MailMessage(fromAddress, toAddress)
+            {
+                Subject = subject,
+                Body = body
+            })
+            {
+                smtp.Send(message);
+            }
         }
 
         public int ID = 0;

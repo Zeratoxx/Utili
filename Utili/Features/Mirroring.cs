@@ -55,7 +55,7 @@ namespace Utili
                         // If the to channel is in another guild
                         else
                         {
-                            ToGuild = Program.GlobalClient.GetGuild(ulong.Parse(Value.Value.Split("G").Last()));
+                            ToGuild = Program.Shards.GetGuild(ulong.Parse(Value.Value.Split("G").Last()));
                             ToChannel = ToGuild.GetTextChannel(ulong.Parse(Value.Value.Split(" -> ").Last().Split(" G").First()));
                         }
 
@@ -185,7 +185,7 @@ namespace Utili
                 ITextChannel To;
                 try
                 {
-                    ToGuild = Program.Client.GetGuild(ToGuildID);
+                    ToGuild = Program.Shards.GetGuild(ToGuildID);
                     To = ToGuild.GetTextChannel(ToID);
                     if (ToGuild.Id == Context.Guild.Id) throw new Exception();
 
@@ -223,7 +223,7 @@ namespace Utili
                 ITextChannel To = null;
                 try
                 {
-                    ToGuild = Program.Client.GetGuild(ToGuildID);
+                    ToGuild = Program.Shards.GetGuild(ToGuildID);
                     To = ToGuild.GetTextChannel(ToID);
                     if (ToGuild.Id == Context.Guild.Id) throw new Exception();
                 }

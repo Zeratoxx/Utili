@@ -16,38 +16,7 @@ namespace Utili
 
         public static void GenerateNewConfig()
         {
-            Config = new Configuration
-            {
-                Token = "",
-                TestToken = "",
-                ShardsToken = "",
-                OtherBotTokens = new OtherBotTokens
-                {
-                    FileBot = "",
-                    HubBot = "",
-                    ThoriumCube = "",
-                    Unwyre = "",
-                    PingPlus = "",
-                    ImgOnly = "",
-                    Shards = ""
-                },
-                Database = new DatabaseInfo
-                {
-                    Server = "",
-                    Database = "",
-                    Username = "",
-                    Password = ""
-                },
-                Youtube = new YoutubeInfo
-                {
-                    ApplicationName = "",
-                    Key = ""
-                },
-                DiscordBotListKey = "",
-                BotsForDiscordKey = "",
-                BotsOnDiscordKey = "",
-                DiscordBoatsKey = ""
-            };
+            Config = new Configuration();
 
             JsonSerializerOptions Options = new JsonSerializerOptions();
             Options.WriteIndented = true;
@@ -83,40 +52,46 @@ namespace Utili
 
     class Configuration
     {
-        public string Token { get; set; }
-        public string TestToken { get; set; }
-        public string ShardsToken { get; set; }
-        public OtherBotTokens OtherBotTokens { get; set; }
-        public DatabaseInfo Database { get; set; }
-        public YoutubeInfo Youtube { get; set; }
-        public string DiscordBotListKey { get; set; }
-        public string BotsForDiscordKey { get; set; }
-        public string BotsOnDiscordKey { get; set; }
-        public string DiscordBoatsKey { get; set; }
+        public string Token { get; set; } = "";
+        public string TestToken { get; set; } = "";
+        public OtherBotTokens OtherBotTokens { get; set; } = new OtherBotTokens();
+        public DatabaseInfo Database { get; set; } = new DatabaseInfo();
+        public EmailLogin EmailInfo { get; set; } = new EmailLogin();
+        public YoutubeInfo Youtube { get; set; } = new YoutubeInfo();
+        public string DiscordBotListKey { get; set; } = "";
+        public string BotsForDiscordKey { get; set; } = "";
+        public string BotsOnDiscordKey { get; set; } = "";
+        public string DiscordBoatsKey { get; set; } = "";
     }
 
     class DatabaseInfo
     {
-        public string Server { get; set; }
-        public string Database { get; set; }
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string Server { get; set; } = "";
+        public string Database { get; set; } = "";
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
     }
 
     class YoutubeInfo
     {
-        public string ApplicationName { get; set; }
-        public string Key { get; set; }
+        public string ApplicationName { get; set; } = "";
+        public string Key { get; set; } = "";
     }
 
     class OtherBotTokens
     {
-        public string FileBot { get; set; }
-        public string HubBot { get; set; }
-        public string ThoriumCube { get; set; }
-        public string Unwyre { get; set; }
-        public string PingPlus { get; set; }
-        public string ImgOnly { get; set; }
-        public string Shards { get; set; }
+        public string FileBot { get; set; } = "";
+        public string HubBot { get; set; } = "";
+        public string ThoriumCube { get; set; } = "";
+        public string Unwyre { get; set; } = "";
+        public string PingPlus { get; set; } = "";
+        public string ImgOnly { get; set; } = "";
+        public string Shards { get; set; } = "";
+    }
+
+    class EmailLogin
+    {
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
     }
 }
