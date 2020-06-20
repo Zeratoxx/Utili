@@ -40,8 +40,8 @@ namespace Utili
         public static bool Ready = false;
         public static bool FirstStart = true;
 
-        public static bool Debug = true;
-        public static bool UseTest = true;
+        public static bool Debug = false;
+        public static bool UseTest = false;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -123,8 +123,8 @@ namespace Utili
                 Console.SetError(outputFile);
             }
 
-            int ShardID = 1;
-            TotalShards = 2;
+            int ShardID = 0;
+            TotalShards = 1;
 
             if (!UseTest)
             {
