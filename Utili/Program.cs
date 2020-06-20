@@ -36,7 +36,6 @@ namespace Utili
         public static CancellationTokenSource ForceStop;
         public static int TotalShards = 0;
         public static bool Ready = false;
-        public static bool FirstStart = true;
 
         public static bool Debug = true;
         public static bool UseTest = true;
@@ -191,20 +190,9 @@ namespace Utili
             Client.Ready += Client_Ready;
             Client.Log += Client_Log;
 
-            if (FirstStart)
-            {
-                Console.WriteLine($"\n[{DateTime.Now}] [Info] Loading cache...");
-                Cache = GetData(IgnoreCache: true).ToHashSet();
-                Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items cached");
-
-                FirstStart = true;
-            }
-            else
-            {
-                Console.WriteLine($"\n[{DateTime.Now}] [Info] Skipped cache loading as this is not the first startup");
-
-            }
-            
+            Console.WriteLine($"\n[{DateTime.Now}] [Info] Loading cache...");
+            Cache = GetData(IgnoreCache: true).ToHashSet();
+            Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items cached");
 
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
 

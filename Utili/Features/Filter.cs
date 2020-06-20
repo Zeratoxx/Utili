@@ -30,8 +30,6 @@ namespace Utili
             var Message = MessageParam as SocketUserMessage;
             var Context = new SocketCommandContext(Client, Message);
 
-            if (Context.User.Id == 552232599439933474 || Context.User.Id == 722388562301026394) return;
-
             if (Context.User.Id == Program.Client.CurrentUser.Id & Context.Message.Embeds.Count > 0)
             {
                 if (Context.Message.Embeds.First().Author.Value.Name == "Message deleted") return;
