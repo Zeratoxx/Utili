@@ -29,16 +29,18 @@ namespace Utili
     {
         public static string VersionNumber = "1.11.1";
 
-        public static DiscordShardedClient GlobalClient;
         public static DiscordSocketClient Client;
+        public static DiscordSocketClient GlobalClient;
+        public static DiscordSocketClient ShardsClient;
         private CommandService Commands;
         public static YouTubeService Youtube;
         public static CancellationTokenSource ForceStop;
         public static int TotalShards = 0;
         public static bool Ready = false;
+        public static bool FirstStart = true;
 
-        public static bool Debug = true;
-        public static bool UseTest = true;
+        public static bool Debug = false;
+        public static bool UseTest = false;
 
         DateTime LastStatsUpdate = DateTime.Now;
 
@@ -53,7 +55,7 @@ namespace Utili
                 Console.Clear();
             }
 
-            if(!Debug) Console.WriteLine("See output.txt");
+            if (!Debug) Console.WriteLine("See output.txt");
             bool Retry = true;
 
             while (true)
@@ -75,9 +77,9 @@ namespace Utili
                     {
                         if (Client.ConnectionState != ConnectionState.Connected)
                         {
-                            if(e.InnerException == null) Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n\n");
+                            if (e.InnerException == null) Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n\n");
                             else Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n{e.InnerException.Message}\n\nRestarting...\n\n");
-                            
+
                             Retry = true;
                             Thread.Sleep(5000);
                         }
@@ -118,15 +120,6 @@ namespace Utili
                 await Sharding.GetShardID();
             }
 
-            int[] ShardIDs = new int[] { ShardID };
-
-            GlobalClient = new DiscordShardedClient(ShardIDs, new DiscordSocketConfig 
-            {
-                LogLevel = LogSeverity.Info,
-                MessageCacheSize = 100,
-                TotalShards = TotalShards,
-                ConnectionTimeout = 15000
-            });
 
             if (!Debug)
             {
@@ -165,6 +158,20 @@ namespace Utili
                 _ = Sharding.FlushDisconnected();
             }
 
+            GlobalClient = new DiscordSocketClient(new DiscordSocketConfig
+            {
+                LogLevel = LogSeverity.Critical,
+                MessageCacheSize = 100
+            });
+
+            ShardsClient = new DiscordSocketClient(new DiscordSocketConfig
+            {
+                LogLevel = LogSeverity.Critical,
+                MessageCacheSize = 0
+            });
+
+            ShardsClient.Log += Client_Log;
+
             Commands = new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = false,
@@ -190,9 +197,20 @@ namespace Utili
             Client.Ready += Client_Ready;
             Client.Log += Client_Log;
 
-            Console.WriteLine($"\n[{DateTime.Now}] [Info] Loading cache...");
-            Cache = GetData(IgnoreCache: true).ToHashSet();
-            Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items cached");
+            if (FirstStart)
+            {
+                Console.WriteLine($"\n[{DateTime.Now}] [Info] Loading cache...");
+                Cache = GetData(IgnoreCache: true).ToHashSet();
+                Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items cached");
+
+                FirstStart = true;
+            }
+            else
+            {
+                Console.WriteLine($"\n[{DateTime.Now}] [Info] Skipped cache loading as this is not the first startup");
+
+            }
+
 
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
 
@@ -210,6 +228,12 @@ namespace Utili
 
             await GlobalClient.LoginAsync(TokenType.Bot, Token);
             await GlobalClient.StartAsync();
+
+            if (!UseTest)
+            {
+                await ShardsClient.LoginAsync(TokenType.Bot, Config.ShardsToken);
+                await ShardsClient.StartAsync();
+            }
 
             var LatencyTimer = new System.Timers.Timer(10000);
             LatencyTimer.Elapsed += UpdateLatency;
@@ -295,11 +319,11 @@ namespace Utili
 
         private async void CheckReliability(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if(Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
+            if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
             {
                 try { await Task.Delay(10000, ForceStop.Token); } catch { }
 
-                if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000) 
+                if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
                 {
                     if (ForceStop.IsCancellationRequested || !Ready)
                     {
@@ -308,7 +332,7 @@ namespace Utili
 
                     Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{Client.ConnectionState} {Client.Latency}]");
                     Ready = false;
-                    ForceStop.Cancel(); 
+                    ForceStop.Cancel();
                 }
             }
         }
@@ -385,7 +409,7 @@ namespace Utili
 
             if (!(Context.Message == null || Context.Message.ToString() == "" || Context.User.Id == Client.CurrentUser.Id || Context.User.IsBot))
             {
-                if(GetData(Context.Guild.Id.ToString(), "Commands-Disabled", Context.Channel.Id.ToString()).Count == 0)
+                if (GetData(Context.Guild.Id.ToString(), "Commands-Disabled", Context.Channel.Id.ToString()).Count == 0)
                 {
                     int ArgPos = 0;
 
@@ -567,110 +591,110 @@ namespace Utili
             await User.AddRoleAsync(Role);
         }
 
-#endregion
+        #endregion
 
         #region Client Join
 
-                private async Task Commence_ClientJoin(SocketGuild Guild)
-                {
-                    Task.Run(() => Client_ClientJoin(Guild));
-                }
+        private async Task Commence_ClientJoin(SocketGuild Guild)
+        {
+            Task.Run(() => Client_ClientJoin(Guild));
+        }
 
-                private async Task Client_ClientJoin(SocketGuild Guild)
-                {
-                    DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
-                    DateTime StartTime = DateTime.Now;
-                    foreach(var User in Guild.Users)
-                    {
-                        SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(StartTime), IgnoreCache: true, Table: "Utili_InactiveTimers");
-                        await Task.Delay(100);
-                    }
-                }
+        private async Task Client_ClientJoin(SocketGuild Guild)
+        {
+            DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
+            DateTime StartTime = DateTime.Now;
+            foreach (var User in Guild.Users)
+            {
+                SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(StartTime), IgnoreCache: true, Table: "Utili_InactiveTimers");
+                await Task.Delay(100);
+            }
+        }
 
         #endregion
 
         #region User Leave
 
-                private async Task Commence_UserLeft(SocketGuildUser User)
-                {
-                    Task.Run(() => Client_UserLeft(User));
-                }
+        private async Task Commence_UserLeft(SocketGuildUser User)
+        {
+            Task.Run(() => Client_UserLeft(User));
+        }
 
-                private async Task Client_UserLeft(SocketGuildUser User)
-                {
-                    DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
+        private async Task Client_UserLeft(SocketGuildUser User)
+        {
+            DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
 
-                    RolePersist RolePersist = new RolePersist();
-                    Task.Run(() => RolePersist.UserLeft(User));
-                }
+            RolePersist RolePersist = new RolePersist();
+            Task.Run(() => RolePersist.UserLeft(User));
+        }
         #endregion
 
         #region Client Leave
 
-                private async Task Commence_ClientLeave(SocketGuild Guild)
-                {
-                    Task.Run(() => Client_ClientLeave(Guild));
-                }
+        private async Task Commence_ClientLeave(SocketGuild Guild)
+        {
+            Task.Run(() => Client_ClientLeave(Guild));
+        }
 
-                private async Task Client_ClientLeave(SocketGuild Guild)
-                {
-                    DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
-                    RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE GuildID = '{Guild.Id}'");
-                    DeleteData(Guild.Id.ToString());
-                }
+        private async Task Client_ClientLeave(SocketGuild Guild)
+        {
+            DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
+            RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE GuildID = '{Guild.Id}'");
+            DeleteData(Guild.Id.ToString());
+        }
 
         #endregion
 
         #region Voice Updated
 
-                private async Task Commence_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
-                {
-                    Task.Run(() => Client_UserVoiceStateUpdated(UserParam, Before, After));
-                }
+        private async Task Commence_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
+        {
+            Task.Run(() => Client_UserVoiceStateUpdated(UserParam, Before, After));
+        }
 
-                private async Task Client_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
-                {
-                    SocketGuildUser User = UserParam as SocketGuildUser;
-                    VCLink VCLink = new VCLink();
-                    Task.Run(() => VCLink.Client_UserVoiceStateUpdated(User, Before, After));
-                }
+        private async Task Client_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
+        {
+            SocketGuildUser User = UserParam as SocketGuildUser;
+            VCLink VCLink = new VCLink();
+            Task.Run(() => VCLink.Client_UserVoiceStateUpdated(User, Before, After));
+        }
 
         #endregion
 
         #region Channel Created
 
-                private async Task Commence_ChannelCreated(SocketChannel Channel)
-                {
-                    Task.Run(() => Client_ChannelCreated(Channel));
-                }
+        private async Task Commence_ChannelCreated(SocketChannel Channel)
+        {
+            Task.Run(() => Client_ChannelCreated(Channel));
+        }
 
-                private async Task Client_ChannelCreated(SocketChannel Channel)
-                {
-                    MessageLogs MessageLogs = new MessageLogs();
-                    Task.Run(() => MessageLogs.MessageLogs_ChannelCreated(Channel));
-                }
+        private async Task Client_ChannelCreated(SocketChannel Channel)
+        {
+            MessageLogs MessageLogs = new MessageLogs();
+            Task.Run(() => MessageLogs.MessageLogs_ChannelCreated(Channel));
+        }
 
         #endregion
 
         #region Messages
 
-                public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
-                {
-                    MessageLogs MessageLogs = new MessageLogs();
-                    Task.Run(() => MessageLogs.MessageLogs_MessageDeleted(PartialMessage, Channel));
-                }
+        public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
+        {
+            MessageLogs MessageLogs = new MessageLogs();
+            Task.Run(() => MessageLogs.MessageLogs_MessageDeleted(PartialMessage, Channel));
+        }
 
-                public async Task Commence_MessageUpdated(Cacheable<IMessage, ulong> PartialMessage, SocketMessage NewMessage, ISocketMessageChannel Channel)
-                {
-                    MessageLogs MessageLogs = new MessageLogs();
-                    Task.Run(() => MessageLogs.MessageLogs_MessageEdited(PartialMessage, NewMessage, Channel));
-                }
+        public async Task Commence_MessageUpdated(Cacheable<IMessage, ulong> PartialMessage, SocketMessage NewMessage, ISocketMessageChannel Channel)
+        {
+            MessageLogs MessageLogs = new MessageLogs();
+            Task.Run(() => MessageLogs.MessageLogs_MessageEdited(PartialMessage, NewMessage, Channel));
+        }
 
-                public async Task Commence_ReactionAdded(Cacheable<IUserMessage, ulong> Message, ISocketMessageChannel Channel, SocketReaction Reaction)
-                {
-                    Votes Votes = new Votes();
-                    Task.Run(() => Votes.Votes_ReactionAdded(Message, Channel, Reaction));
-                }
+        public async Task Commence_ReactionAdded(Cacheable<IUserMessage, ulong> Message, ISocketMessageChannel Channel, SocketReaction Reaction)
+        {
+            Votes Votes = new Votes();
+            Task.Run(() => Votes.Votes_ReactionAdded(Message, Channel, Reaction));
+        }
 
         #endregion
     }
