@@ -56,7 +56,18 @@ namespace Utili
                 Console.Clear();
             }
 
-            if (!Debug) Console.WriteLine("See output.txt");
+            if (!Debug)
+            {
+                Console.WriteLine("See Output.txt for console.");
+                StreamWriter outputFile = null;
+
+                if (!File.Exists("Output.txt")) outputFile = File.CreateText("Output.txt");
+                else outputFile = File.AppendText("Output.txt");
+                outputFile.AutoFlush = true;
+                Console.SetOut(outputFile);
+                Console.SetError(outputFile);
+            }
+
             bool Retry = true;
 
             while (true)
@@ -112,16 +123,7 @@ namespace Utili
             }
             catch { }
 
-            if (!Debug)
-            {
-                StreamWriter outputFile = null;
-
-                if (!File.Exists("Output.txt")) outputFile = File.CreateText("Output.txt");
-                else outputFile = File.AppendText("Output.txt");
-                outputFile.AutoFlush = true;
-                Console.SetOut(outputFile);
-                Console.SetError(outputFile);
-            }
+            
 
             int ShardID = 0;
             TotalShards = 1;
@@ -130,9 +132,9 @@ namespace Utili
             {
 
                 TotalShards = await Sharding.GetTotalShards();
-                Console.WriteLine($"Waiting for a shard to become available (0-{TotalShards - 1})");
+                Console.WriteLine($"[{DateTime.Now}] [Sharding] Waiting for a shard to become available (0-{TotalShards - 1})");
                 ShardID = await Sharding.GetShardID();
-                Console.WriteLine($"Found available shard {ShardID}");
+                Console.WriteLine($"[{DateTime.Now}] [Sharding] Found available shard {ShardID}. Continuing with startup.");
             }
 
             if (!UseTest)
@@ -158,6 +160,7 @@ namespace Utili
                 LogLevel = LogSeverity.Debug,
             });
 
+            
             Client.MessageReceived += Commence_MessageReceived;
             Client.MessageDeleted += Commence_MessageDelete;
             Client.MessageUpdated += Commence_MessageUpdated;
@@ -175,6 +178,7 @@ namespace Utili
 
             Client.Ready += Client_Ready;
             Client.Log += Client_Log;
+            Shards.Log += Client_Log;
 
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
 
@@ -231,37 +235,43 @@ namespace Utili
 
         private async void UpdateLatency(object sender, System.Timers.ElapsedEventArgs e)
         {
-            TimeSpan Uptime = DateTime.Now - QueryTimer;
-            try { QueriesPerSecond = Math.Round(Queries / Uptime.TotalSeconds, 2); } catch { QueriesPerSecond = 0; }
-            try { CacheQueriesPerSecond = Math.Round(CacheQueries / Uptime.TotalSeconds, 2); } catch { CacheQueriesPerSecond = 0; }
+            if (!Ready) return;
 
             try
             {
-                DateTime Now = DateTime.Now;
-                GetData("Ping Test", IgnoreCache: true);
-                DBLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+                TimeSpan Uptime = DateTime.Now - QueryTimer;
+                try { QueriesPerSecond = Math.Round(Queries / Uptime.TotalSeconds, 2); } catch { QueriesPerSecond = 0; }
+                try { CacheQueriesPerSecond = Math.Round(CacheQueries / Uptime.TotalSeconds, 2); } catch { CacheQueriesPerSecond = 0; }
+
+                try
+                {
+                    DateTime Now = DateTime.Now;
+                    GetData("Ping Test", IgnoreCache: true);
+                    DBLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+                }
+                catch { };
+
+                CacheItems = Cache.Count;
+
+                try
+                {
+                    DateTime Now = DateTime.Now;
+                    var Sent = await Shards.GetGuild(682882628168450079).GetTextChannel(713125991563919492).SendMessageAsync("Testing send latency...");
+                    SendLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+
+                    Now = DateTime.Now;
+                    await Sent.ModifyAsync(x => x.Content = "Testing edit latency...");
+                    EditLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+
+                    await Sent.DeleteAsync();
+                }
+                catch { SendLatency = 0; EditLatency = 0; };
+
+                QueryTimer = DateTime.Now;
+                Queries = 0;
+                CacheQueries = 0;
             }
             catch { };
-
-            CacheItems = Cache.Count;
-
-            try
-            {
-                DateTime Now = DateTime.Now;
-                var Sent = await Shards.GetGuild(682882628168450079).GetTextChannel(713125991563919492).SendMessageAsync("Testing send latency...");
-                SendLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
-
-                Now = DateTime.Now;
-                await Sent.ModifyAsync(x => x.Content = "Testing edit latency...");
-                EditLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
-
-                await Sent.DeleteAsync();
-            }
-            catch { SendLatency = 0; EditLatency = 0; };
-
-            QueryTimer = DateTime.Now;
-            Queries = 0;
-            CacheQueries = 0;
         }
 
         private async void CheckReliability(object sender, System.Timers.ElapsedEventArgs e)

@@ -15,6 +15,7 @@ using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
 using static Utili.Json;
+using Google.Apis.YouTube.v3.Data;
 
 namespace Utili
 {
@@ -30,7 +31,12 @@ namespace Utili
             if (GetData(Context.Guild.Id.ToString(), "Votes-Channel", Context.Channel.Id.ToString()).Count > 0)
             {
                 bool React = false;
-                if (GetData(Context.Guild.Id.ToString(), "Votes-Mode", "Attachments").Count > 0)
+
+                string Mode = "All";
+                try { Mode = GetData(Context.Guild.Id.ToString(), "Votes-Mode").First().Value; } catch { }
+                try { Mode = GetData(Context.Guild.Id.ToString(), $"Votes-Mode-{Context.Channel.Id}").First().Value; } catch { }
+                
+                if (Mode == "Attachments")
                 {
                     if (Message.Attachments.Count > 0 || Message.Content.Contains("youtube.com/watch?v=") || Message.Content.Contains("discordapp.com/attachment") || Message.Content.Contains("youtu.be/")) React = true;
                 }
@@ -42,6 +48,9 @@ namespace Utili
                     string DownName = "";
                     try { UpName = GetData(Context.Guild.Id.ToString(), "Votes-UpName").First().Value; } catch { }
                     try { DownName = GetData(Context.Guild.Id.ToString(), "Votes-DownName").First().Value; } catch { }
+
+                    try { UpName = GetData(Context.Guild.Id.ToString(), $"Votes-UpName-{Context.Channel.Id}").First().Value; } catch { }
+                    try { DownName = GetData(Context.Guild.Id.ToString(), $"Votes-DownName-{Context.Channel.Id}").First().Value; } catch { }
 
                     IEmote Emote;
                     if (GetGuildEmote(UpName, Context.Guild) != null) Emote = GetGuildEmote(UpName, Context.Guild);
@@ -78,6 +87,9 @@ namespace Utili
             try { UpName = GetData(Channel.Guild.Id.ToString(), "Votes-UpName").First().Value; } catch { }
             try { DownName = GetData(Channel.Guild.Id.ToString(), "Votes-DownName").First().Value; } catch { }
 
+            try { UpName = GetData(Channel.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}").First().Value; } catch { }
+            try { DownName = GetData(Channel.Guild.Id.ToString(), $"Votes-DownName-{Channel.Id}").First().Value; } catch { }
+
             IEmote UpEmote;
             if (GetGuildEmote(UpName, Channel.Guild) != null) UpEmote = GetGuildEmote(UpName, Channel.Guild);
             else UpEmote = GetDiscordEmote(Base64Decode(UpName));
@@ -106,9 +118,10 @@ namespace Utili
         public static string HelpContent =
                 "help - Show this list\n" +
                 "about - Display feature information\n" +
-                "upEmote [emote | reset] - Set the upvote emote\n" +
-                "downEmote [emote | reset] - Set the downvote emote\n" +
-                "mode [all | attachments] - Select which messages get emotes added\n" +
+                "upEmote [channel] [emote | reset] - Set the upvote emote for a channel\n" +
+                "downEmote [channel] [emote | reset] - Set the downvote emote for a channel\n" +
+                "mode [channel] [all | attachments] - Select which messages get emotes added to them in a channel\n" +
+                "**Tip:** Why not use a filter in combination with votes mode all?\n" +
                 "on [channel] - Enable voting in a channel\n" +
                 "off [channel] - Disable voting in a channel";
 
@@ -135,14 +148,15 @@ namespace Utili
         }
 
         [Command("upEmote")]
-        public async Task upEmote(string EmoteName)
+        public async Task upEmote(ITextChannel Channel, string EmoteName)
         {
             if (Permission(Context.User, Context.Channel))
             {
                 if(EmoteName.ToLower() == "reset")
                 {
-                    DeleteData(Context.Guild.Id.ToString(), "Votes-UpName");
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Reset upvote emote", $"Upvote emote reset to ⬆️"));
+                    DeleteData(Context.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Votes-UpName"); // Previously channel id was not specified so this is for backwards-compatibility.
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Reset upvote emote", $"The upvote emote for {Channel.Mention} has been reset to ⬆️"));
                 }
                 else
                 {
@@ -151,23 +165,24 @@ namespace Utili
                     if (GetGuildEmote(EmoteName, Context.Guild) != null) { Emote = GetGuildEmote(EmoteName, Context.Guild); Guild = true; }
                     else Emote = GetDiscordEmote(EmoteName);
 
-                    DeleteData(Context.Guild.Id.ToString(), "Votes-UpName");
-                    if(Guild) SaveData(Context.Guild.Id.ToString(), "Votes-UpName", EmoteName);
-                    else SaveData(Context.Guild.Id.ToString(), "Votes-UpName", Base64Encode(EmoteName));
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set upvote emote", $"Upvote emote set to {Emote}\n\n**Note:** If the emote does not display properly in this message, it's not working. Use the actual emote in your command or specify reset to go back to the defaul emote."));
+                    DeleteData(Context.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}");
+                    if(Guild) SaveData(Context.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}", EmoteName);
+                    else SaveData(Context.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}", Base64Encode(EmoteName));
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set upvote emote", $"The upvote emote for {Channel.Mention} has been set to {Emote}\n\n**Note:** If the emote does not display properly in this message, it's not working. Use the actual emote in your command or specify reset to go back to the defaul emote."));
                 }
             }
         }
 
         [Command("downEmote")]
-        public async Task downEmote(string EmoteName)
+        public async Task downEmote(ITextChannel Channel, string EmoteName)
         {
             if (Permission(Context.User, Context.Channel))
             {
                 if (EmoteName.ToLower() == "reset")
                 {
-                    DeleteData(Context.Guild.Id.ToString(), "Votes-DownName");
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Reset downvote emote", $"Downvote emote reset to ⬇️"));
+                    DeleteData(Context.Guild.Id.ToString(), $"Votes-DownName-{Channel.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Votes-DownName"); // Previously channel id was not specified so this is for backwards-compatibility.
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Reset downvote emote", $"The downvote emote for {Channel.Mention} has been reset to ⬇️"));
                 }
                 else
                 {
@@ -176,29 +191,30 @@ namespace Utili
                     if (GetGuildEmote(EmoteName, Context.Guild) != null) { Emote = GetGuildEmote(EmoteName, Context.Guild); Guild = true; }
                     else Emote = GetDiscordEmote(EmoteName);
 
-                    DeleteData(Context.Guild.Id.ToString(), "Votes-DownName");
-                    if (Guild) SaveData(Context.Guild.Id.ToString(), "Votes-DownName", EmoteName);
-                    else SaveData(Context.Guild.Id.ToString(), "Votes-DownName", Base64Encode(EmoteName));
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set downvote emote", $"Downvote emote set to {Emote}\n\n**Note:** If the emote does not display properly in this message, it's not working. Use the actual emote in your command or specify reset to go back to the defaul emote."));
+                    DeleteData(Context.Guild.Id.ToString(), $"Votes-DownName-{Channel.Id}");
+                    if (Guild) SaveData(Context.Guild.Id.ToString(), $"Votes-DownName-{Channel.Id}", EmoteName);
+                    else SaveData(Context.Guild.Id.ToString(), $"Votes-DownName-{Channel.Id}", Base64Encode(EmoteName));
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set downvote emote", $"The downvote emote for {Channel.Mention} has been set to {Emote}\n\n**Note:** If the emote does not display properly in this message, it's not working. Use the actual emote in your command or specify reset to go back to the defaul emote."));
                 }
             }
         }
 
         [Command("Mode")]
-        public async Task Mode(string Mode)
+        public async Task Mode(ITextChannel Channel, string Mode)
         {
             if (Permission(Context.User, Context.Channel))
             {
                 switch (Mode.ToLower())
                 {
                     case "all":
-                        DeleteData(Context.Guild.Id.ToString(), "Votes-Mode");
-                        SaveData(Context.Guild.Id.ToString(), "Votes-Mode", "All");
+                        // Backwards compatibility not needed here (Keep DB entries with no channel specified) because unlike emotes there is no case for no value set.
+                        DeleteData(Context.Guild.Id.ToString(), $"Votes-Mode-{Channel.Id}");
+                        SaveData(Context.Guild.Id.ToString(), $"Votes-Mode-{Channel.Id}", "All");
                         await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mode set", "All messages will be reacted to"));
                         break;
                     case "attachments":
-                        DeleteData(Context.Guild.Id.ToString(), "Votes-Mode");
-                        SaveData(Context.Guild.Id.ToString(), "Votes-Mode", "Attachments");
+                        DeleteData(Context.Guild.Id.ToString(), $"Votes-Mode-{Channel.Id}");
+                        SaveData(Context.Guild.Id.ToString(), $"Votes-Mode-{Channel.Id}", "Attachments");
                         await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mode set", "Only messages with attachments or youtube links will be reacted to"));
                         break;
                     default:

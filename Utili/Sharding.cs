@@ -82,10 +82,10 @@ namespace Utili
                     {
                         DeleteData(OldData.ID);
                     }
-                }
-                catch { };
 
-                await Task.Delay(1000);
+                    await Task.Delay(1000);
+                }
+                catch { await Task.Delay(1000); };
             }
         }
 
@@ -104,15 +104,15 @@ namespace Utili
                         var ShardData = GetShardData(-1, "Online");
                         ShardData.AddRange(GetShardData(-1, "Reserved"));
 
-                        ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(20));
+                        ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(10));
 
                         foreach (var OldData in ShardData)
                         {
+                            AllowOnlineNotification = false;
                             DeleteData(OldData.ID);
 
                             if (!OfflineShardIDs.Contains(OldData.ShardID) && Program.Ready)
                             {
-                                AllowOnlineNotification = false;
                                 OfflineShardIDs.Add(OldData.ShardID);
                                 await Program.Shards.GetUser(218613903653863427).SendMessageAsync(embed: GetEmbed("No", "Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nLots of love, shard {Program.Client.ShardId}."));
 
