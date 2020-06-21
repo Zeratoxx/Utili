@@ -29,7 +29,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.11.1";
+        public static string VersionNumber = "1.11.2";
 
         public static DiscordSocketClient Client;
         public static DiscordShardedClient Shards;

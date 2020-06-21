@@ -33,7 +33,12 @@ namespace Utili
                 SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
             }
 
+            // VCLinkEnabled effects only the after voice channel. The before voice channel is updated regardless of settings.
             bool VCLinkEnabled = GetData(User.Guild.Id.ToString(), "VCLink-Enabled", "True").Count > 0;
+            if (VCLinkEnabled)
+            {
+                if (GetData(User.Guild.Id.ToString(), $"VcLink-Exclude", After.VoiceChannel.Id.ToString()).Count > 0) VCLinkEnabled = false;
+            }
             if (VCLinkEnabled || GetData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Count > 0)
             {
                 #region Remove Before VC
@@ -92,7 +97,9 @@ namespace Utili
                 "help - Show this list\n" +
                 "about - Display feature information\n" +
                 "on - Enable the feature in the server\n" +
-                "off - Disable the feature in the server";
+                "off - Disable the feature in the server\n" +
+                "exclude [voice channel] - Exclude a voice channel from getting a text channel linked to it\n" +
+                "include [voice channel] - Reverse the effect of the exclude command\n";
 
         [Command("Help")]
         public async Task Help()
@@ -137,6 +144,29 @@ namespace Utili
             {
                 DeleteData(Context.Guild.Id.ToString(), "VCLink-Enabled");
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Voice channel linking disabled"));
+            }
+        }
+
+        [Command("Exclude")]
+        public async Task Exclude(IVoiceChannel Channel)
+        {
+            if(Permission(Context.User, Context.Channel))
+            {
+                DeleteData(Context.Guild.Id.ToString(), "VCLink-Exclude", Channel.Id.ToString());
+                SaveData(Context.Guild.Id.ToString(), "VCLink-Exclude", Channel.Id.ToString());
+
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Voice channel excluded", $"Text channels will no longer be made for the voice channel {Channel.Name}"));
+            }
+        }
+
+        [Command("Include"), Alias("Unexclude")]
+        public async Task Include(IVoiceChannel Channel)
+        {
+            if (Permission(Context.User, Context.Channel))
+            {
+                DeleteData(Context.Guild.Id.ToString(), "VCLink-Exclude", Channel.Id.ToString());
+
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Voice channel included", $"Text channels will no longer no longer be made for the voice channel {Channel.Name}\n**Note:** This command doesn't enable the feature, it only reverses the effect of vclink exclude. Use vclink on to enable the feature in your server."));
             }
         }
     }
