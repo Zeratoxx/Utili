@@ -627,6 +627,12 @@ namespace Utili
             SocketGuildUser User = UserParam as SocketGuildUser;
             VCLink VCLink = new VCLink();
             Task.Run(() => VCLink.Client_UserVoiceStateUpdated(User, Before, After));
+
+            if (After.VoiceChannel != null)
+            {
+                DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
+                SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
+            }
         }
 
         #endregion
