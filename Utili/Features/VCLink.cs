@@ -31,7 +31,7 @@ namespace Utili
             bool VCLinkEnabled = GetData(User.Guild.Id.ToString(), "VCLink-Enabled", "True").Count > 0;
             if (VCLinkEnabled)
             {
-                if (GetData(User.Guild.Id.ToString(), $"VCLink-Exclude", After.VoiceChannel.Id.ToString()).Count > 0) VCLinkEnabled = false;
+                try { if (GetData(User.Guild.Id.ToString(), $"VCLink-Exclude", After.VoiceChannel.Id.ToString()).Count > 0) VCLinkEnabled = false; } catch { }
             }
 
             #region Remove Before VC
