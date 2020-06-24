@@ -71,6 +71,8 @@ namespace Utili
                             var Temp = await User.Guild.CreateTextChannelAsync($"vc-{After.VoiceChannel.Name}");
                             SaveData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}", Temp.Id.ToString());
 
+                            await Task.Delay(500);
+
                             Channel = User.Guild.GetTextChannel(Temp.Id);
 
                             if (After.VoiceChannel.CategoryId.HasValue) await Channel.ModifyAsync(x => x.CategoryId = After.VoiceChannel.CategoryId.Value);

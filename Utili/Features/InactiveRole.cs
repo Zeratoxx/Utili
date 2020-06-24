@@ -70,7 +70,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count <= (GetMaxWorkers()-1)/2) Tasks.Add(ProcessAll());
+                if (Tasks.Count <= 1) Tasks.Add(ProcessAll());
             }
         }
 
@@ -102,7 +102,7 @@ namespace Utili
 
             SocketRole ImmuneRole = null;
             try { ImmuneRole = Guild.GetRole(ulong.Parse(GetData(Guild.Id.ToString(), "InactiveRole-ImmuneRole").First().Value)); }
-            catch { };
+            catch { return; };
 
             TimeSpan Threshold;
             try { Threshold = TimeSpan.Parse(GetData(Guild.Id.ToString(), "InactiveRole-Timespan").First().Value); }
@@ -111,6 +111,8 @@ namespace Utili
             string Mode = "Give";
             try { Mode = GetData(Guild.Id.ToString(), "InactiveRole-Mode").First().Value; }
             catch {}
+
+            HashSet<Data> ActivityData = GetDataHashSet(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
 
             foreach (var User in Guild.Users)
             {
@@ -125,8 +127,11 @@ namespace Utili
                         bool Inactive = false;
                         DateTime LastThing = DateTime.MinValue;
 
-                        try { LastThing = DateTime.Parse(GetData(Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers").First().Value); }
+                        try { LastThing = DateTime.Parse(ActivityData.Where(x => x.Type == $"InactiveRole-Timer-{User.Id}").First().Value); CacheQueries += 1; }
                         catch { ChangeRoles = false; }
+
+                        await Task.Delay(200);
+                        // Simulate normal database latency as to not overload the cpu.
 
                         if (ChangeRoles)
                         {

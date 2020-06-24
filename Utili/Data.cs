@@ -74,10 +74,15 @@ namespace Utili
                 CacheQueries += 1;
             }
 
-            if(!CacheOnly) RunNonQuery($"INSERT INTO {Table}(GuildID, DataType, DataValue) VALUES(@GuildID, @Type, @Value);", new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
+            if (!CacheOnly) RunNonQuery($"INSERT INTO {Table}(GuildID, DataType, DataValue) VALUES(@GuildID, @Type, @Value);", new (string, string)[] { ("GuildID", GuildID), ("Type", Type), ("Value", Value) });
         }
 
         public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
+        {
+            return GetDataHashSet(GuildID, Type, Value, IgnoreCache, Table).ToList();
+        }
+
+        public static HashSet<Data> GetDataHashSet(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
         {
             HashSet<Data> Data = new HashSet<Data>();
 
@@ -91,7 +96,7 @@ namespace Utili
                 if (Type != null) Data = Data.Where(x => x.Type == Type).ToHashSet();
                 if (Value != null) Data = Data.Where(x => x.Value == Value).ToHashSet();
                 CacheQueries += 1;
-                return Data.ToList();
+                return Data;
             }
 
             using (var connection = new MySqlConnection(ConnectionString))
@@ -145,7 +150,7 @@ namespace Utili
                 }
             }
 
-            return Data.ToList();
+            return Data;
         }
 
         public static List<Data> GetDataWhere(string Where)
