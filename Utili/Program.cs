@@ -42,7 +42,7 @@ namespace Utili
         public static bool FirstStart = true;
         public static int Restarts = 0;
 
-        public static bool Debug = false;
+        public static bool Debug = true;
         public static bool UseTest = false;
 
         DateTime LastStatsUpdate = DateTime.Now;
@@ -179,7 +179,6 @@ namespace Utili
 
             Client.Ready += Client_Ready;
             Client.Log += Client_Log;
-            Shards.Log += Client_Log;
 
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
 
@@ -322,10 +321,6 @@ namespace Utili
 
             await Client.SetGameAsync(".help", null, ActivityType.Watching);
 
-            if(Restarts == 0) await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Environment.MachineName}. This is the fist startup."));
-            else if(Restarts == 1) await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Environment.MachineName}. Since first startup {Restarts} restart has occurred."));
-            else await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Environment.MachineName}. Since first startup {Restarts} restarts have occurred."));
-
             Youtube = new YouTubeService(new BaseClientService.Initializer()
             {
                 ApplicationName = Config.Youtube.ApplicationName,
@@ -338,6 +333,19 @@ namespace Utili
             Task.Run(() => AntiProfane.AntiProfane_Ready());
 
             Ready = true;
+
+            await Task.Delay(1000);
+
+            string Machine = "Undefined Machine";
+            try { Machine = Environment.MachineName; } catch { }
+
+            try
+            {
+                if (Restarts == 0) await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. This is the fist startup."));
+                else if (Restarts == 1) await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restart has occurred."));
+                else await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restarts have occurred."));
+            }
+            catch(Exception e) { Console.WriteLine(e.Message + "\n" + e.StackTrace); }
         }
 
         #endregion
