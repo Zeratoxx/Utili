@@ -130,6 +130,12 @@ namespace Utili
         {
             if(Permission(Context.User, Context.Channel))
             {
+                if(Time > TimeSpan.FromDays(13) + TimeSpan.FromHours(23))
+                {
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"The maximum autopurge timespan is 13 days and 23 hours. (13d23h)"));
+                    return;
+                }
+
                 DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}");
                 SaveData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}", Time.ToString());
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge time", $"Messages older than {DisplayTimespan(Time)} will be deleted.\nThis setting is only for {Channel.Mention}.\nNote that messages are only purged every so often so this timer may not be completely accurate."));

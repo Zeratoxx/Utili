@@ -29,7 +29,7 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.11.2";
+        public static string VersionNumber = "1.11.3";
 
         public static DiscordSocketClient Client;
         public static DiscordShardedClient Shards;
@@ -37,8 +37,10 @@ namespace Utili
         public static YouTubeService Youtube;
         public static CancellationTokenSource ForceStop;
         public static int TotalShards = 0;
+        public static int ShardID = 0;
         public static bool Ready = false;
         public static bool FirstStart = true;
+        public static int Restarts = 0;
 
         public static bool Debug = false;
         public static bool UseTest = false;
@@ -100,6 +102,7 @@ namespace Utili
                     catch //Only if Client.ConnectionState errors
                     {
                         Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n");
+                        Restarts += 1;
                         Retry = true;
                         Thread.Sleep(5000);
                     }
@@ -123,9 +126,7 @@ namespace Utili
             }
             catch { }
 
-            
-
-            int ShardID = 0;
+            ShardID = 0;
             TotalShards = 1;
 
             if (!UseTest)
@@ -320,6 +321,11 @@ namespace Utili
             else Console.WriteLine($"\n[{DateTime.Now}] [Info] Skipped cache loading as this is not the first startup");
 
             await Client.SetGameAsync(".help", null, ActivityType.Watching);
+
+            if(Restarts == 0) await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Environment.MachineName}. This is the fist startup."));
+            else if(Restarts == 1) await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Environment.MachineName}. Since first startup {Restarts} restart has occurred."));
+            else await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Environment.MachineName}. Since first startup {Restarts} restarts have occurred."));
+
             Youtube = new YouTubeService(new BaseClientService.Initializer()
             {
                 ApplicationName = Config.Youtube.ApplicationName,

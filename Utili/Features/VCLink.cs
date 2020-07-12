@@ -146,7 +146,7 @@ namespace Utili
         }
 
         [Command("Exclude")]
-        public async Task Exclude(IVoiceChannel Channel)
+        public async Task Exclude([Remainder] IVoiceChannel Channel)
         {
             if(Permission(Context.User, Context.Channel))
             {
@@ -158,7 +158,7 @@ namespace Utili
         }
 
         [Command("Include"), Alias("Unexclude")]
-        public async Task Include(IVoiceChannel Channel)
+        public async Task Include([Remainder] IVoiceChannel Channel)
         {
             if (Permission(Context.User, Context.Channel))
             {

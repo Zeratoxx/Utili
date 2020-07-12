@@ -180,7 +180,7 @@ namespace Utili
         public async Task Vote(bool Include = true)
         {
             string Content = "";
-            List<Data> Data = GetData(Type: "VoteLink");
+            List<Data> Data = GetData(Type: "VoteLink", IgnoreCache: true);
             Data = Data.OrderBy(x => x.ID).ToList();
             foreach(var Link in Data)
             {

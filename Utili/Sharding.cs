@@ -105,18 +105,18 @@ namespace Utili
                         ShardData.AddRange(GetShardData(-1, "Reserved"));
 
                         ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(10));
+                        // ShardData is now all shards which were active but are now not sending a heartbeat.
 
                         foreach (var OldData in ShardData)
                         {
                             AllowOnlineNotification = false;
                             DeleteData(OldData.ID);
 
-                            if (!OfflineShardIDs.Contains(OldData.ShardID) && Program.Ready)
+                            if (!OfflineShardIDs.Contains(OldData.ShardID))
                             {
                                 OfflineShardIDs.Add(OldData.ShardID);
-                                await Program.Shards.GetUser(218613903653863427).SendMessageAsync(embed: GetEmbed("No", "Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nLots of love, shard {Program.Client.ShardId}."));
-
-                                SendEmail(Config.EmailInfo.Username, $"Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nLots of love, shard {Program.Client.ShardId}");
+                                SendEmail(Config.EmailInfo.Username, $"Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nSent by {Program.Client.ShardId}");
+                                await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("No", "Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nSent by {Program.Client.ShardId}."));
                             }
                         }
 
@@ -124,9 +124,9 @@ namespace Utili
                         {
                             foreach (int OfflineShardID in OfflineShardIDs)
                             {
-                                if (ShardData.Where(x => x.ShardID == OfflineShardID).Count() > 0)
+                                if (GetShardData(OfflineShardID, "Online").Count > 0)
                                 {
-                                    await Program.Shards.GetUser(218613903653863427).SendMessageAsync(embed: GetEmbed("Yes", "Shard online", $"Shard {OfflineShardID} has sent a heartbeat.\nLots of love, shard {Program.Client.ShardId}."));
+                                    await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("Yes", "Shard online", $"Shard {OfflineShardID} has sent a heartbeat.\nSent from shard {Program.Client.ShardId}."));
                                     OfflineShardIDs.Remove(OfflineShardID);
                                 }
                             }
