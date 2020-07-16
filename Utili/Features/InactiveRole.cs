@@ -60,7 +60,7 @@ namespace Utili
 
         public async Task Run()
         {
-            StartRunthrough = new System.Timers.Timer(60000);
+            StartRunthrough = new System.Timers.Timer(30000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
         }
@@ -70,7 +70,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count <= 1) Tasks.Add(ProcessAll());
+                if (Tasks.Count <= 3) Tasks.Add(ProcessAll());
             }
         }
 
@@ -102,7 +102,7 @@ namespace Utili
 
             SocketRole ImmuneRole = null;
             try { ImmuneRole = Guild.GetRole(ulong.Parse(GetData(Guild.Id.ToString(), "InactiveRole-ImmuneRole").First().Value)); }
-            catch { return; };
+            catch {};
 
             TimeSpan Threshold;
             try { Threshold = TimeSpan.Parse(GetData(Guild.Id.ToString(), "InactiveRole-Timespan").First().Value); }
@@ -130,7 +130,7 @@ namespace Utili
                         try { LastThing = DateTime.Parse(ActivityData.Where(x => x.Type == $"InactiveRole-Timer-{User.Id}").First().Value); CacheQueries += 1; }
                         catch { ChangeRoles = false; }
 
-                        await Task.Delay(200);
+                        await Task.Delay(50);
                         // Simulate normal database latency as to not overload the cpu.
 
                         if (ChangeRoles)

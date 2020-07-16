@@ -24,7 +24,7 @@ namespace Utili
         {
             if (GetData(User.Guild.Id.ToString(), "RolePersist-Enabled", "True").Count > 0)
             {
-                foreach (Data Data in GetData(User.Guild.Id.ToString(), $"RolePersist-Role-{User.Id}"))
+                foreach (Data Data in GetData(User.Guild.Id.ToString(), $"RolePersist-Role-{User.Id}", IgnoreCache: true))
                 {
                     try
                     {
@@ -43,7 +43,7 @@ namespace Utili
             {
                 foreach(var Role in User.Roles)
                 {
-                    SaveData(User.Guild.Id.ToString(), $"RolePersist-Role-{User.Id}", Role.Id.ToString());
+                    SaveData(User.Guild.Id.ToString(), $"RolePersist-Role-{User.Id}", Role.Id.ToString(), IgnoreCache: true);
                 }
             }
         }

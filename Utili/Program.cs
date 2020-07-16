@@ -29,20 +29,22 @@ namespace Utili
 {
     class Program
     {
-        public static string VersionNumber = "1.11.3";
+        public static string VersionNumber = "1.11.4";
 
         public static DiscordSocketClient Client;
         public static DiscordShardedClient Shards;
         private CommandService Commands;
         public static YouTubeService Youtube;
         public static CancellationTokenSource ForceStop;
+        public static System.Timers.Timer ReliabilityTimer;
+        public static System.Timers.Timer LatencyTimer;
         public static int TotalShards = 0;
         public static int ShardID = 0;
         public static bool Ready = false;
         public static bool FirstStart = true;
         public static int Restarts = 0;
 
-        public static bool Debug = true;
+        public static bool Debug = false;
         public static bool UseTest = false;
 
         DateTime LastStatsUpdate = DateTime.Now;
@@ -94,8 +96,25 @@ namespace Utili
                             if (e.InnerException == null) Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n\n");
                             else Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n{e.InnerException.Message}\n\nRestarting...\n\n");
 
-                            Retry = true;
+                            try { ForceStop.Cancel(); } catch { }
+
+                            try { ReliabilityTimer.Stop(); } catch { }
+                            try { ReliabilityTimer.Dispose(); } catch { }
+
+                            try { Client.StopAsync(); } catch { };
+                            try { Client.Dispose(); } catch { };
+
+                            try { Autopurge.StartRunthrough.Stop(); } catch { }
+                            try { InactiveRole.StartRunthrough.Stop(); } catch { }
+
+                            try { LatencyTimer.Stop(); } catch { }
+                            try { LatencyTimer.Dispose(); } catch { }
+
+                            Ready = false;
+
                             Thread.Sleep(5000);
+
+                            Retry = true;
                         }
                         else Console.WriteLine($"[{DateTime.Now}] [Exception] {e.Message}");
                     }
@@ -194,7 +213,7 @@ namespace Utili
             await Shards.LoginAsync(TokenType.Bot, Token);
             await Shards.StartAsync();
 
-            var LatencyTimer = new System.Timers.Timer(10000);
+            LatencyTimer = new System.Timers.Timer(10000);
             LatencyTimer.Elapsed += UpdateLatency;
             LatencyTimer.Start();
 
@@ -206,7 +225,7 @@ namespace Utili
 
             ForceStop = new CancellationTokenSource();
 
-            var ReliabilityTimer = new System.Timers.Timer(5000);
+            ReliabilityTimer = new System.Timers.Timer(5000);
             ReliabilityTimer.Elapsed += CheckReliability;
             ReliabilityTimer.Start();
 
@@ -312,7 +331,7 @@ namespace Utili
                 foreach (var Guild in Client.Guilds) ValidGuildIDs.Add(Guild.Id.ToString());
 
                 Console.WriteLine($"[{DateTime.Now}] [Info] Loading cache...");
-                Cache = GetData(IgnoreCache: true).Where(x => ValidGuildIDs.Contains(x.GuildID)).ToHashSet();
+                Cache = GetData(IgnoreCache: true).Where(x => ValidGuildIDs.Contains(x.GuildID)).Where(x => !x.Type.Contains("RolePersist-Role-")).ToHashSet();
                 Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items loaded.");
 
                 FirstStart = false;
@@ -334,18 +353,29 @@ namespace Utili
 
             Ready = true;
 
-            await Task.Delay(1000);
-
-            string Machine = "Undefined Machine";
-            try { Machine = Environment.MachineName; } catch { }
-
-            try
+            _ = Task.Run(async () =>
             {
-                if (Restarts == 0) await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. This is the fist startup."));
-                else if (Restarts == 1) await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restart has occurred."));
-                else await Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restarts have occurred."));
-            }
-            catch(Exception e) { Console.WriteLine(e.Message + "\n" + e.StackTrace); }
+                await Task.Delay(10000);
+
+                string Machine = "Undefined Machine";
+                try { Machine = Environment.MachineName; } catch { }
+                if (Machine == null) Machine = "Undefined Machine";
+
+                try
+                {
+                    SocketGuild Guild = Shards.GetGuild(682882628168450079);
+                    SocketTextChannel Channel = Guild.GetTextChannel(731790673728241665);
+                    Console.WriteLine(Restarts);
+                    Console.WriteLine(VersionNumber);
+                    Console.WriteLine(Machine);
+                    if (Restarts == 0) await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. This is the fist startup."));
+                    else if (Restarts == 1) await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restart has occurred."));
+                    else await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restarts have occurred."));
+                }
+                catch (Exception e) { Console.WriteLine(e.Message + "\n" + e.StackTrace); }
+            });
+
+            
         }
 
         #endregion
