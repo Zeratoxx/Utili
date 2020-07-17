@@ -1,20 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
-
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
-using static Utili.Json;
 
 namespace Utili
 {
@@ -93,7 +84,7 @@ namespace Utili
                             catch { try { await DRole.ModifyAsync(x => x.Permissions = new GuildPermissions()); } catch { } };
                         }
 
-                        #endregion
+                        #endregion Clear
 
                         #region Channels
 
@@ -112,7 +103,7 @@ namespace Utili
                             await Channel2.AddPermissionOverwriteAsync(Bot, OverwritePermissions.AllowAll(Channel2));
                         }
 
-                        #endregion
+                        #endregion Channels
 
                         #region Human Roles
 
@@ -122,15 +113,15 @@ namespace Utili
                             await User.AddRoleAsync(Role);
                         }
 
-                        #endregion
+                        #endregion Human Roles
                     }
                 }
-                else 
+                else
                 {
                     string Prefix = ".";
                     try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
 
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Warning", $"This command will **DELETE ALL CHANNELS AND ROLES**.\nThis **CAN NOT BE UNDONE**.\n\nThis command re-formats the server into a server for testing bots.\nUse {Prefix}TestServerReset Confirm to continue.\n[Support Discord](https://discord.gg/WsxqABZ)")); 
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Warning", $"This command will **DELETE ALL CHANNELS AND ROLES**.\nThis **CAN NOT BE UNDONE**.\n\nThis command re-formats the server into a server for testing bots.\nUse {Prefix}TestServerReset Confirm to continue.\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 }
             }
         }
@@ -147,7 +138,7 @@ namespace Utili
         [Command("AddVoteLink")]
         public async Task AddVoteLink(string Title, string Content)
         {
-            if(OwnerPermission(Context.User, Context.Channel))
+            if (OwnerPermission(Context.User, Context.Channel))
             {
                 SaveData(Title, "VoteLink", Content);
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Vote link saved", $"[{Title}]({Content})"));
@@ -181,7 +172,6 @@ namespace Utili
             {
                 SaveData(GuildID, Type, Value);
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Saved data"));
-
             }
         }
 
@@ -193,7 +183,7 @@ namespace Utili
                 Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated via force crash command.");
                 Program.Ready = false;
                 Program.ForceStop.Cancel();
-            }  
+            }
         }
     }
 }

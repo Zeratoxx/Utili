@@ -1,30 +1,19 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-
-using static Utili.Data;
-using static Utili.Logic;
-using static Utili.SendMessage;
-using static Utili.Json;
-
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
-using Microsoft.CodeAnalysis.CSharp;
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using static Utili.Json;
+using static Utili.Logic;
+using static Utili.SendMessage;
 
 namespace Utili
 {
-    class Rosyln
+    internal class Rosyln
     {
-        
     }
 
     public class RosylnCommands : ModuleBase<SocketCommandContext>
@@ -46,7 +35,7 @@ namespace Utili
                 try
                 {
                     var Evaluation = await CSharpScript.EvaluateAsync<object>($"{Code}", ScriptOptions.Default.WithReferences(References).WithImports(Imports), globals: globals);
-                    if(Evaluation == null) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed"));
+                    if (Evaluation == null) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed"));
                     else await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed", Evaluation.ToString()));
                 }
                 catch (CompilationErrorException e)
@@ -70,24 +59,31 @@ namespace Utili
                     case "filebot":
                         Token = Config.OtherBotTokens.FileBot;
                         break;
+
                     case "hubbot":
                         Token = Config.OtherBotTokens.HubBot;
                         break;
+
                     case "thoriumcube":
                         Token = Config.OtherBotTokens.ThoriumCube;
                         break;
+
                     case "unwyre":
                         Token = Config.OtherBotTokens.Unwyre;
                         break;
+
                     case "pingplus":
                         Token = Config.OtherBotTokens.PingPlus;
                         break;
+
                     case "imgonly":
                         Token = Config.OtherBotTokens.ImgOnly;
                         break;
+
                     case "shards":
                         Token = Config.OtherBotTokens.Shards;
                         break;
+
                     default:
                         await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid bot"));
                         return;
@@ -104,12 +100,12 @@ namespace Utili
 
                 await TempClient.LoginAsync(TokenType.Bot, Token);
                 await TempClient.StartAsync();
-                
+
                 await Task.Delay(2000);
 
-                Microsoft.CodeAnalysis.MetadataReference[] References = { 
-                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.WebSocket.dll")), 
-                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.Core.dll")), 
+                Microsoft.CodeAnalysis.MetadataReference[] References = {
+                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.WebSocket.dll")),
+                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.Core.dll")),
                     Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/System.Linq.dll"))
                     };
 
@@ -145,5 +141,4 @@ namespace Utili
         public SocketCommandContext Context;
         public DiscordSocketClient Client;
     }
-    
 }

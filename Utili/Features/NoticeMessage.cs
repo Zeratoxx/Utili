@@ -1,26 +1,18 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Threading;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
-using static Utili.SendMessage;
 using static Utili.Program;
-using static Utili.Json;
+using static Utili.SendMessage;
 
 namespace Utili
 {
-    class NoticeMessage
+    internal class NoticeMessage
     {
         private static List<(ulong, int)> MessageList = new List<(ulong, int)>();
 
@@ -29,7 +21,7 @@ namespace Utili
             var Message = MessageParam as SocketUserMessage;
             var Context = new SocketCommandContext(Program.Client, Message);
 
-            if(Message.Author.Id == Client.CurrentUser.Id)
+            if (Message.Author.Id == Client.CurrentUser.Id)
             {
                 await Task.Delay(5000);
                 var NewMSG = await Context.Channel.GetMessageAsync(Message.Id);
@@ -43,7 +35,7 @@ namespace Utili
             MessageList.RemoveAll(x => x.Item1 == Context.Channel.Id);
             MessageList.Add((Context.Channel.Id, ThisNumber));
 
-            if(GetData($"{Context.Guild.Id}", $"Notices-Channel", $"{Context.Channel.Id}").Count > 0)
+            if (GetData($"{Context.Guild.Id}", $"Notices-Channel", $"{Context.Channel.Id}").Count > 0)
             {
                 TimeSpan Delay = TimeSpan.FromSeconds(15);
                 try { Delay = TimeSpan.Parse(GetData($"{Context.Guild.Id}", $"Notices-Delay-{Context.Channel.Id}").First().Value); }
@@ -123,7 +115,7 @@ namespace Utili
 
                 EmbedBuilder Embed = new EmbedBuilder();
                 if (Title != "") Embed.WithAuthor(new EmbedAuthorBuilder().WithName(Title));
-                if(Title == "" && ImageURL != "") Embed.WithAuthor(new EmbedAuthorBuilder().WithName("Title required for image!"));
+                if (Title == "" && ImageURL != "") Embed.WithAuthor(new EmbedAuthorBuilder().WithName("Title required for image!"));
                 if (ImageURL != "") Embed.WithAuthor(Embed.Author.WithIconUrl(ImageURL));
 
                 if (Footer != "") Embed.WithFooter(new EmbedFooterBuilder().WithText(Footer));
@@ -191,16 +183,16 @@ namespace Utili
                 }
                 await Channel.DeleteMessagesAsync(ToDelete);
 
-                #endregion
+                #endregion Delete Similar
             }
             else
             {
-                try 
-                { 
+                try
+                {
                     Data MessageVar = GetData($"{Channel.Guild.Id}", $"Notices-Message-{Channel.Id}").First();
                     IMessage Message = await Channel.GetMessageAsync(ulong.Parse(MessageVar.Value));
                     await Message.DeleteAsync();
-                } 
+                }
                 catch { return; }
             }
         }
@@ -252,14 +244,14 @@ namespace Utili
         [Command("SetTitle"), Alias("Title")]
         public async Task SetTitle(ITextChannel Channel, [Remainder] string Content)
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
-                if(Content.ToLower() == "none")
+                if (Content.ToLower() == "none")
                 {
                     DeleteData($"{Context.Guild.Id}", $"Notices-Title-{Channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Title removed"));
                 }
-                else if(Content.Length <= 500)
+                else if (Content.Length <= 500)
                 {
                     DeleteData($"{Context.Guild.Id}", $"Notices-Title-{Channel.Id}");
                     SaveData($"{Context.Guild.Id}", $"Notices-Title-{Channel.Id}", $"{Base64Encode(Content)}");
@@ -326,7 +318,7 @@ namespace Utili
                 Color Colour;
                 try { Colour = new Color(R, G, B); }
                 catch { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid colour", "[Pick colour](https://www.rapidtables.com/web/color/RGB_Color.html)\n[Support Discord](https://discord.gg/WsxqABZ)")); return; }
-                    
+
                 DeleteData($"{Context.Guild.Id}", $"Notices-Colour-{Channel.Id}");
                 SaveData($"{Context.Guild.Id}", $"Notices-Colour-{Channel.Id}", $"{R} {G} {B}");
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Colour set", "Preview this colour in this embed.").ToEmbedBuilder().WithColor(Colour).Build());
@@ -433,7 +425,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if(Delay <= TimeSpan.FromMinutes(30) && Delay >= TimeSpan.FromSeconds(1))
+                if (Delay <= TimeSpan.FromMinutes(30) && Delay >= TimeSpan.FromSeconds(1))
                 {
                     DeleteData($"{Context.Guild.Id}", $"Notices-Delay-{Channel.Id}");
                     SaveData($"{Context.Guild.Id}", $"Notices-Delay-{Channel.Id}", $"{Delay}");
@@ -475,7 +467,7 @@ namespace Utili
         [Command("Duplicate"), Alias("Move", "Copy")]
         public async Task Duplicate(ITextChannel From, ITextChannel To)
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
                 if (BotHasPermissions(To, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
@@ -523,7 +515,7 @@ namespace Utili
                     await NM.Update(To);
 
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Notice duplicated", $"Notice settings for {From.Mention} were copied to {To.Mention}"));
-                } 
+                }
             }
         }
 
@@ -539,7 +531,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Channel, new ChannelPermission[]{ ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
                     DeleteData($"{Context.Guild.Id}", $"Notices-Channel", $"{Channel.Id}");
                     SaveData($"{Context.Guild.Id}", $"Notices-Channel", $"{Channel.Id}");

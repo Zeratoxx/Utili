@@ -1,16 +1,10 @@
-﻿using Discord;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.IO;
 
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Utili
 {
-    class Json
+    internal class Json
     {
         public static Configuration Config;
 
@@ -50,7 +44,7 @@ namespace Utili
         }
     }
 
-    class Configuration
+    internal class Configuration
     {
         public string Token { get; set; } = "";
         public string TestToken { get; set; } = "";
@@ -64,7 +58,7 @@ namespace Utili
         public string DiscordBoatsKey { get; set; } = "";
     }
 
-    class DatabaseInfo
+    internal class DatabaseInfo
     {
         public string Server { get; set; } = "";
         public string Database { get; set; } = "";
@@ -72,13 +66,13 @@ namespace Utili
         public string Password { get; set; } = "";
     }
 
-    class YoutubeInfo
+    internal class YoutubeInfo
     {
         public string ApplicationName { get; set; } = "";
         public string Key { get; set; } = "";
     }
 
-    class OtherBotTokens
+    internal class OtherBotTokens
     {
         public string FileBot { get; set; } = "";
         public string HubBot { get; set; } = "";
@@ -89,7 +83,7 @@ namespace Utili
         public string Shards { get; set; } = "";
     }
 
-    class EmailLogin
+    internal class EmailLogin
     {
         public string Username { get; set; } = "";
         public string Password { get; set; } = "";

@@ -3,16 +3,12 @@ using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using static Utili.SendMessage;
-using static Utili.Json;
 using static Utili.Data;
-using System.Threading.Tasks;
-using System.Diagnostics;
+using static Utili.SendMessage;
 
 namespace Utili
 {
-    class Logic
+    internal class Logic
     {
         public static bool Permission(SocketUser User, ISocketMessageChannel Channel, bool CrossGuild = false)
         {
@@ -20,7 +16,7 @@ namespace Utili
             if (user.GuildPermissions.ManageGuild == true) return true;
             else
             {
-                if(!CrossGuild) Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission to use that command"));
+                if (!CrossGuild) Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission to use that command"));
                 else Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission in that guild to use that command"));
                 return false;
             }
@@ -88,7 +84,7 @@ namespace Utili
                 if (Time.Hours > 0) String += $"{Time.Hours}h, ";
                 if (Time.Minutes > 0) String += $"{Time.Minutes}m, ";
             }
-            
+
             return String.Remove(String.Length - 2);
         }
 
@@ -122,7 +118,7 @@ namespace Utili
 
             bool HasPermissions = true;
             List<string> Errors = new List<string>();
-            foreach(ChannelPermission Permission in Permissions)
+            foreach (ChannelPermission Permission in Permissions)
             {
                 if (!User.GetPermissions(Channel as IGuildChannel).Has(Permission))
                 {
@@ -162,7 +158,7 @@ namespace Utili
             List<string> Errors = new List<string>();
             foreach (GuildPermission Permission in Permissions)
             {
-                if(!User.GuildPermissions.Has(Permission))
+                if (!User.GuildPermissions.Has(Permission))
                 {
                     HasPermissions = false;
                     Errors.Add($"`{Permission}`");

@@ -1,31 +1,18 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Text;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Discord.Webhook;
-
+using Discord.WebSocket;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
-using static Utili.Json;
-using Discord.Rest;
-using Google.Apis.YouTube.v3.Data;
-using System.Net.Sockets;
 
 namespace Utili
 {
-    class Mirroring
+    internal class Mirroring
     {
         public async Task Mirroring_MessageReceived(SocketMessage MessageParam)
         {
@@ -37,7 +24,7 @@ namespace Utili
             var Data = GetData(Context.Guild.Id.ToString(), "Mirroring-Link");
             if (Data.Count == 0) return;
 
-            foreach(var Value in Data)
+            foreach (var Value in Data)
             {
                 try
                 {
@@ -48,7 +35,7 @@ namespace Utili
                         SocketGuild ToGuild = Context.Guild;
 
                         // If the link is in this guild only
-                        if(!Value.Value.Split(" -> ").Last().Contains("G"))
+                        if (!Value.Value.Split(" -> ").Last().Contains("G"))
                         {
                             ToChannel = Context.Guild.GetTextChannel(ulong.Parse(Value.Value.Split(" -> ").Last()));
                         }
@@ -199,7 +186,7 @@ namespace Utili
                     return;
                 }
 
-                if(Permission(ToGuild.GetUser(Context.User.Id), Context.Channel, true))
+                if (Permission(ToGuild.GetUser(Context.User.Id), Context.Channel, true))
                 {
                     if (BotHasPermissions(To, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageWebhooks }, Context.Channel))
                     {
@@ -250,7 +237,7 @@ namespace Utili
             {
                 var Data = GetData(Type: "Mirroring-Link");
                 int Links = 0;
-                foreach(var Value in Data)
+                foreach (var Value in Data)
                 {
                     if (Value.Value.Contains(Channel.Id.ToString()))
                     {
@@ -265,7 +252,7 @@ namespace Utili
         [Command("AllowPublic")]
         public async Task AllowPublic(ITextChannel Channel)
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
                 DeleteData(Context.Guild.Id.ToString(), "Mirroring-Public", Channel.Id.ToString());
                 SaveData(Context.Guild.Id.ToString(), "Mirroring-Public", Channel.Id.ToString());

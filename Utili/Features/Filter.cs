@@ -1,29 +1,20 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Threading;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-
-using static Utili.Data;
-using static Utili.Logic;
-using static Utili.SendMessage;
-using static Utili.Program;
-using static Utili.Filter;
-using static Utili.Json;
-using System.Net.Http;
+using System;
+using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using static Utili.Data;
+using static Utili.Filter;
+using static Utili.Logic;
+using static Utili.Program;
+using static Utili.SendMessage;
 
 namespace Utili
 {
-    class Filter
+    internal class Filter
     {
         public async Task Filter_MessageReceived(SocketMessage MessageParam)
         {
@@ -197,18 +188,23 @@ namespace Utili
                             case "?":
                                 Current = "";
                                 break;
+
                             case "#":
                                 Current = "";
                                 break;
+
                             case "&":
                                 Current = "";
                                 break;
+
                             case "=":
                                 Finished = true;
                                 break;
+
                             case "/":
                                 Finished = true;
                                 break;
+
                             default:
                                 Current += Character.ToString();
                                 break;
@@ -269,7 +265,7 @@ namespace Utili
         [Command("Images")]
         public async Task Images(ITextChannel Channel)
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
                 if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
@@ -277,7 +273,7 @@ namespace Utili
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Filter enabled", $"Only allowing messages with images in {Channel.Mention}"));
                     await Task.Delay(500);
                     SaveData(Context.Guild.Id.ToString(), "Filter-Images", Channel.Id.ToString());
-                }  
+                }
             }
         }
 

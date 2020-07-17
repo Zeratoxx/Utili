@@ -1,26 +1,17 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
+﻿using Discord.Commands;
+using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Net;
-using System.Threading;
-using System.Text;
-
-using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
-using static Utili.SendMessage;
 using static Utili.Program;
-using static Utili.Json;
+using static Utili.SendMessage;
 
 namespace Utili
 {
-    class SpamFilter
+    internal class SpamFilter
     {
         public static List<(ulong, DateTime)> SpamTracker = new List<(ulong, DateTime)>();
 
@@ -87,7 +78,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if(Threshold > 1 & Threshold < 21)
+                if (Threshold > 1 & Threshold < 21)
                 {
                     DeleteData(Context.Guild.Id.ToString(), "SpamFilter-Threshold");
                     SaveData(Context.Guild.Id.ToString(), "SpamFilter-Threshold", Threshold.ToString());

@@ -1,24 +1,15 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-
+using System.Linq;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
-using static Utili.Json;
 
 namespace Utili
 {
-    class RolePersist
+    internal class RolePersist
     {
         public async Task UserJoin(SocketGuildUser User)
         {
@@ -39,9 +30,9 @@ namespace Utili
 
         public async Task UserLeft(SocketGuildUser User)
         {
-            if(GetData(User.Guild.Id.ToString(), "RolePersist-Enabled", "True").Count > 0)
+            if (GetData(User.Guild.Id.ToString(), "RolePersist-Enabled", "True").Count > 0)
             {
-                foreach(var Role in User.Roles)
+                foreach (var Role in User.Roles)
                 {
                     SaveData(User.Guild.Id.ToString(), $"RolePersist-Role-{User.Id}", Role.Id.ToString(), IgnoreCache: true);
                 }
@@ -83,9 +74,9 @@ namespace Utili
         [Command("On"), Alias("Enable")]
         public async Task On()
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
-                if(BotHasPermissions(Context.Guild, new GuildPermission[] { GuildPermission.ManageRoles }, Context.Channel))
+                if (BotHasPermissions(Context.Guild, new GuildPermission[] { GuildPermission.ManageRoles }, Context.Channel))
                 {
                     DeleteData(Context.Guild.Id.ToString(), "RolePersist-Enabled");
                     SaveData(Context.Guild.Id.ToString(), "RolePersist-Enabled", "True");

@@ -1,20 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Data.SqlClient;
+﻿using Discord.Commands;
 using MySql.Data.MySqlClient;
-using System.Threading.Tasks;
-using Discord.Commands;
-
-using static Utili.Json;
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Web.Http.Results;
-using System.Net.Mail;
 using System.Net;
+using System.Net.Mail;
+using System.Threading.Tasks;
+using static Utili.Json;
 
 namespace Utili
 {
-    class Data
+    internal class Data
     {
         public static HashSet<Data> Cache;
 
@@ -47,7 +43,7 @@ namespace Utili
                         connection.Open();
                         command.CommandText = Command;
 
-                        if(Values != null)
+                        if (Values != null)
                         {
                             foreach (var Value in Values)
                             {
@@ -328,7 +324,7 @@ namespace Utili
         }
     }
 
-    class MessageData
+    internal class MessageData
     {
         public int ID;
         public string GuildID;

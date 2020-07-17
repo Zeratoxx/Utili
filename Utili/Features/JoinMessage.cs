@@ -9,7 +9,7 @@ using static Utili.SendMessage;
 
 namespace Utili
 {
-    class JoinMessage
+    internal class JoinMessage
     {
         public async Task JoinMessage_UserJoined(SocketGuildUser User)
         {
@@ -165,9 +165,6 @@ namespace Utili
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Title set"));
                 }
                 else { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Title can not exceed 500 characters")); }
-
-
-
             }
         }
 
@@ -343,7 +340,7 @@ namespace Utili
         [Command("Channel")]
         public async Task Channel(string DM)
         {
-            if(DM.ToLower() == "dm")
+            if (DM.ToLower() == "dm")
             {
                 if (Permission(Context.User as SocketGuildUser, Context.Channel))
                 {

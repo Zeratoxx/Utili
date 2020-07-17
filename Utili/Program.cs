@@ -1,33 +1,26 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
-using System.Threading.Tasks;
-using System.Diagnostics;
-
-using Discord;
-using Discord.WebSocket;
+﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
+using DiscordBotsList.Api;
+using Google.Apis.Services;
+using Google.Apis.YouTube.v3;
+using System;
 using System.Collections.Generic;
-
-using static Utili.SendMessage;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Json;
-
-using System.Threading;
-using System.Linq;
-using System.Runtime.InteropServices;
-using DiscordBotsList.Api;
-using System.Net.Http;
-using System.Net;
-using Google.Apis.YouTube.v3;
-using Google.Apis.Services;
-using System.Net.Http.Headers;
-using Renci.SshNet;
-using System.Net.Mail;
+using static Utili.SendMessage;
 
 namespace Utili
 {
-    class Program
+    internal class Program
     {
         public static string VersionNumber = "1.11.4";
 
@@ -47,11 +40,11 @@ namespace Utili
         public static bool Debug = false;
         public static bool UseTest = false;
 
-        DateTime LastStatsUpdate = DateTime.Now;
+        private DateTime LastStatsUpdate = DateTime.Now;
 
         #region System
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) & UseTest == false)
             {
@@ -121,7 +114,6 @@ namespace Utili
                     catch //Only if Client.ConnectionState errors
                     {
                         Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n");
-                        Restarts += 1;
                         Retry = true;
                         Thread.Sleep(5000);
                     }
@@ -150,7 +142,6 @@ namespace Utili
 
             if (!UseTest)
             {
-
                 TotalShards = await Sharding.GetTotalShards();
                 Console.WriteLine($"[{DateTime.Now}] [Sharding] Waiting for a shard to become available (0-{TotalShards - 1})");
                 ShardID = await Sharding.GetShardID();
@@ -180,7 +171,6 @@ namespace Utili
                 LogLevel = LogSeverity.Debug,
             });
 
-            
             Client.MessageReceived += Commence_MessageReceived;
             Client.MessageDeleted += Commence_MessageDelete;
             Client.MessageUpdated += Commence_MessageUpdated;
@@ -324,6 +314,7 @@ namespace Utili
         private async Task Client_Ready()
         {
             Console.WriteLine($"[{DateTime.Now}] [Info] Logged in as bot user {Client.CurrentUser} ({Client.CurrentUser.Id})");
+            Restarts += 1;
 
             if (FirstStart)
             {
@@ -336,7 +327,7 @@ namespace Utili
 
                 FirstStart = false;
             }
-            else Console.WriteLine($"\n[{DateTime.Now}] [Info] Skipped cache loading as this is not the first startup");
+            else Console.WriteLine($"[{DateTime.Now}] [Info] Skipped cache loading as this is not the first startup.");
 
             await Client.SetGameAsync(".help", null, ActivityType.Watching);
 
@@ -361,24 +352,27 @@ namespace Utili
                 try { Machine = Environment.MachineName; } catch { }
                 if (Machine == null) Machine = "Undefined Machine";
 
-                try
+                bool Success = false;
+                while (!Success)
                 {
-                    SocketGuild Guild = Shards.GetGuild(682882628168450079);
-                    SocketTextChannel Channel = Guild.GetTextChannel(731790673728241665);
-                    Console.WriteLine(Restarts);
-                    Console.WriteLine(VersionNumber);
-                    Console.WriteLine(Machine);
-                    if (Restarts == 0) await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. This is the fist startup."));
-                    else if (Restarts == 1) await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restart has occurred."));
-                    else await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restarts have occurred."));
-                }
-                catch (Exception e) { Console.WriteLine(e.Message + "\n" + e.StackTrace); }
-            });
+                    try
+                    {
+                        SocketGuild Guild = Shards.GetGuild(682882628168450079);
+                        SocketTextChannel Channel = Guild.GetTextChannel(731790673728241665);
 
-            
+                        if (Restarts == 0) await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. This is the fist startup."));
+                        else if (Restarts == 1) await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restart has occurred."));
+                        else await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restarts have occurred."));
+
+                        Success = true;
+                        Console.WriteLine($"[{DateTime.Now}] [Info] Sent check-in to log channel.");
+                    }
+                    catch { await Task.Delay(5000); }
+                }
+            });
         }
 
-        #endregion
+        #endregion System
 
         #region Receive
 
@@ -397,15 +391,14 @@ namespace Utili
                 return;
             }
 
-            #endregion
+            #endregion Delete System Messages
 
             #region System
 
             var Message = MessageParam as SocketUserMessage;
             var Context = new SocketCommandContext(Client, Message);
 
-
-            #endregion
+            #endregion System
 
             var GuildUser = Context.User as SocketGuildUser;
             UserStatus Status = GuildUser.Status;
@@ -417,7 +410,7 @@ namespace Utili
                 return;
             }
 
-            #endregion
+            #endregion Reject DMs
 
             #region Command Handler
 
@@ -434,7 +427,6 @@ namespace Utili
 
                     if (Message.HasStringPrefix(Prefix, ref ArgPos) || Message.HasMentionPrefix(Client.CurrentUser, ref ArgPos))
                     {
-
                         try
                         {
                             var Result = await Commands.ExecuteAsync(Context, ArgPos, null);
@@ -455,7 +447,8 @@ namespace Utili
 
                                     sw.Close();
 
-                                    #endregion
+                                    #endregion Command Logging
+
                                     #region Command Error Logging
 
                                     if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
@@ -465,9 +458,8 @@ namespace Utili
 
                                     sw.Close();
 
-                                    #endregion
+                                    #endregion Command Error Logging
                                 }
-
                             }
                             else
                             {
@@ -481,7 +473,7 @@ namespace Utili
 
                                 sw.Close();
 
-                                #endregion
+                                #endregion Command Logging
                             }
                         }
                         catch
@@ -492,7 +484,7 @@ namespace Utili
                 }
             }
 
-            #endregion
+            #endregion Command Handler
 
             #region Start other scripts
 
@@ -522,10 +514,10 @@ namespace Utili
 
             if (LastStatsUpdate < DateTime.Now.AddMinutes(-10)) Task.Run(() => UpdateStats());
 
-            #endregion
+            #endregion Start other scripts
         }
 
-        #endregion
+        #endregion Receive
 
         #region Update Stats
 
@@ -541,9 +533,10 @@ namespace Utili
             var Me = await API.GetMeAsync();
             try { await Me.UpdateStatsAsync(Shards.Guilds.Count); } catch { }
 
-            #endregion
+            #endregion top.gg
 
             #region Bots For Discord
+
             HttpClient HttpClient = new HttpClient();
             HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.BotsForDiscordKey);
 
@@ -553,7 +546,8 @@ namespace Utili
             });
 
             try { await HttpClient.PostAsync("https://botsfordiscord.com/api/bot/655155797260501039", Content); } catch { };
-            #endregion
+
+            #endregion Bots For Discord
 
             #region Bots On Discord
 
@@ -565,7 +559,8 @@ namespace Utili
             });
 
             try { await HttpClient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/655155797260501039/guilds", Content); } catch { };
-            #endregion
+
+            #endregion Bots On Discord
 
             #region Discord Boats
 
@@ -578,10 +573,10 @@ namespace Utili
 
             try { await HttpClient.PostAsync("https://discord.boats/api/bot/655155797260501039", Content); } catch { };
 
-            #endregion
+            #endregion Discord Boats
         }
 
-        #endregion
+        #endregion Update Stats
 
         #region User Join
 
@@ -605,7 +600,7 @@ namespace Utili
             await User.AddRoleAsync(Role);
         }
 
-        #endregion
+        #endregion User Join
 
         #region Client Join
 
@@ -625,7 +620,7 @@ namespace Utili
             }
         }
 
-        #endregion
+        #endregion Client Join
 
         #region User Leave
 
@@ -641,7 +636,8 @@ namespace Utili
             RolePersist RolePersist = new RolePersist();
             Task.Run(() => RolePersist.UserLeft(User));
         }
-        #endregion
+
+        #endregion User Leave
 
         #region Client Leave
 
@@ -657,7 +653,7 @@ namespace Utili
             DeleteData(Guild.Id.ToString());
         }
 
-        #endregion
+        #endregion Client Leave
 
         #region Voice Updated
 
@@ -679,7 +675,7 @@ namespace Utili
             }
         }
 
-        #endregion
+        #endregion Voice Updated
 
         #region Channel Created
 
@@ -694,7 +690,7 @@ namespace Utili
             Task.Run(() => MessageLogs.MessageLogs_ChannelCreated(Channel));
         }
 
-        #endregion
+        #endregion Channel Created
 
         #region Messages
 
@@ -716,6 +712,6 @@ namespace Utili
             Task.Run(() => Votes.Votes_ReactionAdded(Message, Channel, Reaction));
         }
 
-        #endregion
+        #endregion Messages
     }
 }

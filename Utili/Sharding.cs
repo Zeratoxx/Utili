@@ -1,29 +1,15 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
-using System.Threading.Tasks;
-
-using Discord;
-using Discord.WebSocket;
-using Discord.Commands;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
-
-using static Utili.SendMessage;
+using System.Linq;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Json;
-
-using System.Threading;
-using System.Linq;
-using System.Runtime.InteropServices;
-using DiscordBotsList.Api;
-using System.Net.Http;
-using System.Net;
-using MySql.Data.MySqlClient;
-using System.Net.Mail;
+using static Utili.SendMessage;
 
 namespace Utili
 {
-    class Sharding
+    internal class Sharding
     {
         public static async Task<int> GetShardID()
         {
@@ -78,6 +64,8 @@ namespace Utili
                     ShardData.Reverse();
                     ShardData.RemoveAt(0);
 
+                    await Task.Delay(500);
+
                     foreach (var OldData in ShardData)
                     {
                         DeleteData(OldData.ID);
@@ -107,7 +95,7 @@ namespace Utili
                         ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(10));
                         // ShardData is now all shards which were active but are now not sending a heartbeat.
 
-                        foreach (var OldData in ShardData)
+                        foreach (var OldData in ShardData.Where(x => x.ShardID != Program.ShardID))
                         {
                             AllowOnlineNotification = false;
                             DeleteData(OldData.ID);
@@ -115,8 +103,8 @@ namespace Utili
                             if (!OfflineShardIDs.Contains(OldData.ShardID))
                             {
                                 OfflineShardIDs.Add(OldData.ShardID);
-                                SendEmail(Config.EmailInfo.Username, $"Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nSent by {Program.Client.ShardId}");
-                                await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("No", "Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nSent by {Program.Client.ShardId}."));
+                                SendEmail(Config.EmailInfo.Username, $"Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nSent by shard {Program.Client.ShardId}");
+                                await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("No", "Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nSent by shard {Program.Client.ShardId}."));
                             }
                         }
 
@@ -126,7 +114,7 @@ namespace Utili
                             {
                                 if (GetShardData(OfflineShardID, "Online").Count > 0)
                                 {
-                                    await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("Yes", "Shard online", $"Shard {OfflineShardID} has sent a heartbeat.\nSent from shard {Program.Client.ShardId}."));
+                                    await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("Yes", "Shard online", $"Shard {OfflineShardID} has sent a heartbeat.\nSent by shard {Program.Client.ShardId}."));
                                     OfflineShardIDs.Remove(OfflineShardID);
                                 }
                             }
@@ -185,7 +173,6 @@ namespace Utili
                     if (Command.Substring(Command.Length - 5) == " AND ") Command = Command.Substring(0, Command.Length - 5);
                     Command += ");";
 
-
                     command.CommandText = Command;
                     MySqlDataReader DataReader = null;
                     try
@@ -213,7 +200,7 @@ namespace Utili
 
         public static void SaveData(int ShardID, string Type, DateTime? Heartbeat = null)
         {
-            if(Heartbeat.HasValue) RunNonQuery($"INSERT INTO Utili_Shards(ShardID, Type, Heartbeat) VALUES(@ShardID, @Type, @Heartbeat);", new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type), ("Heartbeat", ToSQLTime(Heartbeat.Value)) });
+            if (Heartbeat.HasValue) RunNonQuery($"INSERT INTO Utili_Shards(ShardID, Type, Heartbeat) VALUES(@ShardID, @Type, @Heartbeat);", new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type), ("Heartbeat", ToSQLTime(Heartbeat.Value)) });
             else RunNonQuery($"INSERT INTO Utili_Shards(ShardID, Type) VALUES(@ShardID, @Type);", new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type) });
         }
 
@@ -236,7 +223,7 @@ namespace Utili
             if (Command.Substring(Command.Length - 5) == " AND ") Command = Command.Substring(0, Command.Length - 5);
             Command += ");";
 
-            if(Heartbeat.HasValue) RunNonQuery(Command, new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type), ("Heartbeat", ToSQLTime(Heartbeat.Value)) });
+            if (Heartbeat.HasValue) RunNonQuery(Command, new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type), ("Heartbeat", ToSQLTime(Heartbeat.Value)) });
             else RunNonQuery(Command, new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type) });
         }
 
@@ -246,9 +233,7 @@ namespace Utili
         }
     }
 
-
-
-    class ShardData
+    internal class ShardData
     {
         public int ID { get; }
         public int ShardID { get; }

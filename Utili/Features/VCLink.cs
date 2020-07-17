@@ -1,27 +1,15 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Threading;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-
+using System.Linq;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
-using static Utili.Program;
-using static Utili.Json;
-using Discord.Rest;
 
 namespace Utili
 {
-    class VCLink
+    internal class VCLink
     {
         public async Task Client_UserVoiceStateUpdated(SocketGuildUser User, SocketVoiceState Before, SocketVoiceState After)
         {
@@ -36,7 +24,7 @@ namespace Utili
 
             #region Remove Before VC
 
-            if(Before.VoiceChannel != null)
+            if (Before.VoiceChannel != null)
             {
                 try
                 {
@@ -51,7 +39,7 @@ namespace Utili
                 catch { };
             }
 
-            #endregion
+            #endregion Remove Before VC
 
             if (VCLinkEnabled)
             {
@@ -60,8 +48,8 @@ namespace Utili
                 ulong AFKID = 0;
                 try { AFKID = User.Guild.AFKChannel.Id; } catch { }
 
-                if (After.VoiceChannel != null) if(After.VoiceChannel.Id != AFKID)
-                {
+                if (After.VoiceChannel != null) if (After.VoiceChannel.Id != AFKID)
+                    {
                         SocketTextChannel Channel;
                         try { Channel = User.Guild.GetTextChannel(ulong.Parse(GetData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").First().Value)); }
                         catch
@@ -81,9 +69,9 @@ namespace Utili
                         }
 
                         await Channel.AddPermissionOverwriteAsync(User, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
-                }
+                    }
 
-                #endregion
+                #endregion Add After VC
             }
         }
     }
@@ -148,7 +136,7 @@ namespace Utili
         [Command("Exclude")]
         public async Task Exclude([Remainder] IVoiceChannel Channel)
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
                 DeleteData(Context.Guild.Id.ToString(), "VCLink-Exclude", Channel.Id.ToString());
                 SaveData(Context.Guild.Id.ToString(), "VCLink-Exclude", Channel.Id.ToString());

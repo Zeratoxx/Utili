@@ -1,29 +1,20 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Threading;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
-using static Utili.SendMessage;
 using static Utili.Program;
-using static Utili.Json;
-using Renci.SshNet.Messages;
+using static Utili.SendMessage;
 
 namespace Utili
 {
-    class Autopurge
+    internal class Autopurge
     {
-        List<Task> Tasks = new List<Task>();
+        private List<Task> Tasks = new List<Task>();
 
         public static System.Timers.Timer StartRunthrough;
 
@@ -128,9 +119,9 @@ namespace Utili
         [Command("Time"), Alias("Timespan")]
         public async Task Time(ITextChannel Channel, TimeSpan Time)
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
-                if(Time > TimeSpan.FromDays(13) + TimeSpan.FromHours(23))
+                if (Time > TimeSpan.FromDays(13) + TimeSpan.FromHours(23))
                 {
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"The maximum autopurge timespan is 13 days and 23 hours. (13d23h)"));
                     return;
@@ -147,13 +138,13 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if(Mode.ToLower() == "all")
+                if (Mode.ToLower() == "all")
                 {
                     DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}");
                     SaveData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "All");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge mode", $"All messages (except pinned messages) will be deleted."));
                 }
-                else if(Mode.ToLower() == "bots" || Mode.ToLower() == "bot")
+                else if (Mode.ToLower() == "bots" || Mode.ToLower() == "bot")
                 {
                     DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}");
                     SaveData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots");
@@ -172,7 +163,7 @@ namespace Utili
                     DeleteData(Context.Guild.Id.ToString(), "Autopurge-Channel", Channel.Id.ToString());
                     SaveData(Context.Guild.Id.ToString(), "Autopurge-Channel", Channel.Id.ToString());
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Autopurge enabled", $"Autopurge enabled in {Channel.Mention}"));
-                }  
+                }
             }
         }
 

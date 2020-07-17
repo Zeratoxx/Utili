@@ -1,27 +1,18 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Text;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-
+using System;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
-using static Utili.Json;
 
 namespace Utili
 {
-    class MessageLogs
+    internal class MessageLogs
     {
         public async Task MessageLogs_MessageReceived(SocketMessage MessageParam)
         {
@@ -30,14 +21,14 @@ namespace Utili
 
             if (Context.User.IsBot || Context.User.IsWebhook) return;
 
-            if(GetData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Context.Channel.Id.ToString()).Count() > 0)
+            if (GetData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Context.Channel.Id.ToString()).Count() > 0)
             {
                 await SaveMessageAsync(Context);
             }
 
             // Every so often, delete logs older than 30 days to comply with Discord's rules
             Random Random = new Random();
-            if(Random.Next(0, 25) == 10) RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE(Timestamp < '{ToSQLTime(DateTime.Now - TimeSpan.FromDays(30))}')");
+            if (Random.Next(0, 25) == 10) RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE(Timestamp < '{ToSQLTime(DateTime.Now - TimeSpan.FromDays(30))}')");
         }
 
         public async Task MessageLogs_MessageDeleted(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
@@ -48,7 +39,7 @@ namespace Utili
                 MessageData Message = await GetMessageAsync(PartialMessage.Id);
                 string Content = Decrypt(Message.EncryptedContent, ulong.Parse(Message.GuildID), ulong.Parse(Message.ChannelID));
 
-                if(Message.ChannelID == Channel.Id.ToString())
+                if (Message.ChannelID == Channel.Id.ToString())
                 {
                     RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE ID = {Message.ID}");
                     var LogChannel = Guild.GetTextChannel(ulong.Parse(GetData(Guild.Id.ToString(), "MessageLogs-LogChannel").First().Value));
@@ -110,7 +101,7 @@ namespace Utili
         public async Task MessageLogs_ChannelCreated(SocketChannel ChannelParam)
         {
             SocketTextChannel Channel = ChannelParam as SocketTextChannel;
-            if(GetData(Channel.Guild.Id.ToString(), "MessageLogs-DefaultOn").Count > 0)
+            if (GetData(Channel.Guild.Id.ToString(), "MessageLogs-DefaultOn").Count > 0)
             {
                 SaveData(Channel.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString());
             }
@@ -200,22 +191,21 @@ namespace Utili
         [Command("Channel")]
         public async Task LogChannel(ITextChannel Channel)
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
-                if(BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages }, Context.Channel))
+                if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages }, Context.Channel))
                 {
                     DeleteData(Context.Guild.Id.ToString(), "MessageLogs-LogChannel");
                     SaveData(Context.Guild.Id.ToString(), "MessageLogs-LogChannel", Channel.Id.ToString());
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set message logs channel", $"Deleted and edited messages in channels where this feature is turned on will be logged in {Channel.Mention}"));
                 }
-                
             }
         }
 
         [Command("On")]
         public async Task On(SocketTextChannel Channel)
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
                 if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel }, Context.Channel))
                 {
@@ -250,7 +240,7 @@ namespace Utili
                     }
 
                     Typing.Dispose();
-                    if(Failed == 0) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Now logging all channels", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!"));
+                    if (Failed == 0) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Now logging all channels", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!"));
                     else if (Failed == 1) await Context.Channel.SendMessageAsync(embed: GetEmbed("Neutral", "Now logging most channels", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!\nI don't have the `ReadMessages` permission in {Failed} channel"));
                     else await Context.Channel.SendMessageAsync(embed: GetEmbed("Neutral", "Now logging most channels", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!\nI don't have the `ReadMessages` permission in {Failed} channels"));
                 }

@@ -1,16 +1,12 @@
-﻿using System;
-using System.IO;
+﻿using Discord.Commands;
+using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static Utili.Json;
-
-using Discord;
-using Discord.Commands;
 
 namespace Utili
 {
-    class TimespanTypeReader : TypeReader
+    internal class TimespanTypeReader : TypeReader
     {
         private static Regex TimeSpanRegex { get; } = new Regex(@"^(?<days>\d+d)?(?<hours>\d{1,2}h)?(?<minutes>\d{1,2}m)?(?<seconds>\d{1,2}s)?$", RegexOptions.Compiled);
         private static string[] RegexGroups { get; } = new string[] { "days", "hours", "minutes", "seconds" };

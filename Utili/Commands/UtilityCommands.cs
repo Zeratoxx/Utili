@@ -1,21 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using Discord.WebSocket;
-
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
-using static Utili.Json;
-using Discord.Rest;
 
 namespace Utili
 {
@@ -41,7 +33,7 @@ namespace Utili
         public async Task Prune(int Amount)
         {
             Amount += 1; //Account for the command message
-            if(MessagePermission(Context.User, Context.Channel, Context.Channel))
+            if (MessagePermission(Context.User, Context.Channel, Context.Channel))
             {
                 if (BotHasPermissions(Context.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.ManageMessages }, Context.Channel))
                 {
@@ -187,9 +179,7 @@ namespace Utili
             }
         }
 
-        
-
-        #endregion
+        #endregion Prune
 
         #region JoinRole
 
@@ -224,7 +214,7 @@ namespace Utili
         [Command("JoinRole")]
         public async Task JoinRole(string none)
         {
-            if(Permission(Context.User, Context.Channel))
+            if (Permission(Context.User, Context.Channel))
             {
                 if (none.ToLower() == "none")
                 {
@@ -238,10 +228,9 @@ namespace Utili
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 }
             }
-            
         }
 
-        #endregion
+        #endregion JoinRole
 
         #region React
 
@@ -277,9 +266,9 @@ namespace Utili
                 return;
             }
 
-            if(MessagePermission(Context.User, Channel, Context.Channel))
+            if (MessagePermission(Context.User, Channel, Context.Channel))
             {
-                if(BotHasPermissions(Message.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.AddReactions }, Context.Channel))
+                if (BotHasPermissions(Message.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.AddReactions }, Context.Channel))
                 {
                     IEmote Emote = null;
                     if (GetGuildEmote(ReactionString, Context.Guild) != null) Emote = GetGuildEmote(ReactionString, Context.Guild);
@@ -335,7 +324,7 @@ namespace Utili
             }
         }
 
-        #endregion
+        #endregion React
 
         #region WhoHas
 
@@ -346,7 +335,7 @@ namespace Utili
             int TotalPages = int.Parse(Math.Ceiling(decimal.Parse(Users.Count.ToString()) / decimal.Parse("50")).ToString());
             Users = Users.Skip((Page - 1) * 50).Take(50).ToList();
 
-            if((Page < 1 || Page > TotalPages) && TotalPages != 0) { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid page")); return; }
+            if ((Page < 1 || Page > TotalPages) && TotalPages != 0) { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid page")); return; }
 
             string Output = "";
             foreach (var User in Users) Output += $"{User.Mention}\n";
@@ -356,6 +345,6 @@ namespace Utili
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed($"Users with @{Role.Name}", Output, $"Page {Page} of {TotalPages}"));
         }
 
-        #endregion
+        #endregion WhoHas
     }
 }

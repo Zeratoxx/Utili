@@ -1,24 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+﻿using Discord.Commands;
 using System.Linq;
-using System.Web;
-using System.Net;
-using System.Text;
-
-using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-
-using Newtonsoft.Json;
-
-using static Utili.Data;
-using static Utili.Logic;
+using System.Threading.Tasks;
 using static Utili.SendMessage;
-using static Utili.Json;
-using DiscordBotsList.Api;
-using Newtonsoft.Json.Linq;
 
 namespace Utili
 {

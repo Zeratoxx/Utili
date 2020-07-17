@@ -1,25 +1,18 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
-
-using Newtonsoft.Json;
-
-using static Utili.Data;
-using static Utili.Logic;
-using static Utili.SendMessage;
-using static Utili.Json;
 using DiscordBotsList.Api;
 using Newtonsoft.Json.Linq;
-using MySql.Data.MySqlClient.Memcached;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
+using static Utili.Data;
+using static Utili.Json;
+using static Utili.Logic;
+using static Utili.SendMessage;
 
 namespace Utili
 {
@@ -145,7 +138,7 @@ namespace Utili
                 "[Bot Invite](https://discordapp.com/api/oauth2/authorize?client_id=655155797260501039&permissions=8&scope=bot)\n" +
                 "[Github](https://github.com/D230Daniel/Utili)\n" +
                 "[Donate](https://www.paypal.me/230Daniel)";
-                
+
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed($"Utili v{Program.VersionNumber}", Content));
         }
 
@@ -182,7 +175,7 @@ namespace Utili
             string Content = "";
             List<Data> Data = GetData(Type: "VoteLink", IgnoreCache: true);
             Data = Data.OrderBy(x => x.ID).ToList();
-            foreach(var Link in Data)
+            foreach (var Link in Data)
             {
                 Content += $"[{Link.GuildID}]({Link.Value})\n";
             }
@@ -221,7 +214,7 @@ namespace Utili
                         }
                     }
 
-                    #endregion
+                    #endregion Discord Bots List (top.gg)
 
                     #region Bots for Discord
 
@@ -264,7 +257,7 @@ namespace Utili
                         }
                     }
 
-                    #endregion
+                    #endregion Bots for Discord
                 }
                 catch
                 {
@@ -286,8 +279,8 @@ namespace Utili
                     }
                 }
             }
-            
-            if(Include) await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Vote for me!", Content, $"{Votes} votes from {TopVoters.Count} unique voters"));
+
+            if (Include) await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Vote for me!", Content, $"{Votes} votes from {TopVoters.Count} unique voters"));
             else await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Vote for me!", Content));
         }
 
@@ -319,7 +312,7 @@ namespace Utili
         {
             if (Context.Guild.Owner.Id == Context.User.Id)
             {
-                if(Confirm.ToLower() == "confirm")
+                if (Confirm.ToLower() == "confirm")
                 {
                     DeleteData(Context.Guild.Id.ToString());
                     RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE GuildID = '{Context.Guild.Id}'");

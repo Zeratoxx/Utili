@@ -1,28 +1,20 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Threading;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
-using static Utili.SendMessage;
 using static Utili.Program;
-using static Utili.Filter;
-using System.Net.Http;
-using System.Text.RegularExpressions;
+using static Utili.SendMessage;
 
 namespace Utili
 {
-    class AntiProfane
+    internal class AntiProfane
     {
         public static Dictionary<string, string> LeetRules = new Dictionary<string, string>();
         public static List<string> BadWords;
@@ -33,7 +25,7 @@ namespace Utili
             var Message = MessageParam as SocketUserMessage;
             var Context = new SocketCommandContext(Client, Message);
 
-            if(GetData(Context.Guild.Id.ToString(), "AntiProfane-Enabled", "True").Count > 0)
+            if (GetData(Context.Guild.Id.ToString(), "AntiProfane-Enabled", "True").Count > 0)
             {
                 if (await IsProfaneAsync(Context.Message.Content))
                 {

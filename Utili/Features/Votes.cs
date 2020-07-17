@@ -1,25 +1,15 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Net;
-using System.Text;
-
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-
+using System.Linq;
+using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
-using static Utili.Json;
-using Google.Apis.YouTube.v3.Data;
 
 namespace Utili
 {
-    class Votes
+    internal class Votes
     {
         public async Task Votes_MessageReceived(SocketMessage MessageParam)
         {
@@ -35,7 +25,7 @@ namespace Utili
                 string Mode = "All";
                 try { Mode = GetData(Context.Guild.Id.ToString(), "Votes-Mode").First().Value; } catch { }
                 try { Mode = GetData(Context.Guild.Id.ToString(), $"Votes-Mode-{Context.Channel.Id}").First().Value; } catch { }
-                
+
                 if (Mode == "Attachments")
                 {
                     if (Message.Attachments.Count > 0 || Message.Content.Contains("youtube.com/watch?v=") || Message.Content.Contains("discordapp.com/attachment") || Message.Content.Contains("youtu.be/")) React = true;
@@ -58,9 +48,8 @@ namespace Utili
                     Task Task = Message.AddReactionAsync(Emote);
 
                     while (!Task.IsCompleted) await Task.Delay(20);
-                    if(!Task.IsCompletedSuccessfully) Emote = GetDiscordEmote("⬆️");
+                    if (!Task.IsCompletedSuccessfully) Emote = GetDiscordEmote("⬆️");
                     await Message.AddReactionAsync(Emote);
-
 
                     if (GetGuildEmote(DownName, Context.Guild) != null) Emote = GetGuildEmote(DownName, Context.Guild);
                     else Emote = GetDiscordEmote(Base64Decode(DownName));
@@ -103,7 +92,7 @@ namespace Utili
             if (Reaction.Emote.Name != UpEmote.Name && Reaction.Emote.Name != DownEmote.Name) return;
 
             bool ReactedUp = false;
-            foreach(var RUsr in await Message.GetReactionUsersAsync(UpEmote, 99999).ToListAsync()) if (RUsr.Where(x => x.Id == Reaction.User.Value.Id).Count() > 0) ReactedUp = true;
+            foreach (var RUsr in await Message.GetReactionUsersAsync(UpEmote, 99999).ToListAsync()) if (RUsr.Where(x => x.Id == Reaction.User.Value.Id).Count() > 0) ReactedUp = true;
 
             bool ReactedDown = false;
             foreach (var RUsr in await Message.GetReactionUsersAsync(DownEmote, 99999).ToListAsync()) if (RUsr.Where(x => x.Id == Reaction.User.Value.Id).Count() > 0) ReactedDown = true;
@@ -152,7 +141,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if(EmoteName.ToLower() == "reset")
+                if (EmoteName.ToLower() == "reset")
                 {
                     DeleteData(Context.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}");
                     DeleteData(Context.Guild.Id.ToString(), $"Votes-UpName"); // Previously channel id was not specified so this is for backwards-compatibility.
@@ -166,7 +155,7 @@ namespace Utili
                     else Emote = GetDiscordEmote(EmoteName);
 
                     DeleteData(Context.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}");
-                    if(Guild) SaveData(Context.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}", EmoteName);
+                    if (Guild) SaveData(Context.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}", EmoteName);
                     else SaveData(Context.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}", Base64Encode(EmoteName));
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set upvote emote", $"The upvote emote for {Channel.Mention} has been set to {Emote}\n\n**Note:** If the emote does not display properly in this message, it's not working. Use the actual emote in your command or specify reset to go back to the defaul emote."));
                 }
@@ -212,11 +201,13 @@ namespace Utili
                         SaveData(Context.Guild.Id.ToString(), $"Votes-Mode-{Channel.Id}", "All");
                         await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mode set", "All messages will be reacted to"));
                         break;
+
                     case "attachments":
                         DeleteData(Context.Guild.Id.ToString(), $"Votes-Mode-{Channel.Id}");
                         SaveData(Context.Guild.Id.ToString(), $"Votes-Mode-{Channel.Id}", "Attachments");
                         await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mode set", "Only messages with attachments or youtube links will be reacted to"));
                         break;
+
                     default:
                         await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid mode", "all - React to all messages\nattachments - React to messages with attachments or youtube links"));
                         break;
@@ -229,7 +220,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if(BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.AddReactions }, Context.Channel))
+                if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.AddReactions }, Context.Channel))
                 {
                     DeleteData(Context.Guild.Id.ToString(), "Votes-Channel", Channel.Id.ToString());
                     SaveData(Context.Guild.Id.ToString(), "Votes-Channel", Channel.Id.ToString());
