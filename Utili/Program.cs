@@ -22,7 +22,7 @@ namespace Utili
 {
     internal class Program
     {
-        public static string VersionNumber = "1.11.4";
+        public static string VersionNumber = "1.11.6";
 
         public static DiscordSocketClient Client;
         public static DiscordShardedClient Shards;
@@ -35,7 +35,7 @@ namespace Utili
         public static int ShardID = 0;
         public static bool Ready = false;
         public static bool FirstStart = true;
-        public static int Restarts = 0;
+        public static int Restarts = -1;
 
         public static bool Debug = false;
         public static bool UseTest = false;
@@ -285,18 +285,18 @@ namespace Utili
 
         private async void CheckReliability(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
+            if (Client.ConnectionState != ConnectionState.Connected)
             {
                 try { await Task.Delay(10000, ForceStop.Token); } catch { }
 
-                if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
+                if (Client.ConnectionState != ConnectionState.Connected)
                 {
                     if (ForceStop.IsCancellationRequested || !Ready)
                     {
                         return;
                     }
 
-                    Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{Client.ConnectionState} {Client.Latency}]");
+                    Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect [{Client.ConnectionState} @ {Client.Latency}ms]");
                     Ready = false;
                     ForceStop.Cancel();
                 }

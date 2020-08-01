@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,10 +39,18 @@ namespace Utili
 
                 if (Delete)
                 {
+                    foreach (string Word in Message.Content.Split(" "))
+                    {
+                        if (await CheckImageAsync(Word)) Delete = false;
+                    }
+                }
+
+                if (Delete)
+                {
                     await Context.Message.DeleteAsync();
                     if (Context.User.Id != Program.Client.CurrentUser.Id)
                     {
-                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with image files (jpg, png)"));
+                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with image files (jpg, png) and instagram images."));
                         Thread.Sleep(5000);
                         await SentMessage.DeleteAsync();
                     }
@@ -95,6 +104,7 @@ namespace Utili
                     foreach (string Word in Message.Content.Split(" "))
                     {
                         if (await CheckVideoAsync(Word)) Delete = false;
+                        if (await CheckImageAsync(Word)) Delete = false;
                     }
                 }
 
@@ -103,7 +113,7 @@ namespace Utili
                     await Context.Message.DeleteAsync();
                     if (Context.User.Id != Program.Client.CurrentUser.Id)
                     {
-                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with media files (png, jpg, mp4, mov, gif) or youtube links"));
+                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with media files (png, jpg, mp4, mov, gif), youtube links and instagram images."));
                         Thread.Sleep(5000);
                         await SentMessage.DeleteAsync();
                     }
@@ -225,6 +235,22 @@ namespace Utili
             }
             return false;
         }
+
+        public static async Task<bool> CheckImageAsync(string Input)
+        {
+            if (!Input.ToLower().Contains("instagram.com/p/")) return false;
+
+            try
+            {
+                WebClient WebClient = new WebClient();
+                string Content = WebClient.DownloadString(Input);
+
+                if (Content.Contains("Sorry, this page isn't available.") && Content.Contains("The link you followed may be broken, or the page may have been removed.")) return false;
+
+                return true;
+            }
+            catch { return false; }
+        }
     }
 
     [Group("Filter")]
@@ -233,9 +259,9 @@ namespace Utili
         public static string HelpContent =
                 "help - Show this list\n" +
                 "about - Display feature information\n" +
-                "images [channel] - Allow only image files in a channel\n" +
+                "images [channel] - Allow only image files and instagram images in a channel\n" +
                 "videos [channel] - Allow only video files and youtube links in a channel\n" +
-                "media [channel] - Allow only image files, video files, gif files and youtube links in a channel\n" +
+                "media [channel] - Allow only image files, video files, gif files, youtube links and instagram images in a channel\n" +
                 "music [channel] - Allow only music files, spotify links, youtube links and soundcloud links in a channel\n" +
                 "attachments [channel] - Allow only messages with attachments in a channel\n" +
                 "off [channel] - Disable any filters in a channel";

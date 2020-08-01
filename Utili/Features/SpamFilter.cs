@@ -20,22 +20,19 @@ namespace Utili
             var Message = MessageParam as SocketUserMessage;
             var Context = new SocketCommandContext(Client, Message);
 
-            if (Context.User.Id == Program.Client.CurrentUser.Id || Context.User.IsBot) return;
+            if (Context.User.IsBot || Context.User.IsWebhook) return;
 
             if (GetData(Context.Guild.Id.ToString(), "SpamFilter-Enabled", "True").Count > 0)
             {
                 int Threshold = 5;
                 try { Threshold = int.Parse(GetData(Context.Guild.Id.ToString(), "SpamFilter-Threshold").First().Value); } catch { }
 
-                if (!Context.User.IsBot & !Context.User.IsWebhook)
-                {
-                    SpamTracker.Add((Context.User.Id, Context.Message.Timestamp.DateTime));
+                SpamTracker.Add((Context.User.Id, DateTime.Now));
 
-                    SpamTracker.RemoveAll(x => x.Item2.CompareTo(DateTime.Now.AddSeconds(-7)) < 0);
-                    if (SpamTracker.Where(x => x.Item1 == Context.User.Id).Count() >= Threshold)
-                    {
-                        await Context.Message.DeleteAsync();
-                    }
+                SpamTracker.RemoveAll(x => x.Item2 < DateTime.Now - TimeSpan.FromSeconds(7));
+                if (SpamTracker.Where(x => x.Item1 == Context.User.Id).Count() >= Threshold)
+                {
+                    await Context.Message.DeleteAsync();
                 }
             }
         }

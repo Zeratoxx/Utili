@@ -70,7 +70,7 @@ namespace Utili
 
                             if (BotsOnly) MessagesToDelete.RemoveAll(x => !x.Author.IsBot);
                             MessagesToDelete.RemoveAll(x => DateTime.Now - x.Timestamp.LocalDateTime < TimeSpan);
-                            MessagesToDelete.RemoveAll(x => DateTime.Now - x.Timestamp.LocalDateTime >= TimeSpan.FromHours(335)); // 14 days - 1 hr
+                            MessagesToDelete.RemoveAll(x => DateTime.Now - x.Timestamp.LocalDateTime >= TimeSpan.FromHours(335.75)); // 13d 23h 45m
                             MessagesToDelete.RemoveAll(x => x.IsPinned);
 
                             await Channel.DeleteMessagesAsync(MessagesToDelete);
