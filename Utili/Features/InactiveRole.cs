@@ -103,7 +103,7 @@ namespace Utili
             try { Mode = GetData(Guild.Id.ToString(), "InactiveRole-Mode").First().Value; }
             catch { }
 
-            HashSet<Data> ActivityData = GetDataList(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
+            List<Data> ActivityData = GetDataList(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
 
             foreach (var User in Guild.Users)
             {

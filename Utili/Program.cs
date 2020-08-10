@@ -204,7 +204,7 @@ namespace Utili
             await Shards.LoginAsync(TokenType.Bot, Token);
             await Shards.StartAsync();
 
-            LatencyTimer = new System.Timers.Timer(10000);
+            LatencyTimer = new System.Timers.Timer(15000);
             LatencyTimer.Elapsed += UpdateLatency;
             LatencyTimer.Start();
 
