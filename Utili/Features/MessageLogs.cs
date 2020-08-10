@@ -21,13 +21,27 @@ namespace Utili
 
             if (Context.User.IsBot || Context.User.IsWebhook) return;
 
+            Random Random = new Random();
+
             if (GetData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Context.Channel.Id.ToString()).Count() > 0)
             {
                 await SaveMessageAsync(Context);
+
+                // Every so often, delete message log channel entries for non-existant channels
+                if (Random.Next(0, 10) == 5)
+                {
+                    var ChannelData = GetData(Context.Guild.Id.ToString(), "MessageLogs-Channel");
+                    foreach(Data Channel in ChannelData)
+                    {
+                        if(!Context.Guild.TextChannels.Select(x => x.Id).Contains(ulong.Parse(Channel.Value)) && Context.Guild.TextChannels.Count > 0)
+                        {
+                            DeleteData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Value);
+                        }
+                    }
+                }
             }
 
             // Every so often, delete logs older than 30 days to comply with Discord's rules
-            Random Random = new Random();
             if (Random.Next(0, 25) == 10) RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE(Timestamp < '{ToSQLTime(DateTime.Now - TimeSpan.FromDays(30))}')");
         }
 

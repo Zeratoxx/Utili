@@ -12,7 +12,7 @@ namespace Utili
 {
     internal class Data
     {
-        public static HashSet<Data> Cache;
+        public static List<Data> Cache;
 
         public static string ConnectionString = "";
 
@@ -75,24 +75,27 @@ namespace Utili
 
         public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
         {
-            return GetDataHashSet(GuildID, Type, Value, IgnoreCache, Table).ToList();
+            return GetDataList(GuildID, Type, Value, IgnoreCache, Table);
         }
 
-        public static HashSet<Data> GetDataHashSet(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
+        public static List<Data> GetDataList(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
         {
-            HashSet<Data> Data = new HashSet<Data>();
+            List<Data> Data = new List<Data>();
 
             try { if (!Program.Client.Guilds.Select(x => x.Id).Contains(ulong.Parse(GuildID))) IgnoreCache = true; }
             catch { }
 
             if (!IgnoreCache)
             {
-                Data = Cache;
-                if (GuildID != null) Data = Data.Where(x => x.GuildID == GuildID).ToHashSet();
-                if (Type != null) Data = Data.Where(x => x.Type == Type).ToHashSet();
-                if (Value != null) Data = Data.Where(x => x.Value == Value).ToHashSet();
                 CacheQueries += 1;
-                return Data;
+                if (GuildID != null && Type != null && Value != null) return Cache.Where(x => x.GuildID == GuildID && x.Type == Type && x.Value == Value).ToList();
+                else if(Type != null && Value != null) return Cache.Where(x => x.Type == Type && x.Value == Value).ToList();
+                else if(GuildID != null && Value != null) return Cache.Where(x => x.GuildID == GuildID && x.Value == Value).ToList();
+                else if(GuildID != null && Type != null) return Cache.Where(x => x.GuildID == GuildID && x.Type == Type).ToList();
+                else if(Value != null) return Cache.Where(x => x.Value == Value).ToList();
+                else if(GuildID != null) return Cache.Where(x => x.GuildID == GuildID).ToList();
+                else if (Type != null) return Cache.Where(x => x.Type == Type).ToList();
+                else return Cache;
             }
 
             using (var connection = new MySqlConnection(ConnectionString))
@@ -196,11 +199,8 @@ namespace Utili
 
             if (!IgnoreCache)
             {
-                HashSet<Data> ToDelete = Cache;
-                if (GuildID != null) ToDelete = ToDelete.Where(x => x.GuildID == GuildID).ToHashSet();
-                if (Type != null) ToDelete = ToDelete.Where(x => x.Type == Type).ToHashSet();
-                if (Value != null) ToDelete = ToDelete.Where(x => x.Value == Value).ToHashSet();
-                foreach (Data Item in ToDelete) { Cache.Remove(Item); CacheQueries += 1; }
+                List<Data> ToDelete = GetDataList(GuildID, Type, Value);
+                foreach (Data Item in ToDelete) { Cache.Remove(Item); CacheQueries += 1; } 
             }
 
             if (!CacheOnly)

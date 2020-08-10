@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using DiscordBotsList.Api;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
+using Org.BouncyCastle.Bcpg.OpenPgp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -318,11 +319,14 @@ namespace Utili
 
             if (FirstStart)
             {
-                List<string> ValidGuildIDs = new List<string>();
-                foreach (var Guild in Client.Guilds) ValidGuildIDs.Add(Guild.Id.ToString());
+                string GuildArray = "";
+                foreach (var Guild in Client.Guilds) GuildArray += $"'{Guild.Id}',";
+                GuildArray = GuildArray.Remove(GuildArray.Length - 1);
 
-                Console.WriteLine($"[{DateTime.Now}] [Info] Loading cache...");
-                Cache = GetData(IgnoreCache: true).Where(x => ValidGuildIDs.Contains(x.GuildID)).Where(x => !x.Type.Contains("RolePersist-Role-")).ToHashSet();
+                Console.WriteLine($"[{DateTime.Now}] [Info] Loading cache for {Client.Guilds.Count} guilds...");
+
+                Cache = GetDataWhere($"GuildID IN ({GuildArray}) AND DataType NOT LIKE '%RolePersist-Role-%'");
+
                 Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items loaded.");
 
                 FirstStart = false;
