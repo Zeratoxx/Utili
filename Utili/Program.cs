@@ -23,7 +23,7 @@ namespace Utili
 {
     internal class Program
     {
-        public static string VersionNumber = "1.11.6";
+        public static string VersionNumber = "1.11.7";
 
         public static DiscordSocketClient Client;
         public static DiscordShardedClient Shards;
@@ -204,7 +204,7 @@ namespace Utili
             await Shards.LoginAsync(TokenType.Bot, Token);
             await Shards.StartAsync();
 
-            LatencyTimer = new System.Timers.Timer(15000);
+            LatencyTimer = new System.Timers.Timer(10000);
             LatencyTimer.Elapsed += UpdateLatency;
             LatencyTimer.Start();
 
@@ -263,6 +263,10 @@ namespace Utili
 
                 CacheItems = Cache.Count;
 
+                QueryTimer = DateTime.Now;
+                Queries = 0;
+                CacheQueries = 0;
+
                 try
                 {
                     DateTime Now = DateTime.Now;
@@ -277,9 +281,7 @@ namespace Utili
                 }
                 catch { SendLatency = 0; EditLatency = 0; };
 
-                QueryTimer = DateTime.Now;
-                Queries = 0;
-                CacheQueries = 0;
+                
             }
             catch { };
         }

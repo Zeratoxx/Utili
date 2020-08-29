@@ -51,7 +51,7 @@ namespace Utili
 
         public async Task Run()
         {
-            StartRunthrough = new System.Timers.Timer(30000);
+            StartRunthrough = new Timer(30000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
         }
@@ -81,6 +81,8 @@ namespace Utili
                 {
                     ulong RoleID = ulong.Parse(GetFirstData(GuildID.ToString(), "InactiveRole-Role").Value);
                     await ProcessGuild(GuildID, RoleID, true);
+
+                    await Task.Delay(500);
                 }
                 catch { }
             }
@@ -118,7 +120,7 @@ namespace Utili
                         bool Inactive = false;
                         DateTime LastThing = DateTime.MinValue;
 
-                        try { LastThing = DateTime.Parse(ActivityData.Where(x => x.Type == $"InactiveRole-Timer-{User.Id}").First().Value); CacheQueries += 1; }
+                        try { LastThing = DateTime.Parse(ActivityData.First(x => x.Type == $"InactiveRole-Timer-{User.Id}").Value); CacheQueries += 1; }
                         catch { ChangeRoles = false; }
 
                         await Task.Delay(50);

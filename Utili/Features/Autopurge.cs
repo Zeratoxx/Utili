@@ -20,7 +20,7 @@ namespace Utili
 
         public async Task Run()
         {
-            StartRunthrough = new System.Timers.Timer(5000);
+            StartRunthrough = new System.Timers.Timer(10000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
         }
@@ -46,6 +46,8 @@ namespace Utili
 
             foreach (ulong GuildID in AllGuilds)
             {
+                await Task.Delay(100);
+
                 try
                 {
                     SocketGuild Guild = Client.GetGuild(GuildID);
@@ -64,14 +66,31 @@ namespace Utili
                             bool BotsOnly = false;
                             if (DataExists(Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots")) BotsOnly = true;
 
-                            var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
+                            var Messages = await Channel.GetMessagesAsync(10000).FlattenAsync();
 
-                            MessagesToDelete.AddRange(Messages);
+                            foreach(var Message in Messages)
+                            {
+                                bool Delete = true;
 
-                            if (BotsOnly) MessagesToDelete.RemoveAll(x => !x.Author.IsBot);
-                            MessagesToDelete.RemoveAll(x => DateTime.Now - x.Timestamp.LocalDateTime < TimeSpan);
-                            MessagesToDelete.RemoveAll(x => DateTime.Now - x.Timestamp.LocalDateTime >= TimeSpan.FromHours(335.75)); // 13d 23h 45m
-                            MessagesToDelete.RemoveAll(x => x.IsPinned);
+                                TimeSpan MessageAge = DateTime.Now - Message.Timestamp.LocalDateTime;
+
+                                // Don't delete if the message is younger than the desired timespan
+                                if (MessageAge < TimeSpan) Delete = false;
+
+                                // Don't delete if the message can't be deleted (too old)
+                                if (MessageAge > TimeSpan.FromHours(335.75)) Delete = false;
+
+                                // Don't delete if the message is pinned
+                                if (Message.IsPinned) Delete = false;
+
+                                if (BotsOnly)
+                                {
+                                    // Don't delete if the message was sent by a human
+                                    if (!Message.Author.IsBot) Delete = false;
+                                }
+
+                                if (Delete) MessagesToDelete.Add(Message);
+                            }
 
                             await Channel.DeleteMessagesAsync(MessagesToDelete);
                         }
