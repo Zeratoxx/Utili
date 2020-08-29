@@ -19,24 +19,34 @@ namespace Utili
             bool VCLinkEnabled = DataExists(User.Guild.Id.ToString(), "VCLink-Enabled", "True");
             if (VCLinkEnabled)
             {
-                try { if (DataExists(User.Guild.Id.ToString(), $"VCLink-Exclude", After.VoiceChannel.Id.ToString())) VCLinkEnabled = false; } catch { }
+                try 
+                { 
+                    if (DataExists(User.Guild.Id.ToString(), $"VCLink-Exclude", After.VoiceChannel.Id.ToString())) VCLinkEnabled = false; 
+                } 
+                catch { }
             }
 
             #region Remove Before VC
 
             if (Before.VoiceChannel != null)
             {
-                try
+                bool Success = false;
+                for(int i = 0; i < 10 || !Success; i++)
                 {
-                    SocketTextChannel Channel = User.Guild.GetTextChannel(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Value));
-                    await Channel.RemovePermissionOverwriteAsync(User);
-                    if (User.Guild.Users.Where(x => x.VoiceChannel != null).Where(x => x.VoiceChannel.Id == Before.VoiceChannel.Id).Count() == 0)
+                    try
                     {
-                        DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}");
-                        await Channel.DeleteAsync();
+                        SocketTextChannel Channel = User.Guild.GetTextChannel(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Value));
+                        await Channel.RemovePermissionOverwriteAsync(User);
+                        if (User.Guild.Users.Where(x => x.VoiceChannel != null && !x.IsBot).Where(x => x.VoiceChannel.Id == Before.VoiceChannel.Id).Count() == 0)
+                        {
+                            await Channel.DeleteAsync();
+                            DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}");
+                        }
+
+                        Success = true;
                     }
+                    catch { await Task.Delay(500); };
                 }
-                catch { };
             }
 
             #endregion Remove Before VC
@@ -48,28 +58,38 @@ namespace Utili
                 ulong AFKID = 0;
                 try { AFKID = User.Guild.AFKChannel.Id; } catch { }
 
-                if (After.VoiceChannel != null) if (After.VoiceChannel.Id != AFKID)
+                if (After.VoiceChannel != null && After.VoiceChannel.Id != AFKID)
+                {
+                    bool Success = false;
+                    for (int i = 0; i < 10 || !Success; i++)
                     {
-                        SocketTextChannel Channel;
-                        try { Channel = User.Guild.GetTextChannel(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").Value)); }
-                        catch
+                        try
                         {
-                            DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}");
+                            SocketTextChannel Channel;
+                            try { Channel = User.Guild.GetTextChannel(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").Value)); }
+                            catch
+                            {
+                                DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}");
 
-                            var Temp = await User.Guild.CreateTextChannelAsync($"vc-{After.VoiceChannel.Name}");
-                            SaveData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}", Temp.Id.ToString());
+                                var Temp = await User.Guild.CreateTextChannelAsync($"vc-{After.VoiceChannel.Name}");
+                                SaveData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}", Temp.Id.ToString());
 
-                            await Task.Delay(500);
+                                await Task.Delay(500);
 
-                            Channel = User.Guild.GetTextChannel(Temp.Id);
+                                Channel = User.Guild.GetTextChannel(Temp.Id);
 
-                            if (After.VoiceChannel.CategoryId.HasValue) await Channel.ModifyAsync(x => x.CategoryId = After.VoiceChannel.CategoryId.Value);
-                            await Channel.ModifyAsync(x => x.Topic = $"Automatically made by Utili");
-                            await Channel.AddPermissionOverwriteAsync(User.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
+                                if (After.VoiceChannel.CategoryId.HasValue) await Channel.ModifyAsync(x => x.CategoryId = After.VoiceChannel.CategoryId.Value);
+                                await Channel.ModifyAsync(x => x.Topic = $"Automatically made by Utili");
+                                await Channel.AddPermissionOverwriteAsync(User.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
+                            }
+
+                            await Channel.AddPermissionOverwriteAsync(User, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
+
+                            Success = true;
                         }
-
-                        await Channel.AddPermissionOverwriteAsync(User, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
-                    }
+                        catch { await Task.Delay(500); }
+                    }       
+                }
 
                 #endregion Add After VC
             }
