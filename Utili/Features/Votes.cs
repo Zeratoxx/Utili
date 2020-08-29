@@ -18,13 +18,13 @@ namespace Utili
 
             if (Context.User.Id == Program.Client.CurrentUser.Id) return;
 
-            if (GetData(Context.Guild.Id.ToString(), "Votes-Channel", Context.Channel.Id.ToString()).Count > 0)
+            if (DataExists(Context.Guild.Id.ToString(), "Votes-Channel", Context.Channel.Id.ToString()))
             {
                 bool React = false;
 
                 string Mode = "All";
-                try { Mode = GetData(Context.Guild.Id.ToString(), "Votes-Mode").First().Value; } catch { }
-                try { Mode = GetData(Context.Guild.Id.ToString(), $"Votes-Mode-{Context.Channel.Id}").First().Value; } catch { }
+                try { Mode = GetFirstData(Context.Guild.Id.ToString(), "Votes-Mode").Value; } catch { }
+                try { Mode = GetFirstData(Context.Guild.Id.ToString(), $"Votes-Mode-{Context.Channel.Id}").Value; } catch { }
 
                 if (Mode == "Attachments")
                 {
@@ -36,11 +36,11 @@ namespace Utili
                 {
                     string UpName = "";
                     string DownName = "";
-                    try { UpName = GetData(Context.Guild.Id.ToString(), "Votes-UpName").First().Value; } catch { }
-                    try { DownName = GetData(Context.Guild.Id.ToString(), "Votes-DownName").First().Value; } catch { }
+                    try { UpName = GetFirstData(Context.Guild.Id.ToString(), "Votes-UpName").Value; } catch { }
+                    try { DownName = GetFirstData(Context.Guild.Id.ToString(), "Votes-DownName").Value; } catch { }
 
-                    try { UpName = GetData(Context.Guild.Id.ToString(), $"Votes-UpName-{Context.Channel.Id}").First().Value; } catch { }
-                    try { DownName = GetData(Context.Guild.Id.ToString(), $"Votes-DownName-{Context.Channel.Id}").First().Value; } catch { }
+                    try { UpName = GetFirstData(Context.Guild.Id.ToString(), $"Votes-UpName-{Context.Channel.Id}").Value; } catch { }
+                    try { DownName = GetFirstData(Context.Guild.Id.ToString(), $"Votes-DownName-{Context.Channel.Id}").Value; } catch { }
 
                     IEmote Emote;
                     if (GetGuildEmote(UpName, Context.Guild) != null) Emote = GetGuildEmote(UpName, Context.Guild);
@@ -67,17 +67,17 @@ namespace Utili
             var Message = await Msg.GetOrDownloadAsync();
             var Channel = Cnl as SocketGuildChannel;
 
-            if (GetData(Channel.Guild.Id.ToString(), "Votes-Channel", Channel.Id.ToString()).Count == 0) return;
+            if (!DataExists(Channel.Guild.Id.ToString(), "Votes-Channel", Channel.Id.ToString())) return;
 
             if (Reaction.User.Value.IsBot) return;
 
             string UpName = "";
             string DownName = "";
-            try { UpName = GetData(Channel.Guild.Id.ToString(), "Votes-UpName").First().Value; } catch { }
-            try { DownName = GetData(Channel.Guild.Id.ToString(), "Votes-DownName").First().Value; } catch { }
+            try { UpName = GetFirstData(Channel.Guild.Id.ToString(), "Votes-UpName").Value; } catch { }
+            try { DownName = GetFirstData(Channel.Guild.Id.ToString(), "Votes-DownName").Value; } catch { }
 
-            try { UpName = GetData(Channel.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}").First().Value; } catch { }
-            try { DownName = GetData(Channel.Guild.Id.ToString(), $"Votes-DownName-{Channel.Id}").First().Value; } catch { }
+            try { UpName = GetFirstData(Channel.Guild.Id.ToString(), $"Votes-UpName-{Channel.Id}").Value; } catch { }
+            try { DownName = GetFirstData(Channel.Guild.Id.ToString(), $"Votes-DownName-{Channel.Id}").Value; } catch { }
 
             IEmote UpEmote;
             if (GetGuildEmote(UpName, Channel.Guild) != null) UpEmote = GetGuildEmote(UpName, Channel.Guild);
@@ -118,7 +118,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Votes", HelpContent, $"Prefix these commands with {Prefix}votes"));
         }
 
@@ -126,7 +126,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Votes", HelpContent, $"Prefix these commands with {Prefix}votes"));
         }
 

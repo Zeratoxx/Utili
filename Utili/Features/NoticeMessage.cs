@@ -19,7 +19,7 @@ namespace Utili
         public async Task NoticeMessage_MessageReceived(SocketMessage MessageParam)
         {
             var Message = MessageParam as SocketUserMessage;
-            var Context = new SocketCommandContext(Program.Client, Message);
+            var Context = new SocketCommandContext(Client, Message);
 
             if (Message.Author.Id == Client.CurrentUser.Id)
             {
@@ -35,10 +35,10 @@ namespace Utili
             MessageList.RemoveAll(x => x.Item1 == Context.Channel.Id);
             MessageList.Add((Context.Channel.Id, ThisNumber));
 
-            if (GetData($"{Context.Guild.Id}", $"Notices-Channel", $"{Context.Channel.Id}").Count > 0)
+            if (DataExists($"{Context.Guild.Id}", $"Notices-Channel", $"{Context.Channel.Id}"))
             {
                 TimeSpan Delay = TimeSpan.FromSeconds(15);
-                try { Delay = TimeSpan.Parse(GetData($"{Context.Guild.Id}", $"Notices-Delay-{Context.Channel.Id}").First().Value); }
+                try { Delay = TimeSpan.Parse(GetFirstData($"{Context.Guild.Id}", $"Notices-Delay-{Context.Channel.Id}").Value); }
                 catch { }
 
                 await Task.Delay(int.Parse(Math.Ceiling(Delay.TotalMilliseconds).ToString()));
@@ -54,59 +54,59 @@ namespace Utili
 
         public async Task Update(ITextChannel Channel, bool Save = true, bool KnownOn = false)
         {
-            if (!KnownOn) KnownOn = GetData($"{Channel.Guild.Id}", $"Notices-Channel", $"{Channel.Id}").Count > 0;
+            if (!KnownOn) KnownOn = DataExists($"{Channel.Guild.Id}", $"Notices-Channel", $"{Channel.Id}");
             if (KnownOn || !Save)
             {
                 IMessage NoticeMessage;
                 try
                 {
-                    Data MessageVar = GetData($"{Channel.Guild.Id}", $"Notices-Message-{Channel.Id}").First();
+                    Data MessageVar = GetFirstData($"{Channel.Guild.Id}", $"Notices-Message-{Channel.Id}");
                     NoticeMessage = await Channel.GetMessageAsync(ulong.Parse(MessageVar.Value));
                 }
                 catch { NoticeMessage = null; }
 
                 string Title;
-                try { Title = GetData($"{Channel.Guild.Id}", $"Notices-Title-{Channel.Id}").First().Value; }
+                try { Title = GetFirstData($"{Channel.Guild.Id}", $"Notices-Title-{Channel.Id}").Value; }
                 catch { Title = ""; }
                 try { Title = Base64Decode(Title); } catch { };
 
                 string Content;
-                try { Content = GetData($"{Channel.Guild.Id}", $"Notices-Content-{Channel.Id}").First().Value; }
+                try { Content = GetFirstData($"{Channel.Guild.Id}", $"Notices-Content-{Channel.Id}").Value; }
                 catch { Content = ""; }
                 try { Content = Base64Decode(Content); } catch { };
 
                 string NormalText;
-                try { NormalText = GetData($"{Channel.Guild.Id}", $"Notices-NormalText-{Channel.Id}").First().Value; }
+                try { NormalText = GetFirstData($"{Channel.Guild.Id}", $"Notices-NormalText-{Channel.Id}").Value; }
                 catch { NormalText = ""; }
                 try { NormalText = Base64Decode(NormalText); } catch { };
 
                 string Footer;
-                try { Footer = GetData($"{Channel.Guild.Id}", $"Notices-Footer-{Channel.Id}").First().Value; }
+                try { Footer = GetFirstData($"{Channel.Guild.Id}", $"Notices-Footer-{Channel.Id}").Value; }
                 catch { Footer = ""; }
                 try { Footer = Base64Decode(Footer); } catch { };
 
                 string ImageURL;
-                try { ImageURL = GetData($"{Channel.Guild.Id}", $"Notices-ImageURL-{Channel.Id}").First().Value; }
+                try { ImageURL = GetFirstData($"{Channel.Guild.Id}", $"Notices-ImageURL-{Channel.Id}").Value; }
                 catch { ImageURL = ""; }
                 try { ImageURL = Base64Decode(ImageURL); } catch { };
 
                 string ThumbnailURL;
-                try { ThumbnailURL = GetData($"{Channel.Guild.Id}", $"Notices-ThumbnailURL-{Channel.Id}").First().Value; }
+                try { ThumbnailURL = GetFirstData($"{Channel.Guild.Id}", $"Notices-ThumbnailURL-{Channel.Id}").Value; }
                 catch { ThumbnailURL = ""; }
                 try { ThumbnailURL = Base64Decode(ThumbnailURL); } catch { };
 
                 string LargeImageURL;
-                try { LargeImageURL = GetData($"{Channel.Guild.Id}", $"Notices-LargeImageURL-{Channel.Id}").First().Value; }
+                try { LargeImageURL = GetFirstData($"{Channel.Guild.Id}", $"Notices-LargeImageURL-{Channel.Id}").Value; }
                 catch { LargeImageURL = ""; }
                 try { LargeImageURL = Base64Decode(LargeImageURL); } catch { };
 
                 string FooterImageURL;
-                try { FooterImageURL = GetData($"{Channel.Guild.Id}", $"Notices-FooterImageURL-{Channel.Id}").First().Value; }
+                try { FooterImageURL = GetFirstData($"{Channel.Guild.Id}", $"Notices-FooterImageURL-{Channel.Id}").Value; }
                 catch { FooterImageURL = ""; }
                 try { FooterImageURL = Base64Decode(FooterImageURL); } catch { };
 
                 string ColourString;
-                try { ColourString = GetData($"{Channel.Guild.Id}", $"Notices-Colour-{Channel.Id}").First().Value; }
+                try { ColourString = GetFirstData($"{Channel.Guild.Id}", $"Notices-Colour-{Channel.Id}").Value; }
                 catch { ColourString = "255 255 255"; }
                 byte R = byte.Parse(ColourString.Split(" ").ToArray()[0]);
                 byte G = byte.Parse(ColourString.Split(" ").ToArray()[1]);
@@ -189,7 +189,7 @@ namespace Utili
             {
                 try
                 {
-                    Data MessageVar = GetData($"{Channel.Guild.Id}", $"Notices-Message-{Channel.Id}").First();
+                    Data MessageVar = GetFirstData($"{Channel.Guild.Id}", $"Notices-Message-{Channel.Id}");
                     IMessage Message = await Channel.GetMessageAsync(ulong.Parse(MessageVar.Value));
                     await Message.DeleteAsync();
                 }
@@ -223,7 +223,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Notices", HelpContent, $"Prefix these commands with {Prefix}notice"));
         }
 
@@ -231,7 +231,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Notices", HelpContent, $"Prefix these commands with {Prefix}notice"));
         }
 
@@ -482,32 +482,32 @@ namespace Utili
                     DeleteData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{To.Id}");
                     DeleteData(Context.Guild.Id.ToString(), $"Notices-Channel", To.Id.ToString());
 
-                    var Data = GetData(Context.Guild.Id.ToString(), $"Notices-Title-{From.Id}");
-                    if (Data.Count != 0) SaveData(Context.Guild.Id.ToString(), $"Notices-Title-{To.Id}", Data.First().Value);
+                    var Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Title-{From.Id}");
+                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Title-{To.Id}", Data.Value);
 
-                    Data = GetData(Context.Guild.Id.ToString(), $"Notices-Content-{From.Id}");
-                    if (Data.Count != 0) SaveData(Context.Guild.Id.ToString(), $"Notices-Content-{To.Id}", Data.First().Value);
+                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Content-{From.Id}");
+                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Content-{To.Id}", Data.Value);
 
-                    Data = GetData(Context.Guild.Id.ToString(), $"Notices-Colour-{From.Id}");
-                    if (Data.Count != 0) SaveData(Context.Guild.Id.ToString(), $"Notices-Colour-{To.Id}", Data.First().Value);
+                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Colour-{From.Id}");
+                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Colour-{To.Id}", Data.Value);
 
-                    Data = GetData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{From.Id}");
-                    if (Data.Count != 0) SaveData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{To.Id}", Data.First().Value);
+                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{From.Id}");
+                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{To.Id}", Data.Value);
 
-                    Data = GetData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{From.Id}");
-                    if (Data.Count != 0) SaveData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{To.Id}", Data.First().Value);
+                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{From.Id}");
+                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{To.Id}", Data.Value);
 
-                    Data = GetData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{From.Id}");
-                    if (Data.Count != 0) SaveData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{To.Id}", Data.First().Value);
+                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{From.Id}");
+                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{To.Id}", Data.Value);
 
-                    Data = GetData(Context.Guild.Id.ToString(), $"Notices-Footer-{From.Id}");
-                    if (Data.Count != 0) SaveData(Context.Guild.Id.ToString(), $"Notices-Footer-{To.Id}", Data.First().Value);
+                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Footer-{From.Id}");
+                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Footer-{To.Id}", Data.Value);
 
-                    Data = GetData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{From.Id}");
-                    if (Data.Count != 0) SaveData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{To.Id}", Data.First().Value);
+                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{From.Id}");
+                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{To.Id}", Data.Value);
 
-                    Data = GetData(Context.Guild.Id.ToString(), $"Notices-Delay-{From.Id}");
-                    if (Data.Count != 0) SaveData(Context.Guild.Id.ToString(), $"Notices-Delay-{To.Id}", Data.First().Value);
+                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Delay-{From.Id}");
+                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Delay-{To.Id}", Data.Value);
 
                     SaveData(Context.Guild.Id.ToString(), $"Notices-Channel", To.Id.ToString());
 

@@ -13,7 +13,7 @@ namespace Utili
     {
         public async Task UserJoin(SocketGuildUser User)
         {
-            if (GetData(User.Guild.Id.ToString(), "RolePersist-Enabled", "True").Count > 0)
+            if (DataExists(User.Guild.Id.ToString(), "RolePersist-Enabled", "True"))
             {
                 foreach (Data Data in GetData(User.Guild.Id.ToString(), $"RolePersist-Role-{User.Id}", IgnoreCache: true))
                 {
@@ -30,7 +30,7 @@ namespace Utili
 
         public async Task UserLeft(SocketGuildUser User)
         {
-            if (GetData(User.Guild.Id.ToString(), "RolePersist-Enabled", "True").Count > 0)
+            if (DataExists(User.Guild.Id.ToString(), "RolePersist-Enabled", "True"))
             {
                 foreach (var Role in User.Roles)
                 {
@@ -53,7 +53,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Role Persist", HelpContent, $"Prefix these commands with {Prefix}rolePersist"));
         }
 
@@ -61,7 +61,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Role Persist", HelpContent, $"Prefix these commands with {Prefix}rolePersist"));
         }
 

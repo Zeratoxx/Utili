@@ -47,7 +47,7 @@ namespace Utili
                         }
 
                         ulong WebhookID = 0;
-                        try { WebhookID = ulong.Parse(GetData(ToChannel.Guild.Id.ToString(), $"Mirroring-WebhookID-{ToChannel.Id}").First().Value); }
+                        try { WebhookID = ulong.Parse(GetFirstData(ToChannel.Guild.Id.ToString(), $"Mirroring-WebhookID-{ToChannel.Id}").Value); }
                         catch { }
 
                         IWebhook Web = null;
@@ -112,7 +112,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Mirroring", HelpContent, $"Prefix these commands with {Prefix}mirroring"));
         }
 
@@ -120,7 +120,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Mirroring", HelpContent, $"Prefix these commands with {Prefix}mirroring"));
         }
 
@@ -161,7 +161,7 @@ namespace Utili
         public async Task Mirror(ITextChannel From, ulong ToGuildID, ulong ToID)
         {
             bool PublicAllowed = false;
-            if (GetData(Context.Guild.Id.ToString(), "Mirroring-Public", From.Id.ToString()).Count > 0) PublicAllowed = true;
+            if (DataExists(Context.Guild.Id.ToString(), "Mirroring-Public", From.Id.ToString())) PublicAllowed = true;
 
             bool Allowed = PublicAllowed;
             if (!Allowed) Allowed = Permission(Context.User, Context.Channel);
@@ -181,7 +181,7 @@ namespace Utili
                 catch
                 {
                     string Prefix = ".";
-                    try { Prefix = GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                     return;
                 }
@@ -217,7 +217,7 @@ namespace Utili
                 catch
                 {
                     string Prefix = ".";
-                    try { Prefix = GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                     return;
                 }

@@ -22,12 +22,12 @@ namespace Utili
             var Message = MessageParam as SocketUserMessage;
             var Context = new SocketCommandContext(Client, Message);
 
-            if (Context.User.Id == Program.Client.CurrentUser.Id & Context.Message.Embeds.Count > 0)
+            if (Context.User.Id == Client.CurrentUser.Id & Context.Message.Embeds.Count > 0)
             {
                 if (Context.Message.Embeds.First().Author.Value.Name == "Message deleted") return;
             }
 
-            if (GetData(Context.Guild.Id.ToString(), "Filter-Images", Context.Channel.Id.ToString()).Count > 0)
+            if (DataExists(Context.Guild.Id.ToString(), "Filter-Images", Context.Channel.Id.ToString()))
             {
                 bool Delete = false;
                 if (Message.Attachments.Count == 0) Delete = true;
@@ -48,7 +48,7 @@ namespace Utili
                 if (Delete)
                 {
                     await Context.Message.DeleteAsync();
-                    if (Context.User.Id != Program.Client.CurrentUser.Id)
+                    if (Context.User.Id != Client.CurrentUser.Id)
                     {
                         var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with image files (jpg, png) and instagram images."));
                         Thread.Sleep(5000);
@@ -57,7 +57,7 @@ namespace Utili
                 }
             }
 
-            if (GetData(Context.Guild.Id.ToString(), "Filter-Videos", Context.Channel.Id.ToString()).Count > 0)
+            if (DataExists(Context.Guild.Id.ToString(), "Filter-Videos", Context.Channel.Id.ToString()))
             {
                 bool Delete = false;
 
@@ -79,7 +79,7 @@ namespace Utili
                 if (Delete)
                 {
                     await Context.Message.DeleteAsync();
-                    if (Context.User.Id != Program.Client.CurrentUser.Id)
+                    if (Context.User.Id != Client.CurrentUser.Id)
                     {
                         var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with video files (mov, mp4) or youtube links"));
                         Thread.Sleep(5000);
@@ -88,7 +88,7 @@ namespace Utili
                 }
             }
 
-            if (GetData(Context.Guild.Id.ToString(), "Filter-Media", Context.Channel.Id.ToString()).Count > 0)
+            if (DataExists(Context.Guild.Id.ToString(), "Filter-Media", Context.Channel.Id.ToString()))
             {
                 bool Delete = false;
 
@@ -111,7 +111,7 @@ namespace Utili
                 if (Delete)
                 {
                     await Context.Message.DeleteAsync();
-                    if (Context.User.Id != Program.Client.CurrentUser.Id)
+                    if (Context.User.Id != Client.CurrentUser.Id)
                     {
                         var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with media files (png, jpg, mp4, mov, gif), youtube links and instagram images."));
                         Thread.Sleep(5000);
@@ -120,7 +120,7 @@ namespace Utili
                 }
             }
 
-            if (GetData(Context.Guild.Id.ToString(), "Filter-Music", Context.Channel.Id.ToString()).Count > 0)
+            if (DataExists(Context.Guild.Id.ToString(), "Filter-Music", Context.Channel.Id.ToString()))
             {
                 bool Delete = false;
 
@@ -145,7 +145,7 @@ namespace Utili
                 if (Delete)
                 {
                     await Context.Message.DeleteAsync();
-                    if (Context.User.Id != Program.Client.CurrentUser.Id)
+                    if (Context.User.Id != Client.CurrentUser.Id)
                     {
                         var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with music files (mp3, wav, m4a, flac), youtube links, spotify links or soundcloud links"));
                         Thread.Sleep(5000);
@@ -154,7 +154,7 @@ namespace Utili
                 }
             }
 
-            if (GetData(Context.Guild.Id.ToString(), "Filter-Attachments", Context.Channel.Id.ToString()).Count > 0)
+            if (DataExists(Context.Guild.Id.ToString(), "Filter-Attachments", Context.Channel.Id.ToString()))
             {
                 bool Delete = false;
 
@@ -163,7 +163,7 @@ namespace Utili
                 if (Delete)
                 {
                     await Context.Message.DeleteAsync();
-                    if (Context.User.Id != Program.Client.CurrentUser.Id)
+                    if (Context.User.Id != Client.CurrentUser.Id)
                     {
                         var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with attachments"));
                         Thread.Sleep(5000);
@@ -270,7 +270,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Message Filter", HelpContent, $"Prefix these commands with {Prefix}filter"));
         }
 
@@ -278,7 +278,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Message Filter", HelpContent, $"Prefix these commands with {Prefix}filter"));
         }
 

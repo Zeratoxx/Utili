@@ -256,7 +256,7 @@ namespace Utili
                 try
                 {
                     DateTime Now = DateTime.Now;
-                    GetData("Ping Test", IgnoreCache: true);
+                    GetFirstData("Ping Test", IgnoreCache: true);
                     DBLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
                 }
                 catch { };
@@ -288,19 +288,15 @@ namespace Utili
         {
             if (Client.ConnectionState != ConnectionState.Connected)
             {
-                try { await Task.Delay(10000, ForceStop.Token); } catch { }
-
-                if (Client.ConnectionState != ConnectionState.Connected)
+                for(int i = 0; i < 30; i++)
                 {
-                    if (ForceStop.IsCancellationRequested || !Ready)
-                    {
-                        return;
-                    }
-
-                    Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect [{Client.ConnectionState} @ {Client.Latency}ms]");
-                    Ready = false;
-                    ForceStop.Cancel();
+                    try { await Task.Delay(1000, ForceStop.Token); } catch { }
+                    if (Client.ConnectionState == ConnectionState.Connected || ForceStop.IsCancellationRequested || !Ready) return;
                 }
+                
+                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect [{Client.ConnectionState} @ {Client.Latency}ms]");
+                Ready = false;
+                ForceStop.Cancel();
             }
         }
 
@@ -420,12 +416,12 @@ namespace Utili
 
             if (!(Context.Message == null || Context.Message.ToString() == "" || Context.User.Id == Client.CurrentUser.Id || Context.User.IsBot))
             {
-                if (GetData(Context.Guild.Id.ToString(), "Commands-Disabled", Context.Channel.Id.ToString()).Count == 0)
+                if (!DataExists(Context.Guild.Id.ToString(), "Commands-Disabled", Context.Channel.Id.ToString()))
                 {
                     int ArgPos = 0;
 
                     string Prefix = ".";
-                    try { Prefix = GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
                     if (UseTest) Prefix = "-";
 
@@ -600,7 +596,7 @@ namespace Utili
             DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
             SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
 
-            var Role = User.Guild.GetRole(ulong.Parse(Data.GetData(User.Guild.Id.ToString(), "JoinRole").First().Value));
+            var Role = User.Guild.GetRole(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), "JoinRole").Value));
             await User.AddRoleAsync(Role);
         }
 

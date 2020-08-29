@@ -59,10 +59,10 @@ namespace Utili
                             List<IMessage> MessagesToDelete = new List<IMessage>();
 
                             TimeSpan TimeSpan = TimeSpan.Parse("00:15:00");
-                            try { TimeSpan = TimeSpan.Parse(GetData(GuildID.ToString(), $"Autopurge-Timespan-{Channel.Id}").First().Value); } catch { }
+                            try { TimeSpan = TimeSpan.Parse(GetFirstData(GuildID.ToString(), $"Autopurge-Timespan-{Channel.Id}").Value); } catch { }
 
                             bool BotsOnly = false;
-                            if (GetData(Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots").Count > 0) BotsOnly = true;
+                            if (DataExists(Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots")) BotsOnly = true;
 
                             var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
 
@@ -98,7 +98,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Autopurge", HelpContent, $"Prefix these commands with {Prefix}autopurge"));
         }
 
@@ -106,7 +106,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Autopurge", HelpContent, $"Prefix these commands with {Prefix}autopurge"));
         }
 

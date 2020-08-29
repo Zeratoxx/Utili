@@ -119,7 +119,7 @@ namespace Utili
                 else
                 {
                     string Prefix = ".";
-                    try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Warning", $"This command will **DELETE ALL CHANNELS AND ROLES**.\nThis **CAN NOT BE UNDONE**.\n\nThis command re-formats the server into a server for testing bots.\nUse {Prefix}TestServerReset Confirm to continue.\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 }

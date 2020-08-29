@@ -13,12 +13,12 @@ namespace Utili
     {
         public async Task JoinMessage_UserJoined(SocketGuildUser User)
         {
-            if (GetData(User.Guild.Id.ToString(), "JoinMessage-Enabled", "true").Count > 0)
+            if (DataExists(User.Guild.Id.ToString(), "JoinMessage-Enabled", "true"))
             {
                 var JoinMessage = await GetJoinMessageAsync(User.Guild, User);
 
                 string ChannelData;
-                try { ChannelData = GetData(User.Guild.Id.ToString(), "JoinMessage-Channel").First().Value; } catch { ChannelData = "DM"; }
+                try { ChannelData = GetFirstData(User.Guild.Id.ToString(), "JoinMessage-Channel").Value; } catch { ChannelData = "DM"; }
                 if (ulong.TryParse(ChannelData, out ulong ChannelID))
                 {
                     ITextChannel Channel = User.Guild.GetTextChannel(ChannelID);
@@ -35,51 +35,51 @@ namespace Utili
         public static async Task<(string, Embed)> GetJoinMessageAsync(SocketGuild Guild, SocketUser User)
         {
             string Title;
-            try { Title = GetData($"{Guild.Id}", $"JoinMessage-Title").First().Value; }
+            try { Title = GetFirstData($"{Guild.Id}", $"JoinMessage-Title").Value; }
             catch { Title = ""; }
             try { Title = Base64Decode(Title).Replace("%user%", $"{User.Username}#{User.Discriminator}"); } catch { };
 
             string Content;
-            try { Content = GetData($"{Guild.Id}", $"JoinMessage-Content").First().Value; }
+            try { Content = GetFirstData($"{Guild.Id}", $"JoinMessage-Content").Value; }
             catch { Content = ""; }
             try { Content = Base64Decode(Content).Replace("%user%", $"{User.Mention}"); } catch { };
 
             string NormalText;
-            try { NormalText = GetData($"{Guild.Id}", $"JoinMessage-NormalText").First().Value; }
+            try { NormalText = GetFirstData($"{Guild.Id}", $"JoinMessage-NormalText").Value; }
             catch { NormalText = ""; }
             try { NormalText = Base64Decode(NormalText).Replace("%user%", $"{User.Mention}"); } catch { };
 
             string Footer;
-            try { Footer = GetData($"{Guild.Id}", $"JoinMessage-Footer").First().Value; }
+            try { Footer = GetFirstData($"{Guild.Id}", $"JoinMessage-Footer").Value; }
             catch { Footer = ""; }
             try { Footer = Base64Decode(Footer).Replace("%user%", $"{User.Username}#{User.Discriminator}"); } catch { };
 
             string ImageURL;
-            try { ImageURL = GetData($"{Guild.Id}", $"JoinMessage-ImageURL").First().Value; }
+            try { ImageURL = GetFirstData($"{Guild.Id}", $"JoinMessage-ImageURL").Value; }
             catch { ImageURL = ""; }
             try { ImageURL = Base64Decode(ImageURL); } catch { };
             if (ImageURL == "user") ImageURL = User.GetAvatarUrl();
 
             string ThumbnailURL;
-            try { ThumbnailURL = GetData($"{Guild.Id}", $"JoinMessage-ThumbnailURL").First().Value; }
+            try { ThumbnailURL = GetFirstData($"{Guild.Id}", $"JoinMessage-ThumbnailURL").Value; }
             catch { ThumbnailURL = ""; }
             try { ThumbnailURL = Base64Decode(ThumbnailURL); } catch { };
             if (ThumbnailURL == "user") ThumbnailURL = User.GetAvatarUrl();
 
             string LargeImageURL;
-            try { LargeImageURL = GetData($"{Guild.Id}", $"JoinMessage-LargeImageURL").First().Value; }
+            try { LargeImageURL = GetFirstData($"{Guild.Id}", $"JoinMessage-LargeImageURL").Value; }
             catch { LargeImageURL = ""; }
             try { LargeImageURL = Base64Decode(LargeImageURL); } catch { };
             if (LargeImageURL == "user") LargeImageURL = User.GetAvatarUrl();
 
             string FooterImageURL;
-            try { FooterImageURL = GetData($"{Guild.Id}", $"JoinMessage-FooterImageURL").First().Value; }
+            try { FooterImageURL = GetFirstData($"{Guild.Id}", $"JoinMessage-FooterImageURL").Value; }
             catch { FooterImageURL = ""; }
             try { FooterImageURL = Base64Decode(FooterImageURL); } catch { };
             if (FooterImageURL == "user") FooterImageURL = User.GetAvatarUrl();
 
             string ColourString;
-            try { ColourString = GetData($"{Guild.Id}", $"JoinMessage-Colour").First().Value; }
+            try { ColourString = GetFirstData($"{Guild.Id}", $"JoinMessage-Colour").Value; }
             catch { ColourString = "255 255 255"; }
             byte R = byte.Parse(ColourString.Split(" ").ToArray()[0]);
             byte G = byte.Parse(ColourString.Split(" ").ToArray()[1]);
@@ -130,7 +130,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Join Message", HelpContent, $"Prefix these commands with {Prefix}joinmessage"));
         }
 
@@ -138,7 +138,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Join Message", HelpContent, $"Prefix these commands with {Prefix}joinmessage"));
         }
 
@@ -352,7 +352,7 @@ namespace Utili
             else
             {
                 string Prefix = ".";
-                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
             }
         }

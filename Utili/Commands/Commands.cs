@@ -48,7 +48,7 @@ namespace Utili
                 "antiprofane - Manage the anti-profane filter feature";
 
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Utili", Content, $"Guild Prefix: {Prefix}"));
         }
@@ -60,7 +60,7 @@ namespace Utili
             if (Categories.Contains(Category.ToLower()))
             {
                 string Prefix = ".";
-                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
                 switch (Category.ToLower())
                 {
@@ -301,7 +301,7 @@ namespace Utili
 
                 default:
                     string Prefix = ".";
-                    try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                     break;
             }
@@ -323,7 +323,7 @@ namespace Utili
                 else
                 {
                     string Prefix = ".";
-                    try { Prefix = GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "WARNING", $"This command will delete **all** data that Utili has stored on {Context.Guild.Name}!\nThis includes all configuration data, all message logs, and all activity information.\n\nUse `{Prefix}deletedata confirm` to confirm this action."));
                 }
             }

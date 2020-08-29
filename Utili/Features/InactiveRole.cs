@@ -37,10 +37,10 @@ namespace Utili
                 SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
             }
 
-            List<Data> InactiveRole = GetData(Context.Guild.Id.ToString(), "InactiveRole-Role");
-            if (InactiveRole.Count != 0)
+            Data InactiveRole = GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Role");
+            if (InactiveRole != null)
             {
-                var Role = Context.Guild.GetRole(ulong.Parse(InactiveRole.First().Value));
+                var Role = Context.Guild.GetRole(ulong.Parse(InactiveRole.Value));
 
                 if (Usr.Roles.Contains(Role))
                 {
@@ -79,7 +79,7 @@ namespace Utili
             {
                 try
                 {
-                    ulong RoleID = ulong.Parse(GetData(GuildID.ToString(), "InactiveRole-Role").First().Value);
+                    ulong RoleID = ulong.Parse(GetFirstData(GuildID.ToString(), "InactiveRole-Role").Value);
                     await ProcessGuild(GuildID, RoleID, true);
                 }
                 catch { }
@@ -92,15 +92,15 @@ namespace Utili
             SocketRole Role = Guild.GetRole(RoleID);
 
             SocketRole ImmuneRole = null;
-            try { ImmuneRole = Guild.GetRole(ulong.Parse(GetData(Guild.Id.ToString(), "InactiveRole-ImmuneRole").First().Value)); }
+            try { ImmuneRole = Guild.GetRole(ulong.Parse(GetFirstData(Guild.Id.ToString(), "InactiveRole-ImmuneRole").Value)); }
             catch { };
 
             TimeSpan Threshold;
-            try { Threshold = TimeSpan.Parse(GetData(Guild.Id.ToString(), "InactiveRole-Timespan").First().Value); }
+            try { Threshold = TimeSpan.Parse(GetFirstData(Guild.Id.ToString(), "InactiveRole-Timespan").Value); }
             catch { Threshold = TimeSpan.FromDays(30); }
 
             string Mode = "Give";
-            try { Mode = GetData(Guild.Id.ToString(), "InactiveRole-Mode").First().Value; }
+            try { Mode = GetFirstData(Guild.Id.ToString(), "InactiveRole-Mode").Value; }
             catch { }
 
             List<Data> ActivityData = GetDataList(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
@@ -173,7 +173,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Inactive Role", HelpContent, $"Prefix these commands with {Prefix}inactive"));
         }
 
@@ -181,7 +181,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Inactive Role", HelpContent, $"Prefix these commands with {Prefix}inactive"));
         }
 
@@ -199,7 +199,7 @@ namespace Utili
                 DeleteData(Context.Guild.Id.ToString(), "InactiveRole-Role");
                 SaveData(Context.Guild.Id.ToString(), "InactiveRole-Role", Role.Id.ToString());
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set inactive role", $"Inactive users will be given the {Role.Mention} role\nYour users are now being processed, this may take a while."));
-                ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
+                ulong RoleID = ulong.Parse(GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Role").Value);
                 await ProcessGuild(Context.Guild.Id, RoleID, true);
             }
         }
@@ -218,7 +218,7 @@ namespace Utili
             else
             {
                 string Prefix = ".";
-                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
             }
         }
@@ -231,7 +231,7 @@ namespace Utili
                 DeleteData(Context.Guild.Id.ToString(), "InactiveRole-ImmuneRole");
                 SaveData(Context.Guild.Id.ToString(), "InactiveRole-ImmuneRole", Role.Id.ToString());
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set immune role", $"Users with the {Role.Mention} role will never be marked as inactive.\nYour users are now being processed, this may take a while."));
-                ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
+                ulong RoleID = ulong.Parse(GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Role").Value);
                 await ProcessGuild(Context.Guild.Id, RoleID, true);
             }
         }
@@ -250,7 +250,7 @@ namespace Utili
             else
             {
                 string Prefix = ".";
-                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
             }
         }
@@ -263,7 +263,7 @@ namespace Utili
                 DeleteData(Context.Guild.Id.ToString(), "InactiveRole-Timespan");
                 SaveData(Context.Guild.Id.ToString(), "InactiveRole-Timespan", Time.ToString());
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set inactive timer", $"After {DisplayTimespan(Time)} of inactivity users will get the role.\nYour users are now being processed, this may take a while."));
-                ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
+                ulong RoleID = ulong.Parse(GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Role").Value);
                 await ProcessGuild(Context.Guild.Id, RoleID, true);
             }
         }
@@ -279,7 +279,7 @@ namespace Utili
                     SaveData(Context.Guild.Id.ToString(), "InactiveRole-Mode", "Give");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mode set", $"Inactive users will now be given the role and active users will have it taken away from them.\nYour users are now being processed, this may take a while."));
 
-                    ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
+                    ulong RoleID = ulong.Parse(GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Role").Value);
                     await ProcessGuild(Context.Guild.Id, RoleID, true);
                 }
             }
@@ -291,14 +291,14 @@ namespace Utili
                     SaveData(Context.Guild.Id.ToString(), "InactiveRole-Mode", "Take");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mode set", $"Active users will now be given the role and inactive users will have it taken away from them.\nYour users are now being processed, this may take a while."));
 
-                    ulong RoleID = ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value);
+                    ulong RoleID = ulong.Parse(GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Role").Value);
                     await ProcessGuild(Context.Guild.Id, RoleID, true);
                 }
             }
             else
             {
                 string Prefix = ".";
-                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
             }
         }
@@ -310,11 +310,11 @@ namespace Utili
             Page -= 1;
 
             IRole Role;
-            try { Role = Context.Guild.GetRole(ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value)); }
+            try { Role = Context.Guild.GetRole(ulong.Parse(GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Role").Value)); }
             catch { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "No inactive role is set")); return; }
 
             string Mode = "Give";
-            try { Mode = GetData(Context.Guild.Id.ToString(), "InactiveRole-Mode").First().Value; }
+            try { Mode = GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Mode").Value; }
             catch { }
 
             List<SocketGuildUser> InactiveUsers = null;
@@ -351,11 +351,11 @@ namespace Utili
                 if (BotHasPermissions(Context.Guild, new GuildPermission[] { GuildPermission.KickMembers }, Context.Channel))
                 {
                     IRole Role;
-                    try { Role = Context.Guild.GetRole(ulong.Parse(GetData(Context.Guild.Id.ToString(), "InactiveRole-Role").First().Value)); }
+                    try { Role = Context.Guild.GetRole(ulong.Parse(GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Role").Value)); }
                     catch { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "No inactive role is set")); return; }
 
                     string Mode = "Give";
-                    try { Mode = GetData(Context.Guild.Id.ToString(), "InactiveRole-Mode").First().Value; }
+                    try { Mode = GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Mode").Value; }
                     catch { }
 
                     List<SocketGuildUser> InactiveUsers = null;

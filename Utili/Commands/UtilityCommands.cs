@@ -105,7 +105,7 @@ namespace Utili
             if (thing.ToLower() != "skip")
             {
                 string Prefix = ".";
-                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 return;
             }
@@ -224,7 +224,7 @@ namespace Utili
                 else
                 {
                     string Prefix = ".";
-                    try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 }
             }
@@ -261,7 +261,7 @@ namespace Utili
             if (!Success || Message == null)
             {
                 string Prefix = ".";
-                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 return;
             }
@@ -302,7 +302,7 @@ namespace Utili
             if (!Success || Message == null)
             {
                 string Prefix = ".";
-                try { Prefix = GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 return;
             }

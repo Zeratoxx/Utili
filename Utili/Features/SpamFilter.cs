@@ -22,10 +22,10 @@ namespace Utili
 
             if (Context.User.IsBot || Context.User.IsWebhook) return;
 
-            if (GetData(Context.Guild.Id.ToString(), "SpamFilter-Enabled", "True").Count > 0)
+            if (DataExists(Context.Guild.Id.ToString(), "SpamFilter-Enabled", "True"))
             {
                 int Threshold = 5;
-                try { Threshold = int.Parse(GetData(Context.Guild.Id.ToString(), "SpamFilter-Threshold").First().Value); } catch { }
+                try { Threshold = int.Parse(GetFirstData(Context.Guild.Id.ToString(), "SpamFilter-Threshold").Value); } catch { }
 
                 SpamTracker.Add((Context.User.Id, DateTime.Now));
 
@@ -52,7 +52,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Spam Filter", HelpContent, $"Prefix these commands with {Prefix}spam"));
         }
 
@@ -60,7 +60,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Spam Filter", HelpContent, $"Prefix these commands with {Prefix}spam"));
         }
 
@@ -93,7 +93,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Context.Guild.GetUser(Program.Client.CurrentUser.Id).GuildPermissions.ManageMessages)
+                if (Context.Guild.GetUser(Client.CurrentUser.Id).GuildPermissions.ManageMessages)
                 {
                     DeleteData(Context.Guild.Id.ToString(), "SpamFilter-Enabled");
                     SaveData(Context.Guild.Id.ToString(), "SpamFilter-Enabled", "True");

@@ -25,12 +25,12 @@ namespace Utili
             var Message = MessageParam as SocketUserMessage;
             var Context = new SocketCommandContext(Client, Message);
 
-            if (GetData(Context.Guild.Id.ToString(), "AntiProfane-Enabled", "True").Count > 0)
+            if (DataExists(Context.Guild.Id.ToString(), "AntiProfane-Enabled", "True"))
             {
                 if (await IsProfaneAsync(Context.Message.Content))
                 {
                     await Context.Message.DeleteAsync();
-                    if (Context.User.Id != Program.Client.CurrentUser.Id)
+                    if (Context.User.Id != Client.CurrentUser.Id)
                     {
                         var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This server doesn't allow profane langugae.\n[Report false positive](https://discord.gg/WsxqABZ)"));
                         Thread.Sleep(5000);
@@ -131,7 +131,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Anti-Profane filter", HelpContent, $"Prefix these commands with {Prefix}antiprofane"));
         }
 
@@ -139,7 +139,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Anti-Profane filter", HelpContent, $"Prefix these commands with {Prefix}antiprofane"));
         }
 

@@ -16,10 +16,10 @@ namespace Utili
             if (Before.VoiceChannel == After.VoiceChannel) return;
 
             // VCLinkEnabled effects only the after voice channel. The before voice channel is updated regardless of settings.
-            bool VCLinkEnabled = GetData(User.Guild.Id.ToString(), "VCLink-Enabled", "True").Count > 0;
+            bool VCLinkEnabled = DataExists(User.Guild.Id.ToString(), "VCLink-Enabled", "True");
             if (VCLinkEnabled)
             {
-                try { if (GetData(User.Guild.Id.ToString(), $"VCLink-Exclude", After.VoiceChannel.Id.ToString()).Count > 0) VCLinkEnabled = false; } catch { }
+                try { if (DataExists(User.Guild.Id.ToString(), $"VCLink-Exclude", After.VoiceChannel.Id.ToString())) VCLinkEnabled = false; } catch { }
             }
 
             #region Remove Before VC
@@ -28,7 +28,7 @@ namespace Utili
             {
                 try
                 {
-                    SocketTextChannel Channel = User.Guild.GetTextChannel(ulong.Parse(GetData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").First().Value));
+                    SocketTextChannel Channel = User.Guild.GetTextChannel(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Value));
                     await Channel.RemovePermissionOverwriteAsync(User);
                     if (User.Guild.Users.Where(x => x.VoiceChannel != null).Where(x => x.VoiceChannel.Id == Before.VoiceChannel.Id).Count() == 0)
                     {
@@ -51,7 +51,7 @@ namespace Utili
                 if (After.VoiceChannel != null) if (After.VoiceChannel.Id != AFKID)
                     {
                         SocketTextChannel Channel;
-                        try { Channel = User.Guild.GetTextChannel(ulong.Parse(GetData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").First().Value)); }
+                        try { Channel = User.Guild.GetTextChannel(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").Value)); }
                         catch
                         {
                             DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}");
@@ -91,7 +91,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("VC Linking", HelpContent, $"Prefix these commands with {Prefix}vclink"));
         }
 
@@ -99,7 +99,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("VC Linking", HelpContent, $"Prefix these commands with {Prefix}vclink"));
         }
 

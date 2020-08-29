@@ -78,6 +78,40 @@ namespace Utili
             return GetDataList(GuildID, Type, Value, IgnoreCache, Table);
         }
 
+        public static Data GetFirstData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
+        {
+            try
+            {
+                try { if (!Program.Client.Guilds.Select(x => x.Id).Contains(ulong.Parse(GuildID))) IgnoreCache = true; }
+                catch { }
+
+                if (!IgnoreCache)
+                {
+                    CacheQueries += 1;
+                    if (GuildID != null && Type != null && Value != null) return Cache.First(x => x.GuildID == GuildID && x.Type == Type && x.Value == Value);
+                    else if (Type != null && Value != null) return Cache.First(x => x.Type == Type && x.Value == Value);
+                    else if (GuildID != null && Value != null) return Cache.First(x => x.GuildID == GuildID && x.Value == Value);
+                    else if (GuildID != null && Type != null) return Cache.First(x => x.GuildID == GuildID && x.Type == Type);
+                    else if (Value != null) return Cache.First(x => x.Value == Value);
+                    else if (GuildID != null) return Cache.First(x => x.GuildID == GuildID);
+                    else if (Type != null) return Cache.First(x => x.Type == Type);
+                    else return Cache.First();
+                }
+
+                return GetDataList(GuildID, Type, Value, true, Table).First();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static bool DataExists(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
+        {
+            if (GetFirstData(GuildID, Type, Value, IgnoreCache, Table) != null) return true;
+            else return false;
+        }
+
         public static List<Data> GetDataList(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
         {
             List<Data> Data = new List<Data>();

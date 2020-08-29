@@ -23,7 +23,7 @@ namespace Utili
 
             Random Random = new Random();
 
-            if (GetData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Context.Channel.Id.ToString()).Count() > 0)
+            if (DataExists(Context.Guild.Id.ToString(), "MessageLogs-Channel", Context.Channel.Id.ToString()))
             {
                 await SaveMessageAsync(Context);
 
@@ -48,7 +48,7 @@ namespace Utili
         public async Task MessageLogs_MessageDeleted(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
         {
             var Guild = (Channel as SocketTextChannel).Guild;
-            if (GetData(Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString()).Count() > 0)
+            if (DataExists(Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString()))
             {
                 MessageData Message = await GetMessageAsync(PartialMessage.Id);
                 string Content = Decrypt(Message.EncryptedContent, ulong.Parse(Message.GuildID), ulong.Parse(Message.ChannelID));
@@ -56,7 +56,7 @@ namespace Utili
                 if (Message.ChannelID == Channel.Id.ToString())
                 {
                     RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE ID = {Message.ID}");
-                    var LogChannel = Guild.GetTextChannel(ulong.Parse(GetData(Guild.Id.ToString(), "MessageLogs-LogChannel").First().Value));
+                    var LogChannel = Guild.GetTextChannel(ulong.Parse(GetFirstData(Guild.Id.ToString(), "MessageLogs-LogChannel").Value));
                     var User = Guild.GetUser(ulong.Parse(Message.UserID));
 
                     EmbedBuilder Embed = new EmbedBuilder();
@@ -80,17 +80,17 @@ namespace Utili
             var Guild = (Channel as SocketTextChannel).Guild;
             var Context = new SocketCommandContext(Program.Client, NewMessage as SocketUserMessage);
 
-            if (GetData(Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString()).Count() > 0)
+            if (DataExists(Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString()))
             {
                 MessageData Message = await GetMessageAsync(PartialMessage.Id);
                 string Content = Decrypt(Message.EncryptedContent, ulong.Parse(Message.GuildID), ulong.Parse(Message.ChannelID));
 
-                if (GetData(Message.GuildID.ToString(), "MessageLogs-Channel", Message.ChannelID.ToString()).Count() > 0)
+                if (DataExists(Message.GuildID.ToString(), "MessageLogs-Channel", Message.ChannelID.ToString()))
                 {
                     if (NewMessage.Content == Content) return;
 
                     RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE ID = {Message.ID}");
-                    var LogChannel = Guild.GetTextChannel(ulong.Parse(GetData(Guild.Id.ToString(), "MessageLogs-LogChannel").First().Value));
+                    var LogChannel = Guild.GetTextChannel(ulong.Parse(GetFirstData(Guild.Id.ToString(), "MessageLogs-LogChannel").Value));
                     var User = Guild.GetUser(ulong.Parse(Message.UserID));
 
                     EmbedBuilder Embed = new EmbedBuilder();
@@ -115,7 +115,7 @@ namespace Utili
         public async Task MessageLogs_ChannelCreated(SocketChannel ChannelParam)
         {
             SocketTextChannel Channel = ChannelParam as SocketTextChannel;
-            if (GetData(Channel.Guild.Id.ToString(), "MessageLogs-DefaultOn").Count > 0)
+            if (DataExists(Channel.Guild.Id.ToString(), "MessageLogs-DefaultOn"))
             {
                 SaveData(Channel.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString());
             }
@@ -184,7 +184,7 @@ namespace Utili
         public async Task Help()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Message Logs", HelpContent, $"Prefix these commands with {Prefix}logs"));
         }
 
@@ -192,7 +192,7 @@ namespace Utili
         public async Task Empty()
         {
             string Prefix = ".";
-            try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
             await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Message Logs", HelpContent, $"Prefix these commands with {Prefix}logs"));
         }
 
@@ -262,7 +262,7 @@ namespace Utili
             else
             {
                 string Prefix = ".";
-                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
             }
         }
@@ -294,7 +294,7 @@ namespace Utili
             else
             {
                 string Prefix = ".";
-                try { Prefix = Data.GetData(Context.Guild.Id.ToString(), "Prefix").First().Value; } catch { }
+                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
             }
         }
