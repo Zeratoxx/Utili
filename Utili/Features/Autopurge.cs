@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using static Utili.Data;
@@ -20,7 +21,7 @@ namespace Utili
 
         public async Task Run()
         {
-            StartRunthrough = new System.Timers.Timer(10000);
+            StartRunthrough = new System.Timers.Timer(15000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
         }
@@ -30,7 +31,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count <= GetMaxWorkers()) Tasks.Add(Process());
+                if (Tasks.Count < GetMaxWorkers()) Tasks.Add(Process());
             }
         }
 
@@ -46,8 +47,6 @@ namespace Utili
 
             foreach (ulong GuildID in AllGuilds)
             {
-                await Task.Delay(100);
-
                 try
                 {
                     SocketGuild Guild = Client.GetGuild(GuildID);
@@ -66,7 +65,7 @@ namespace Utili
                             bool BotsOnly = false;
                             if (DataExists(Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots")) BotsOnly = true;
 
-                            var Messages = await Channel.GetMessagesAsync(10000).FlattenAsync();
+                            var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
 
                             foreach(var Message in Messages)
                             {

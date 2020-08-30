@@ -30,12 +30,13 @@ namespace Utili
 
             if (Before.VoiceChannel != null)
             {
+                string ID = GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Value;
                 bool Success = false;
                 for(int i = 0; i < 10 || !Success; i++)
                 {
                     try
                     {
-                        SocketTextChannel Channel = User.Guild.GetTextChannel(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Value));
+                        SocketTextChannel Channel = User.Guild.GetTextChannel(ulong.Parse(ID));
                         await Channel.RemovePermissionOverwriteAsync(User);
                         if (User.Guild.Users.Where(x => x.VoiceChannel != null && !x.IsBot).Where(x => x.VoiceChannel.Id == Before.VoiceChannel.Id).Count() == 0)
                         {
@@ -60,13 +61,14 @@ namespace Utili
 
                 if (After.VoiceChannel != null && After.VoiceChannel.Id != AFKID)
                 {
+                    string ID = GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").Value;
                     bool Success = false;
                     for (int i = 0; i < 10 || !Success; i++)
                     {
                         try
                         {
                             SocketTextChannel Channel;
-                            try { Channel = User.Guild.GetTextChannel(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").Value)); }
+                            try { Channel = User.Guild.GetTextChannel(ulong.Parse(ID)); }
                             catch
                             {
                                 DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}");

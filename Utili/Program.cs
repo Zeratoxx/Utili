@@ -256,13 +256,26 @@ namespace Utili
                 try
                 {
                     DateTime Now = DateTime.Now;
-                    GetFirstData("Ping Test", IgnoreCache: true);
+                    GetData("Ping Test", IgnoreCache: true);
                     DBLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
                 }
                 catch { };
 
                 CacheItems = Cache.Count;
 
+                string Output = "";
+
+                var Grouped = CommonItemsRegistry.GroupBy(x => x.Type);
+                var Sorted = Grouped.OrderByDescending(x => x.Count());
+
+                foreach(var Value in Sorted.Take(8))
+                {
+                    Output += $"{Value.Count()}: {Value.Key}\n";
+                }
+
+                CommonItemsOutput = Output;
+
+                CommonItemsRegistry.Clear();
                 QueryTimer = DateTime.Now;
                 Queries = 0;
                 CacheQueries = 0;
@@ -288,15 +301,15 @@ namespace Utili
 
         private async void CheckReliability(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (Client.ConnectionState != ConnectionState.Connected)
+            if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
             {
                 for(int i = 0; i < 30; i++)
                 {
                     try { await Task.Delay(1000, ForceStop.Token); } catch { }
-                    if (Client.ConnectionState == ConnectionState.Connected || ForceStop.IsCancellationRequested || !Ready) return;
+                    if ((Client.ConnectionState == ConnectionState.Connected && Client.Latency < 10000) || ForceStop.IsCancellationRequested || !Ready) return;
                 }
                 
-                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect [{Client.ConnectionState} @ {Client.Latency}ms]");
+                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{Client.ConnectionState} @ {Client.Latency}ms]");
                 Ready = false;
                 ForceStop.Cancel();
             }
@@ -304,7 +317,7 @@ namespace Utili
 
         private async Task Client_Log(LogMessage Message)
         {
-            if (Message.Source.ToString() != "Rest" & !Message.Message.Contains("PRESENCE_UPDATE"))
+            if (Message.Source.ToString() != "Rest" && !Message.Message.Contains("PRESENCE_UPDATE") && !Message.Message.Contains("Unknown dispatch"))
             {
                 Console.WriteLine($"[{DateTime.Now}] [{Message.Source}] {Message.Message}");
             }

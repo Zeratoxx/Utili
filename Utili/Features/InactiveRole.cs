@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -61,7 +62,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count <= 3) Tasks.Add(ProcessAll());
+                if (Tasks.Count < 3) Tasks.Add(ProcessAll());
             }
         }
 
@@ -82,7 +83,7 @@ namespace Utili
                     ulong RoleID = ulong.Parse(GetFirstData(GuildID.ToString(), "InactiveRole-Role").Value);
                     await ProcessGuild(GuildID, RoleID, true);
 
-                    await Task.Delay(500);
+                    await Task.Delay(1000);
                 }
                 catch { }
             }
@@ -123,8 +124,7 @@ namespace Utili
                         try { LastThing = DateTime.Parse(ActivityData.First(x => x.Type == $"InactiveRole-Timer-{User.Id}").Value); CacheQueries += 1; }
                         catch { ChangeRoles = false; }
 
-                        await Task.Delay(50);
-                        // Simulate normal database latency as to not overload the cpu.
+                        await Task.Delay(100);
 
                         if (ChangeRoles)
                         {
@@ -134,8 +134,8 @@ namespace Utili
 
                                 if (ImmuneRole != null) if (User.Roles.Contains(ImmuneRole)) Inactive = false;
 
-                                if (Inactive && Mode == "Give") _ = User.AddRoleAsync(Role);
-                                if (Inactive && Mode == "Take") _ = User.RemoveRoleAsync(Role);
+                                if (Inactive && Mode == "Give") await User.AddRoleAsync(Role);
+                                if (Inactive && Mode == "Take") await User.RemoveRoleAsync(Role);
                             }
                             else
                             {
@@ -146,8 +146,8 @@ namespace Utili
 
                                     if (ImmuneRole != null) if (User.Roles.Contains(ImmuneRole)) Inactive = false;
 
-                                    if (!Inactive && Mode == "Give") _ = User.RemoveRoleAsync(Role);
-                                    if (!Inactive && Mode == "Take") _ = User.AddRoleAsync(Role);
+                                    if (!Inactive && Mode == "Give") await User.RemoveRoleAsync(Role);
+                                    if (!Inactive && Mode == "Take") await User.AddRoleAsync(Role);
                                 }
                             }
                         }

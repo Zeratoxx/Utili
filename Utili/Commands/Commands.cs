@@ -154,7 +154,7 @@ namespace Utili
         }
 
         [Command("Ping"), Alias("Status")]
-        public async Task Ping()
+        public async Task Ping(string Details = "none")
         {
             int Send = SendLatency;
             int Edit = EditLatency;
@@ -165,6 +165,11 @@ namespace Utili
             Embed.AddField("**Discord**", $"API: {API}ms\nSend: {Send}ms\nEdit: {Edit}ms", true);
             Embed.AddField("**Database**", $"Ping: {Database}ms\nQueries: {QueriesPerSecond}/s", true);
             Embed.AddField("**Cache**", $"\nItems: {CacheItems}\nQueries: {CacheQueriesPerSecond}/s", true);
+
+            if(Details.ToLower() == "common")
+            {
+                Embed.Description = $"**Most commonly requested cache items**\n{CommonItemsOutput}";
+            }
 
             await Context.Channel.SendMessageAsync(embed: Embed.Build());
         }

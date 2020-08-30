@@ -205,7 +205,9 @@ namespace Utili
 
         public static int GetMaxWorkers()
         {
-            return (int)Math.Round(Program.Client.Guilds.Count / 50d);
+            int Amount = (int)Math.Round(Program.Client.Guilds.Count / 50d);
+            if (Amount == 0) return 1;
+            else return Amount;
         }
 
         public static string Base64Encode(string plainText)

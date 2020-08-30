@@ -27,6 +27,9 @@ namespace Utili
         public static int SendLatency = 0;
         public static int EditLatency = 0;
 
+        public static List<Data> CommonItemsRegistry = new List<Data>();
+        public static string CommonItemsOutput = "No data collected yet.";
+
         public static void SetConnectionString()
         {
             ConnectionString = $"Server={Config.Database.Server};Database={Config.Database.Database};Uid={Config.Database.Username};Pwd={Config.Database.Password};";
@@ -75,11 +78,15 @@ namespace Utili
 
         public static List<Data> GetData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
         {
+            Data Data = new Data(GuildID, Type, Value);
+            CommonItemsRegistry.Add(Data);
+
             return GetDataList(GuildID, Type, Value, IgnoreCache, Table);
         }
 
         public static Data GetFirstData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
         {
+
             try
             {
                 try { if (!Program.Client.Guilds.Select(x => x.Id).Contains(ulong.Parse(GuildID))) IgnoreCache = true; }
@@ -87,6 +94,9 @@ namespace Utili
 
                 if (!IgnoreCache)
                 {
+                    Data Data = new Data(GuildID, Type, Value);
+                    CommonItemsRegistry.Add(Data);
+
                     CacheQueries += 1;
                     if (GuildID != null && Type != null && Value != null) return Cache.First(x => x.GuildID == GuildID && x.Type == Type && x.Value == Value);
                     else if (Type != null && Value != null) return Cache.First(x => x.Type == Type && x.Value == Value);
@@ -355,6 +365,11 @@ namespace Utili
             GuildID = guildid;
             Type = type;
             Value = value;
+        }
+
+        public override string ToString()
+        {
+            return $"{GuildID}, {Type}, {Value}";
         }
     }
 
