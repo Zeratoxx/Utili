@@ -3,7 +3,6 @@ using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using static Utili.Data;
@@ -67,7 +66,7 @@ namespace Utili
 
                             var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
 
-                            foreach(var Message in Messages)
+                            foreach (var Message in Messages)
                             {
                                 bool Delete = true;
 

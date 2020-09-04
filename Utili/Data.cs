@@ -95,7 +95,6 @@ namespace Utili
 
         public static Data GetFirstData(string GuildID = null, string Type = null, string Value = null, bool IgnoreCache = false, string Table = "Utili")
         {
-
             try
             {
                 try { if (!Program.Client.Guilds.Select(x => x.Id).Contains(ulong.Parse(GuildID))) IgnoreCache = true; }
@@ -142,16 +141,14 @@ namespace Utili
             {
                 CacheQueries += 1;
                 if (GuildID != null && Type != null && Value != null) return Cache.Where(x => x.GuildID == GuildID && x.Type == Type && x.Value == Value).ToList();
-                else if(Type != null && Value != null) return Cache.Where(x => x.Type == Type && x.Value == Value).ToList();
-                else if(GuildID != null && Value != null) return Cache.Where(x => x.GuildID == GuildID && x.Value == Value).ToList();
-                else if(GuildID != null && Type != null) return Cache.Where(x => x.GuildID == GuildID && x.Type == Type).ToList();
-                else if(Value != null) return Cache.Where(x => x.Value == Value).ToList();
-                else if(GuildID != null) return Cache.Where(x => x.GuildID == GuildID).ToList();
+                else if (Type != null && Value != null) return Cache.Where(x => x.Type == Type && x.Value == Value).ToList();
+                else if (GuildID != null && Value != null) return Cache.Where(x => x.GuildID == GuildID && x.Value == Value).ToList();
+                else if (GuildID != null && Type != null) return Cache.Where(x => x.GuildID == GuildID && x.Type == Type).ToList();
+                else if (Value != null) return Cache.Where(x => x.Value == Value).ToList();
+                else if (GuildID != null) return Cache.Where(x => x.GuildID == GuildID).ToList();
                 else if (Type != null) return Cache.Where(x => x.Type == Type).ToList();
                 else return Cache;
             }
-
-            
 
             using (var connection = new MySqlConnection(ConnectionString))
             {
@@ -261,7 +258,7 @@ namespace Utili
             if (!IgnoreCache)
             {
                 List<Data> ToDelete = GetDataList(GuildID, Type, Value);
-                foreach (Data Item in ToDelete) { Cache.Remove(Item); CacheQueries += 1; } 
+                foreach (Data Item in ToDelete) { Cache.Remove(Item); CacheQueries += 1; }
             }
 
             if (!CacheOnly)

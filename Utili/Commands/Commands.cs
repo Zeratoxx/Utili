@@ -166,7 +166,7 @@ namespace Utili
             Embed.AddField("**Database**", $"Ping: {Database}ms\nQueries: {QueriesPerSecond}/s", true);
             Embed.AddField("**Cache**", $"\nItems: {CacheItems}\nQueries: {CacheQueriesPerSecond}/s", true);
 
-            if(Details.ToLower() == "common" && OwnerPermission(Context.User, null))
+            if (Details.ToLower() == "common" && OwnerPermission(Context.User, null))
             {
                 Embed.Description = $"**Most commonly requested data items**\n{CommonItemsOutput}";
             }

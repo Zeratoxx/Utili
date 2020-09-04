@@ -4,7 +4,6 @@ using Discord.WebSocket;
 using DiscordBotsList.Api;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
-using Org.BouncyCastle.Bcpg.OpenPgp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -268,7 +267,7 @@ namespace Utili
                 var Grouped = CommonItemsRegistry.GroupBy(x => x.Type);
                 var Sorted = Grouped.OrderByDescending(x => x.Count());
 
-                foreach(var Value in Sorted.Take(8))
+                foreach (var Value in Sorted.Take(8))
                 {
                     Output += $"{Value.Count()}: {Value.Key}\n";
                 }
@@ -285,7 +284,6 @@ namespace Utili
                 CommonItemsSavedOutput = Output;
 
                 Output = "";
-
 
                 foreach (var Value in CommonItemsGot.Take(8))
                 {
@@ -315,8 +313,6 @@ namespace Utili
                     await Sent.DeleteAsync();
                 }
                 catch { SendLatency = 0; EditLatency = 0; };
-
-                
             }
             catch { };
         }
@@ -325,12 +321,12 @@ namespace Utili
         {
             if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
             {
-                for(int i = 0; i < 30; i++)
+                for (int i = 0; i < 30; i++)
                 {
                     try { await Task.Delay(1000, ForceStop.Token); } catch { }
                     if ((Client.ConnectionState == ConnectionState.Connected && Client.Latency < 10000) || ForceStop.IsCancellationRequested || !Ready) return;
                 }
-                
+
                 Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{Client.ConnectionState} @ {Client.Latency}ms]");
                 Ready = false;
                 ForceStop.Cancel();

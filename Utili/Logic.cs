@@ -50,7 +50,7 @@ namespace Utili
             if (user.Id == 218613903653863427) return true;
             else
             {
-                try { Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "That command is only for the bot owner")); } 
+                try { Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "That command is only for the bot owner")); }
                 catch { }
                 return false;
             }

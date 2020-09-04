@@ -12,6 +12,7 @@ namespace Utili
     internal class Sharding
     {
         public static bool GettingShard = false;
+
         public static async Task<int> GetShardID()
         {
             GettingShard = true;

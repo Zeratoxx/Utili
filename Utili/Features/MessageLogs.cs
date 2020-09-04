@@ -31,9 +31,9 @@ namespace Utili
                 if (Random.Next(0, 10) == 5)
                 {
                     var ChannelData = GetData(Context.Guild.Id.ToString(), "MessageLogs-Channel");
-                    foreach(Data Channel in ChannelData)
+                    foreach (Data Channel in ChannelData)
                     {
-                        if(!Context.Guild.TextChannels.Select(x => x.Id).Contains(ulong.Parse(Channel.Value)) && Context.Guild.TextChannels.Count > 0)
+                        if (!Context.Guild.TextChannels.Select(x => x.Id).Contains(ulong.Parse(Channel.Value)) && Context.Guild.TextChannels.Count > 0)
                         {
                             DeleteData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Value);
                         }

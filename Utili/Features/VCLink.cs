@@ -19,10 +19,10 @@ namespace Utili
             bool VCLinkEnabled = DataExists(User.Guild.Id.ToString(), "VCLink-Enabled", "True");
             if (VCLinkEnabled)
             {
-                try 
-                { 
-                    if (DataExists(User.Guild.Id.ToString(), $"VCLink-Exclude", After.VoiceChannel.Id.ToString())) VCLinkEnabled = false; 
-                } 
+                try
+                {
+                    if (DataExists(User.Guild.Id.ToString(), $"VCLink-Exclude", After.VoiceChannel.Id.ToString())) VCLinkEnabled = false;
+                }
                 catch { }
             }
 
@@ -94,7 +94,7 @@ namespace Utili
                             Success = true;
                         }
                         catch { await Task.Delay(500); }
-                    }       
+                    }
                 }
 
                 #endregion Add After VC
