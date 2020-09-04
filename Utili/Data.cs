@@ -30,6 +30,12 @@ namespace Utili
         public static List<Data> CommonItemsRegistry = new List<Data>();
         public static string CommonItemsOutput = "No data collected yet.";
 
+        public static List<Data> CommonItemsGot = new List<Data>();
+        public static string CommonItemsGotOutput = "No data collected yet.";
+
+        public static List<Data> CommonItemsSaved = new List<Data>();
+        public static string CommonItemsSavedOutput = "No data collected yet.";
+
         public static void SetConnectionString()
         {
             ConnectionString = $"Server={Config.Database.Server};Database={Config.Database.Database};Uid={Config.Database.Username};Pwd={Config.Database.Password};";
@@ -67,6 +73,9 @@ namespace Utili
 
         public static void SaveData(string GuildID, string Type, string Value = "", bool IgnoreCache = false, bool CacheOnly = false, string Table = "Utili")
         {
+            Data Data = new Data(GuildID, Type, Value);
+            CommonItemsSaved.Add(Data);
+
             if (!IgnoreCache)
             {
                 try { Cache.Add(new Data(GuildID, Type, Value)); } catch { };
@@ -142,6 +151,8 @@ namespace Utili
                 else return Cache;
             }
 
+            
+
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 using (var command = connection.CreateCommand())
@@ -176,6 +187,9 @@ namespace Utili
                     MySqlDataReader DataReader = null;
                     try
                     {
+                        Data TData = new Data(GuildID, Type, Value);
+                        CommonItemsGot.Add(TData);
+
                         Queries += 1;
                         DataReader = command.ExecuteReader();
                     }
@@ -199,6 +213,9 @@ namespace Utili
         public static List<Data> GetDataWhere(string Where)
         {
             List<Data> Data = new List<Data>();
+
+            Data TData = new Data("WHERE", "WHERE", Where);
+            CommonItemsGot.Add(TData);
 
             using (var connection = new MySqlConnection(ConnectionString))
             {

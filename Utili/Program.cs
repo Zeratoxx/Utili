@@ -275,7 +275,29 @@ namespace Utili
 
                 CommonItemsOutput = Output;
 
+                Output = "";
+
+                foreach (var Value in CommonItemsSaved.Take(8))
+                {
+                    Output += $"{Value}\n";
+                }
+
+                CommonItemsSavedOutput = Output;
+
+                Output = "";
+
+
+                foreach (var Value in CommonItemsGot.Take(8))
+                {
+                    Output += $"{Value}\n";
+                }
+
+                CommonItemsGotOutput = Output;
+
                 CommonItemsRegistry.Clear();
+                CommonItemsGot.Clear();
+                CommonItemsSaved.Clear();
+
                 QueryTimer = DateTime.Now;
                 Queries = 0;
                 CacheQueries = 0;

@@ -166,9 +166,19 @@ namespace Utili
             Embed.AddField("**Database**", $"Ping: {Database}ms\nQueries: {QueriesPerSecond}/s", true);
             Embed.AddField("**Cache**", $"\nItems: {CacheItems}\nQueries: {CacheQueriesPerSecond}/s", true);
 
-            if(Details.ToLower() == "common")
+            if(Details.ToLower() == "common" && OwnerPermission(Context.User, null))
             {
-                Embed.Description = $"**Most commonly requested cache items**\n{CommonItemsOutput}";
+                Embed.Description = $"**Most commonly requested data items**\n{CommonItemsOutput}";
+            }
+
+            if (Details.ToLower() == "got" && OwnerPermission(Context.User, null))
+            {
+                Embed.Description = $"**Most commonly gotten from database**\n{CommonItemsGotOutput}";
+            }
+
+            if (Details.ToLower() == "saved" && OwnerPermission(Context.User, null))
+            {
+                Embed.Description = $"**Most commonly saved to database**\n{CommonItemsSavedOutput}";
             }
 
             await Context.Channel.SendMessageAsync(embed: Embed.Build());

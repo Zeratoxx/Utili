@@ -11,8 +11,11 @@ namespace Utili
 {
     internal class Sharding
     {
+        public static bool GettingShard = false;
         public static async Task<int> GetShardID()
         {
+            GettingShard = true;
+
             while (true)
             {
                 try
@@ -34,6 +37,9 @@ namespace Utili
                             {
                                 SaveData(Target, "Online", DateTime.Now);
                                 DeleteData(Target, "Reserved");
+
+                                GettingShard = false;
+
                                 return Target;
                             }
                             else DeleteData(Target, "Reserved");
@@ -53,7 +59,7 @@ namespace Utili
 
         public static async Task KeepConnection()
         {
-            while (!Program.ForceStop.IsCancellationRequested)
+            while (!Program.ForceStop.IsCancellationRequested && !GettingShard)
             {
                 try
                 {
@@ -132,7 +138,7 @@ namespace Utili
                     var ShardData = GetShardData(-1, "Online");
                     ShardData.AddRange(GetShardData(-1, "Reserved"));
 
-                    ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(30));
+                    ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(10));
 
                     foreach (var OldData in ShardData)
                     {

@@ -30,24 +30,23 @@ namespace Utili
 
             if (Before.VoiceChannel != null)
             {
-                string ID = GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Value;
+                string ID = "";
+                try { ID = GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Value; }
+                catch { }
                 bool Success = false;
-                for(int i = 0; i < 10 || !Success; i++)
+                try
                 {
-                    try
+                    SocketTextChannel Channel = User.Guild.GetTextChannel(ulong.Parse(ID));
+                    await Channel.RemovePermissionOverwriteAsync(User);
+                    if (User.Guild.Users.Where(x => x.VoiceChannel != null && !x.IsBot).Where(x => x.VoiceChannel.Id == Before.VoiceChannel.Id).Count() == 0)
                     {
-                        SocketTextChannel Channel = User.Guild.GetTextChannel(ulong.Parse(ID));
-                        await Channel.RemovePermissionOverwriteAsync(User);
-                        if (User.Guild.Users.Where(x => x.VoiceChannel != null && !x.IsBot).Where(x => x.VoiceChannel.Id == Before.VoiceChannel.Id).Count() == 0)
-                        {
-                            await Channel.DeleteAsync();
-                            DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}");
-                        }
-
-                        Success = true;
+                        await Channel.DeleteAsync();
+                        DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}");
                     }
-                    catch { await Task.Delay(500); };
+
+                    Success = true;
                 }
+                catch { };
             }
 
             #endregion Remove Before VC
@@ -61,10 +60,15 @@ namespace Utili
 
                 if (After.VoiceChannel != null && After.VoiceChannel.Id != AFKID)
                 {
-                    string ID = GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").Value;
+                    string ID = "";
+                    try { ID = GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").Value; }
+                    catch { }
+
                     bool Success = false;
-                    for (int i = 0; i < 10 || !Success; i++)
+                    for (int i = 0; i < 10; i++)
                     {
+                        if (Success) break;
+
                         try
                         {
                             SocketTextChannel Channel;

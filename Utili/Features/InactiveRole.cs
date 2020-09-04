@@ -30,14 +30,6 @@ namespace Utili
 
             var Usr = Context.User as SocketGuildUser;
 
-            //Save the data anyway so that if it's ever enabled the bot doesn't mark everyone
-
-            int RowsAffected = RunNonQuery($"UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Context.Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{Usr.Id}"), ("Value", ToSQLTime(DateTime.Now)) });
-            if (RowsAffected == 0)
-            {
-                SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
-            }
-
             Data InactiveRole = GetFirstData(Context.Guild.Id.ToString(), "InactiveRole-Role");
             if (InactiveRole != null)
             {
@@ -46,6 +38,12 @@ namespace Utili
                 if (Usr.Roles.Contains(Role))
                 {
                     await Usr.RemoveRoleAsync(Role);
+                }
+
+                int RowsAffected = RunNonQuery($"UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new (string, string)[] { ("GuildID", Context.Guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{Usr.Id}"), ("Value", ToSQLTime(DateTime.Now)) });
+                if (RowsAffected == 0)
+                {
+                    SaveData(Context.Guild.Id.ToString(), $"InactiveRole-Timer-{Usr.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
                 }
             }
         }
@@ -62,7 +60,7 @@ namespace Utili
             if (Ready)
             {
                 Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count < 3) Tasks.Add(ProcessAll());
+                if (Tasks.Count == 0) Tasks.Add(ProcessAll());
             }
         }
 
