@@ -64,37 +64,30 @@ namespace Utili
                     try { ID = GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}").Value; }
                     catch { }
 
-                    bool Success = false;
-                    for (int i = 0; i < 10; i++)
+                    SocketTextChannel Channel = null;
+                    try { Channel = User.Guild.GetTextChannel(ulong.Parse(ID)); }
+                    catch { }
+                    
+                    if(Channel == null)
                     {
-                        if (Success) break;
+                        DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}");
 
-                        try
+                        var Temp = await User.Guild.CreateTextChannelAsync($"vc-{After.VoiceChannel.Name}");
+                        SaveData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}", Temp.Id.ToString());
+
+                        int i = 0;
+                        while (Channel == null || i > 20)
                         {
-                            SocketTextChannel Channel;
-                            try { Channel = User.Guild.GetTextChannel(ulong.Parse(ID)); }
-                            catch
-                            {
-                                DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}");
-
-                                var Temp = await User.Guild.CreateTextChannelAsync($"vc-{After.VoiceChannel.Name}");
-                                SaveData(User.Guild.Id.ToString(), $"VCLink-Channel-{After.VoiceChannel.Id}", Temp.Id.ToString());
-
-                                await Task.Delay(500);
-
-                                Channel = User.Guild.GetTextChannel(Temp.Id);
-
-                                if (After.VoiceChannel.CategoryId.HasValue) await Channel.ModifyAsync(x => x.CategoryId = After.VoiceChannel.CategoryId.Value);
-                                await Channel.ModifyAsync(x => x.Topic = $"Automatically made by Utili");
-                                await Channel.AddPermissionOverwriteAsync(User.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
-                            }
-
-                            await Channel.AddPermissionOverwriteAsync(User, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
-
-                            Success = true;
+                            await Task.Delay(500);
+                            Channel = User.Guild.GetTextChannel(Temp.Id);
+                            i++;
                         }
-                        catch { await Task.Delay(500); }
+
+                        if (After.VoiceChannel.CategoryId.HasValue) await Channel.ModifyAsync(x => { x.CategoryId = After.VoiceChannel.CategoryId.Value; x.Topic = "Automatically made by Utili"; });
+                        await Channel.AddPermissionOverwriteAsync(User.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
                     }
+
+                    await Channel.AddPermissionOverwriteAsync(User, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
                 }
 
                 #endregion Add After VC
