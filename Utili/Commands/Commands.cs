@@ -40,6 +40,7 @@ namespace Utili
                 "notice - Manage the channel notices feature\n" +
                 "joinmessage - Manage the join message feature\n" +
                 "vclink - Manage the VC Link feature\n" +
+                "vcroles - Manage the VC Roles feature\n" +
                 "rolepersist - Manage the role persist feature\n" +
                 "inactive - Manage the inactive role feature\n" +
                 "spam - Manage the spam filter feature\n" +

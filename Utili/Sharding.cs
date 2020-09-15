@@ -99,7 +99,8 @@ namespace Utili
                         var ShardData = GetShardData(-1, "Online");
                         ShardData.AddRange(GetShardData(-1, "Reserved"));
 
-                        ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(10));
+                        var OldShardData = ShardData.Where(x => DateTime.Now - x.Heartbeat > TimeSpan.FromSeconds(10)).ToList();
+                        OldShardData.AddRange(ShardData.Where(x => DateTime.Now - x.Heartbeat < TimeSpan.FromMinutes(-1)));
                         // ShardData is now all shards which were active but are now not sending a heartbeat.
 
                         foreach (var OldData in ShardData.Where(x => x.ShardID != Program.ShardID))
@@ -129,7 +130,7 @@ namespace Utili
                     }
                     catch { };
 
-                    await Task.Delay(1000);
+                    await Task.Delay(3000);
                 }
             }
             else

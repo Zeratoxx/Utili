@@ -22,7 +22,7 @@ namespace Utili
 {
     internal class Program
     {
-        public static string VersionNumber = "1.11.7";
+        public static string VersionNumber = "1.11.8";
 
         public static DiscordSocketClient Client;
         public static DiscordShardedClient Shards;
@@ -32,7 +32,7 @@ namespace Utili
         public static System.Timers.Timer ReliabilityTimer;
         public static System.Timers.Timer LatencyTimer;
         public static int TotalShards = 0;
-        public static int ShardID = 0;
+        public static int ShardID = -1;
         public static bool Ready = false;
         public static bool FirstStart = true;
         public static int Restarts = -1;
@@ -137,7 +137,7 @@ namespace Utili
             }
             catch { }
 
-            ShardID = 0;
+            ShardID = -1;
             TotalShards = 1;
 
             if (!UseTest)
@@ -157,9 +157,10 @@ namespace Utili
             Shards = new DiscordShardedClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info,
-                MessageCacheSize = 100,
+                MessageCacheSize = 5,
                 TotalShards = TotalShards,
-                ConnectionTimeout = 15000
+                ConnectionTimeout = 30000,
+                AlwaysDownloadUsers = false
             });
 
             Client = Shards.GetShard(ShardID);
@@ -168,7 +169,7 @@ namespace Utili
             {
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Async,
-                LogLevel = LogSeverity.Debug,
+                LogLevel = LogSeverity.Debug
             });
 
             Client.MessageReceived += Commence_MessageReceived;
@@ -700,6 +701,8 @@ namespace Utili
             SocketGuildUser User = UserParam as SocketGuildUser;
             VCLink VCLink = new VCLink();
             Task.Run(() => VCLink.Client_UserVoiceStateUpdated(User, Before, After));
+            VCRoles VCRoles = new VCRoles();
+            Task.Run(() => VCRoles.Client_UserVoiceStateUpdated(User, Before, After));
 
             if (After.VoiceChannel != null)
             {

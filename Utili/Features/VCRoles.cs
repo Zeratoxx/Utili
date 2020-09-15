@@ -33,10 +33,10 @@ namespace Utili
 
             #region Add After Role
 
-            if (Before.VoiceChannel != null)
+            if (After.VoiceChannel != null)
             {
                 string ID = "";
-                try { ID = GetFirstData(User.Guild.Id.ToString(), $"VCRoles-Role-{Before.VoiceChannel.Id}").Value; }
+                try { ID = GetFirstData(User.Guild.Id.ToString(), $"VCRoles-Role-{After.VoiceChannel.Id}").Value; }
                 catch { }
 
                 try
