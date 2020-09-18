@@ -20,6 +20,9 @@ namespace Utili
         public static int CacheQueries = 0;
         public static DateTime QueryTimer = DateTime.Now;
 
+        public static int ReactionsAltered = 0;
+        public static double ReactionsAlteredPerSecond = 0;
+
         public static double QueriesPerSecond = 0;
         public static double CacheQueriesPerSecond = 0;
         public static int DBLatency = 0;

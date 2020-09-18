@@ -252,6 +252,7 @@ namespace Utili
                 TimeSpan Uptime = DateTime.Now - QueryTimer;
                 try { QueriesPerSecond = Math.Round(Queries / Uptime.TotalSeconds, 2); } catch { QueriesPerSecond = 0; }
                 try { CacheQueriesPerSecond = Math.Round(CacheQueries / Uptime.TotalSeconds, 2); } catch { CacheQueriesPerSecond = 0; }
+                try { ReactionsAlteredPerSecond = Math.Round(ReactionsAltered / Uptime.TotalSeconds, 2); } catch { ReactionsAltered = 0; }
 
                 try
                 {
@@ -300,6 +301,7 @@ namespace Utili
                 QueryTimer = DateTime.Now;
                 Queries = 0;
                 CacheQueries = 0;
+                ReactionsAltered = 0;
 
                 try
                 {

@@ -182,6 +182,11 @@ namespace Utili
                 Embed.Description = $"**Most commonly saved to database**\n{CommonItemsSavedOutput}";
             }
 
+            if (Details.ToLower() == "reactions" && OwnerPermission(Context.User, null))
+            {
+                Embed.Description = $"**Reactions added/removed:** {ReactionsAlteredPerSecond}/s";
+            }
+
             await Context.Channel.SendMessageAsync(embed: Embed.Build());
         }
 
