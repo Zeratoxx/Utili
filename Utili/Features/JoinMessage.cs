@@ -376,7 +376,7 @@ namespace Utili
         }
 
         [Command("Off"), Alias("Disable")]
-        public async Task Off(ITextChannel Channel)
+        public async Task Off()
         {
             if (Permission(Context.User, Context.Channel))
             {
