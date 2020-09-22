@@ -14,12 +14,11 @@ namespace Utili
         public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
         {
             await Task.Yield();
-
-            TimeSpan result = TimeSpan.Zero;
             if (input == "0")
                 return TypeReaderResult.FromSuccess((TimeSpan?)null);
 
-            if (TimeSpan.TryParse(input, out result))
+
+            if (TimeSpan.TryParse(input, out TimeSpan result))
                 return TypeReaderResult.FromSuccess(result);
 
             Match mtc = TimeSpanRegex.Match(input);

@@ -49,25 +49,21 @@ namespace Utili
         {
             try
             {
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+                using MySqlConnection connection = new MySqlConnection(ConnectionString);
+                using MySqlCommand command = connection.CreateCommand();
+                connection.Open();
+                command.CommandText = commandText;
+
+                if (values != null)
                 {
-                    using (MySqlCommand command = connection.CreateCommand())
+                    foreach ((string, string) value in values)
                     {
-                        connection.Open();
-                        command.CommandText = commandText;
-
-                        if (values != null)
-                        {
-                            foreach ((string, string) value in values)
-                            {
-                                command.Parameters.Add(new MySqlParameter(value.Item1, value.Item2));
-                            }
-                        }
-
-                        Queries += 1;
-                        return command.ExecuteNonQuery();
+                        command.Parameters.Add(new MySqlParameter(value.Item1, value.Item2));
                     }
                 }
+
+                Queries += 1;
+                return command.ExecuteNonQuery();
             }
             catch
             {
@@ -154,60 +150,55 @@ namespace Utili
                 return Cache;
             }
 
-            using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+            using MySqlConnection connection = new MySqlConnection(ConnectionString);
+            using MySqlCommand command = connection.CreateCommand();
+            connection.Open();
+
+            string commandText;
+            if (guildId == null & type == null & value == null) commandText = $"SELECT * FROM {table};";
+            else
             {
-                using (MySqlCommand command = connection.CreateCommand())
+                commandText = $"SELECT * FROM {table} WHERE(";
+                if (guildId != null)
                 {
-                    connection.Open();
-
-                    string commandText;
-                    if (guildId == null & type == null & value == null) commandText = $"SELECT * FROM {table};";
-                    else
-                    {
-                        commandText = $"SELECT * FROM {table} WHERE(";
-                        if (guildId != null)
-                        {
-                            commandText += "GuildID = @GuildID AND ";
-                            command.Parameters.Add(new MySqlParameter("GuildID", guildId));
-                        }
-                        if (type != null)
-                        {
-                            commandText += "DataType = @Type AND ";
-                            command.Parameters.Add(new MySqlParameter("Type", type));
-                        }
-                        if (value != null)
-                        {
-                            commandText += "DataValue = @Value";
-                            command.Parameters.Add(new MySqlParameter("Value", value));
-                        }
-                        if (commandText.Substring(commandText.Length - 5) == " AND ") commandText = commandText.Substring(0, commandText.Length - 5);
-                        commandText += ");";
-                    }
-
-                    command.CommandText = commandText;
-                    MySqlDataReader dataReader = null;
-                    try
-                    {
-                        Data data = new Data(guildId, type, value);
-                        CommonItemsGot.Add(data);
-
-                        Queries += 1;
-                        dataReader = command.ExecuteReader();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-
-                    while (dataReader.Read())
-                    {
-                        Data @new = new Data(dataReader.GetString(1), dataReader.GetString(2), dataReader.GetString(3))
-                        {
-                            Id = dataReader.GetInt32(0)
-                        };
-                        data.Add(@new);
-                    }
+                    commandText += "GuildID = @GuildID AND ";
+                    command.Parameters.Add(new MySqlParameter("GuildID", guildId));
                 }
+                if (type != null)
+                {
+                    commandText += "DataType = @Type AND ";
+                    command.Parameters.Add(new MySqlParameter("Type", type));
+                }
+                if (value != null)
+                {
+                    commandText += "DataValue = @Value";
+                    command.Parameters.Add(new MySqlParameter("Value", value));
+                }
+                if (commandText.Substring(commandText.Length - 5) == " AND ") commandText = commandText.Substring(0, commandText.Length - 5);
+                commandText += ");";
+            }
+
+            command.CommandText = commandText;
+            MySqlDataReader dataReader = null;
+            try
+            {
+                CommonItemsGot.Add(new Data(guildId, type, value));
+
+                Queries += 1;
+                dataReader = command.ExecuteReader();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            while (dataReader.Read())
+            {
+                Data @new = new Data(dataReader.GetString(1), dataReader.GetString(2), dataReader.GetString(3))
+                {
+                    Id = dataReader.GetInt32(0)
+                };
+                data.Add(@new);
             }
 
             return data;
@@ -217,38 +208,33 @@ namespace Utili
         {
             List<Data> data = new List<Data>();
 
-            Data data = new Data("WHERE", "WHERE", where);
-            CommonItemsGot.Add(data);
+            CommonItemsGot.Add(new Data("WHERE", "WHERE", where));
 
-            using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+            using MySqlConnection connection = new MySqlConnection(ConnectionString);
+            using MySqlCommand command = connection.CreateCommand();
+            connection.Open();
+
+            string commandText = $"SELECT * FROM Utili WHERE({@where});";
+
+            command.CommandText = commandText;
+            MySqlDataReader dataReader = null;
+            try
             {
-                using (MySqlCommand command = connection.CreateCommand())
+                Queries += 1;
+                dataReader = command.ExecuteReader();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            while (dataReader.Read())
+            {
+                Data @new = new Data(dataReader.GetString(1), dataReader.GetString(2), dataReader.GetString(3))
                 {
-                    connection.Open();
-
-                    string commandText = $"SELECT * FROM Utili WHERE({where});";
-
-                    command.CommandText = commandText;
-                    MySqlDataReader dataReader = null;
-                    try
-                    {
-                        Queries += 1;
-                        dataReader = command.ExecuteReader();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-
-                    while (dataReader.Read())
-                    {
-                        Data @new = new Data(dataReader.GetString(1), dataReader.GetString(2), dataReader.GetString(3))
-                        {
-                            Id = dataReader.GetInt32(0)
-                        };
-                        data.Add(@new);
-                    }
-                }
+                    Id = dataReader.GetInt32(0)
+                };
+                data.Add(@new);
             }
 
             return data;
@@ -306,45 +292,41 @@ namespace Utili
 
         public static async Task<MessageData> GetMessageAsync(ulong messageId)
         {
-            using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+            using MySqlConnection connection = new MySqlConnection(ConnectionString);
+            using MySqlCommand command = connection.CreateCommand();
+            connection.Open();
+
+            string commandText = $"SELECT * FROM Utili_MessageLogs WHERE MessageID = '{messageId}'";
+
+            command.CommandText = commandText;
+            MySqlDataReader dataReader = null;
+            try
             {
-                using (MySqlCommand command = connection.CreateCommand())
-                {
-                    connection.Open();
-
-                    string commandText = $"SELECT * FROM Utili_MessageLogs WHERE MessageID = '{messageId}'";
-
-                    command.CommandText = commandText;
-                    MySqlDataReader dataReader = null;
-                    try
-                    {
-                        Queries += 1;
-                        dataReader = command.ExecuteReader();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-
-                    while (dataReader.Read())
-                    {
-                        MessageData data = new MessageData
-                        {
-                            Id = dataReader.GetInt32(0),
-                            GuildId = dataReader.GetString(1),
-                            ChannelId = dataReader.GetString(2),
-                            MessageId = dataReader.GetString(3),
-                            UserId = dataReader.GetString(4),
-                            EncryptedContent = dataReader.GetString(5),
-                            Timestmap = dataReader.GetDateTime(6)
-                        };
-
-                        return data;
-                    }
-
-                    return null;
-                }
+                Queries += 1;
+                dataReader = command.ExecuteReader();
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            while (dataReader.Read())
+            {
+                MessageData data = new MessageData
+                {
+                    Id = dataReader.GetInt32(0),
+                    GuildId = dataReader.GetString(1),
+                    ChannelId = dataReader.GetString(2),
+                    MessageId = dataReader.GetString(3),
+                    UserId = dataReader.GetString(4),
+                    EncryptedContent = dataReader.GetString(5),
+                    Timestmap = dataReader.GetDateTime(6)
+                };
+
+                return data;
+            }
+
+            return null;
         }
 
         public static string ToSqlTime(DateTime time)
@@ -367,14 +349,12 @@ namespace Utili
                 UseDefaultCredentials = false,
                 Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
             };
-            using (MailMessage message = new MailMessage(fromAddress, toAddress)
+            using MailMessage message = new MailMessage(fromAddress, toAddress)
             {
                 Subject = subject,
                 Body = body
-            })
-            {
-                smtp.Send(message);
-            }
+            };
+            smtp.Send(message);
         }
 
         public int Id;

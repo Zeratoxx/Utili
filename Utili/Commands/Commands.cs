@@ -246,36 +246,34 @@ namespace Utili
                     request.Headers["Content-Type"] = "json";
                     request.PreAuthenticate = true;
                     HttpWebResponse response = request.GetResponse() as HttpWebResponse;
-                    using (Stream responseStream = response.GetResponseStream())
+                    using Stream responseStream = response.GetResponseStream();
+                    StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                    string str = reader.ReadToEnd();
+
+                    List<JToken> voterIDs = JObject.Parse(str).SelectToken("$.repeatVotersMonth").ToList();
+
+                    foreach (JToken voter in voterIDs)
                     {
-                        StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
-                        string str = reader.ReadToEnd();
-
-                        List<JToken> voterIDs = JObject.Parse(str).SelectToken("$.repeatVotersMonth").ToList();
-
-                        foreach (JToken voter in voterIDs)
+                        votes += 1;
+                        try
                         {
-                            votes += 1;
-                            try
-                            {
-                                IUser user = Program.Shards.GetUser(ulong.Parse(voter.ToString()));
-                                string name = user.ToString();
+                            IUser user = Program.Shards.GetUser(ulong.Parse(voter.ToString()));
+                            string name = user.ToString();
 
-                                if (topVoters.FindIndex(x => x.Item1 == name) >= 0)
-                                {
-                                    (string, int) voterItem = topVoters.Find(x => x.Item1 == name);
-                                    voterItem.Item2 += 1;
-                                    topVoters.RemoveAll(x => x.Item1 == name);
-                                    topVoters.Add(voterItem);
-                                }
-                                else
-                                {
-                                    (string, int) voterItem = (name, 1);
-                                    topVoters.Add(voterItem);
-                                }
+                            if (topVoters.FindIndex(x => x.Item1 == name) >= 0)
+                            {
+                                (string, int) voterItem = topVoters.Find(x => x.Item1 == name);
+                                voterItem.Item2 += 1;
+                                topVoters.RemoveAll(x => x.Item1 == name);
+                                topVoters.Add(voterItem);
                             }
-                            catch { }
+                            else
+                            {
+                                (string, int) voterItem = (name, 1);
+                                topVoters.Add(voterItem);
+                            }
                         }
+                        catch { }
                     }
 
                     #endregion Bots for Discord

@@ -154,7 +154,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Context.Guild, new[] { GuildPermission.ReadMessages, GuildPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(Context.Guild, new[] { GuildPermission.ViewChannel, GuildPermission.ManageMessages }, Context.Channel))
                 {
                     DeleteData(Context.Guild.Id.ToString(), "AntiProfane-Enabled");
                     SaveData(Context.Guild.Id.ToString(), "AntiProfane-Enabled", "True");

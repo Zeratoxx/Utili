@@ -271,7 +271,7 @@ namespace Utili
             {
                 if (BotHasPermissions(message.Channel as ITextChannel, new[] { ChannelPermission.AddReactions }, Context.Channel))
                 {
-                    IEmote emote = null;
+                    IEmote emote;
                     if (GetGuildEmote(reactionString, Context.Guild) != null) emote = GetGuildEmote(reactionString, Context.Guild);
                     else emote = GetDiscordEmote(reactionString);
 
@@ -312,7 +312,7 @@ namespace Utili
             {
                 if (BotHasPermissions(message.Channel as ITextChannel, new[] { ChannelPermission.AddReactions }, Context.Channel))
                 {
-                    IEmote emote = null;
+                    IEmote emote;
                     if (GetGuildEmote(reactionString, Context.Guild) != null) emote = GetGuildEmote(reactionString, Context.Guild);
                     else emote = GetDiscordEmote(reactionString);
 

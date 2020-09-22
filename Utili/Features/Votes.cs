@@ -150,8 +150,8 @@ namespace Utili
                 }
                 else
                 {
-                    IEmote emote = null;
                     bool guild = false;
+                    IEmote emote;
                     if (GetGuildEmote(emoteName, Context.Guild) != null) { emote = GetGuildEmote(emoteName, Context.Guild); guild = true; }
                     else emote = GetDiscordEmote(emoteName);
 
@@ -177,7 +177,7 @@ namespace Utili
                 else
                 {
                     bool guild = false;
-                    IEmote emote = null;
+                    IEmote emote;
                     if (GetGuildEmote(emoteName, Context.Guild) != null) { emote = GetGuildEmote(emoteName, Context.Guild); guild = true; }
                     else emote = GetDiscordEmote(emoteName);
 

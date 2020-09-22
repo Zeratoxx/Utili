@@ -156,52 +156,48 @@ namespace Utili
         {
             List<ShardData> data = new List<ShardData>();
 
-            using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+            using MySqlConnection connection = new MySqlConnection(ConnectionString);
+            using MySqlCommand command = connection.CreateCommand();
+            connection.Open();
+
+            if (shardId == -1 & type == null & heartbeat == null) throw new Exception();
+            string commandText = "SELECT * FROM Utili_Shards WHERE(";
+            if (shardId != -1)
             {
-                using (MySqlCommand command = connection.CreateCommand())
-                {
-                    connection.Open();
+                commandText += "ShardID = @ShardID AND ";
+                command.Parameters.Add(new MySqlParameter("ShardID", shardId));
+            }
+            if (type != null)
+            {
+                commandText += "Type = @Type AND ";
+                command.Parameters.Add(new MySqlParameter("Type", type));
+            }
+            if (heartbeat.HasValue)
+            {
+                commandText += "DataValue = @Value";
+                command.Parameters.Add(new MySqlParameter("Heartbeat", ToSqlTime(heartbeat.Value)));
+            }
+            if (commandText.Substring(commandText.Length - 5) == " AND ") commandText = commandText.Substring(0, commandText.Length - 5);
+            commandText += ");";
 
-                    if (shardId == -1 & type == null & heartbeat == null) throw new Exception();
-                    string commandText = "SELECT * FROM Utili_Shards WHERE(";
-                    if (shardId != -1)
-                    {
-                        commandText += "ShardID = @ShardID AND ";
-                        command.Parameters.Add(new MySqlParameter("ShardID", shardId));
-                    }
-                    if (type != null)
-                    {
-                        commandText += "Type = @Type AND ";
-                        command.Parameters.Add(new MySqlParameter("Type", type));
-                    }
-                    if (heartbeat.HasValue)
-                    {
-                        commandText += "DataValue = @Value";
-                        command.Parameters.Add(new MySqlParameter("Heartbeat", ToSqlTime(heartbeat.Value)));
-                    }
-                    if (commandText.Substring(commandText.Length - 5) == " AND ") commandText = commandText.Substring(0, commandText.Length - 5);
-                    commandText += ");";
+            command.CommandText = commandText;
+            MySqlDataReader dataReader = null;
+            try
+            {
+                dataReader = command.ExecuteReader();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
 
-                    command.CommandText = commandText;
-                    MySqlDataReader dataReader = null;
-                    try
-                    {
-                        dataReader = command.ExecuteReader();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
+            while (dataReader.Read())
+            {
+                ShardData @new;
+                try { @new = new ShardData(dataReader.GetInt32(0), dataReader.GetInt32(1), dataReader.GetString(2), dataReader.GetDateTime(3)); }
+                catch { @new = new ShardData(dataReader.GetInt32(0), dataReader.GetInt32(1), dataReader.GetString(2), DateTime.MaxValue); }
 
-                    while (dataReader.Read())
-                    {
-                        ShardData @new;
-                        try { @new = new ShardData(dataReader.GetInt32(0), dataReader.GetInt32(1), dataReader.GetString(2), dataReader.GetDateTime(3)); }
-                        catch { @new = new ShardData(dataReader.GetInt32(0), dataReader.GetInt32(1), dataReader.GetString(2), DateTime.MaxValue); }
-
-                        data.Add(@new);
-                    }
-                }
+                data.Add(@new);
             }
 
             return data;

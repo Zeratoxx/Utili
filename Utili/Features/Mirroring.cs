@@ -207,8 +207,8 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                SocketGuild toGuild = null;
-                ITextChannel to = null;
+                SocketGuild toGuild;
+                ITextChannel to;
                 try
                 {
                     toGuild = Program.Shards.GetGuild(toGuildId);

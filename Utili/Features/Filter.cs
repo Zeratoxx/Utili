@@ -234,7 +234,7 @@ namespace Utili
                     VideoListResponse response = await request.ExecuteAsync();
                     if (response.Items.Count > 0) return true;
                 }
-                catch (Exception e) { }
+                catch { }
             }
             return false;
         }

@@ -322,7 +322,7 @@ namespace Utili
 
             string content = "";
             int i = 1;
-            i = i * page;
+            i *= page;
             foreach (SocketGuildUser user in inactiveUsers.Skip(page * 50).Take(50))
             {
                 content += $"{user.Mention}\n";
