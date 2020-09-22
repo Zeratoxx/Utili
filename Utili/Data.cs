@@ -22,6 +22,7 @@ namespace Utili
 
         public static int ReactionsAltered = 0;
         public static double ReactionsAlteredPerSecond = 0;
+        public static double MaxReactionsAlteredPerSecond = 0;
 
         public static double QueriesPerSecond = 0;
         public static double CacheQueriesPerSecond = 0;
@@ -68,7 +69,7 @@ namespace Utili
                     }
                 }
             }
-            catch (Exception e)
+            catch
             {
                 return 0;
             }
@@ -200,8 +201,10 @@ namespace Utili
 
                     while (DataReader.Read())
                     {
-                        Data New = new Data(DataReader.GetString(1), DataReader.GetString(2), DataReader.GetString(3));
-                        New.ID = DataReader.GetInt32(0);
+                        Data New = new Data(DataReader.GetString(1), DataReader.GetString(2), DataReader.GetString(3))
+                        {
+                            ID = DataReader.GetInt32(0)
+                        };
                         Data.Add(New);
                     }
                 }
@@ -239,8 +242,10 @@ namespace Utili
 
                     while (DataReader.Read())
                     {
-                        Data New = new Data(DataReader.GetString(1), DataReader.GetString(2), DataReader.GetString(3));
-                        New.ID = DataReader.GetInt32(0);
+                        Data New = new Data(DataReader.GetString(1), DataReader.GetString(2), DataReader.GetString(3))
+                        {
+                            ID = DataReader.GetInt32(0)
+                        };
                         Data.Add(New);
                     }
                 }
@@ -323,14 +328,16 @@ namespace Utili
 
                     while (DataReader.Read())
                     {
-                        MessageData Data = new MessageData();
-                        Data.ID = DataReader.GetInt32(0);
-                        Data.GuildID = DataReader.GetString(1);
-                        Data.ChannelID = DataReader.GetString(2);
-                        Data.MessageID = DataReader.GetString(3);
-                        Data.UserID = DataReader.GetString(4);
-                        Data.EncryptedContent = DataReader.GetString(5);
-                        Data.Timestmap = DataReader.GetDateTime(6);
+                        MessageData Data = new MessageData
+                        {
+                            ID = DataReader.GetInt32(0),
+                            GuildID = DataReader.GetString(1),
+                            ChannelID = DataReader.GetString(2),
+                            MessageID = DataReader.GetString(3),
+                            UserID = DataReader.GetString(4),
+                            EncryptedContent = DataReader.GetString(5),
+                            Timestmap = DataReader.GetDateTime(6)
+                        };
 
                         return Data;
                     }
@@ -342,7 +349,7 @@ namespace Utili
 
         public static string ToSQLTime(DateTime Time)
         {
-            return $"{Time.Year.ToString("0000")}-{Time.Month.ToString("00")}-{Time.Day.ToString("00")} {Time.Hour.ToString("00")}:{Time.Minute.ToString("00")}:{Time.Second.ToString("00")}";
+            return $"{Time.Year:0000}-{Time.Month:00}-{Time.Day:00} {Time.Hour:00}:{Time.Minute:00}:{Time.Second:00}";
         }
 
         public static void SendEmail(string To, string Subject, string Content)

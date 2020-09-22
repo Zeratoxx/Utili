@@ -184,7 +184,7 @@ namespace Utili
 
             if (Details.ToLower() == "reactions" && OwnerPermission(Context.User, null))
             {
-                Embed.Description = $"**Reactions added/removed:** {ReactionsAlteredPerSecond}/s";
+                Embed.Description = $"**Reactions added/removed:** {ReactionsAlteredPerSecond}/s\n**Max:** {MaxReactionsAlteredPerSecond}";
             }
 
             await Context.Channel.SendMessageAsync(embed: Embed.Build());

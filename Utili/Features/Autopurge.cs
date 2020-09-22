@@ -14,7 +14,7 @@ namespace Utili
 {
     internal class Autopurge
     {
-        private List<Task> Tasks = new List<Task>();
+        private readonly List<Task> Tasks = new List<Task>();
 
         public static System.Timers.Timer StartRunthrough;
 

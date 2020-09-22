@@ -14,7 +14,7 @@ namespace Utili
 {
     internal class NoticeMessage
     {
-        private static List<(ulong, int)> MessageList = new List<(ulong, int)>();
+        private static readonly List<(ulong, int)> MessageList = new List<(ulong, int)>();
 
         public async Task NoticeMessage_MessageReceived(SocketMessage MessageParam)
         {

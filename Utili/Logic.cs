@@ -124,7 +124,7 @@ namespace Utili
                 if (!User.GetPermissions(Channel as IGuildChannel).Has(Permission))
                 {
                     HasPermissions = false;
-                    Errors.Add($"`{Permission.ToString()}`");
+                    Errors.Add($"`{Permission}`");
                 }
             }
 

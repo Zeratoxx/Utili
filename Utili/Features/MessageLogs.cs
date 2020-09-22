@@ -64,9 +64,11 @@ namespace Utili
                     Embed.WithCurrentTimestamp();
                     Embed.WithDescription($"**Message sent by {User.Mention} deleted in {(Channel as SocketTextChannel).Mention}**\n{Content}");
 
-                    EmbedAuthorBuilder Author = new EmbedAuthorBuilder();
-                    Author.Name = $"{User.Username}#{User.Discriminator}";
-                    Author.IconUrl = User.GetAvatarUrl();
+                    EmbedAuthorBuilder Author = new EmbedAuthorBuilder
+                    {
+                        Name = $"{User.Username}#{User.Discriminator}",
+                        IconUrl = User.GetAvatarUrl()
+                    };
                     Embed.WithAuthor(Author);
                     Embed.WithFooter($"Message: {PartialMessage.Id} | User: {User.Id}");
 
@@ -99,9 +101,11 @@ namespace Utili
                     Embed.WithDescription($"**Message sent by {User.Mention} edited in {(Channel as SocketTextChannel).Mention}**  [Jump]({NewMessage.GetJumpUrl()})");
                     Embed.AddField("Before", Content);
                     Embed.AddField("After", NewMessage.Content);
-                    EmbedAuthorBuilder Author = new EmbedAuthorBuilder();
-                    Author.Name = $"{User.Username}#{User.Discriminator}";
-                    Author.IconUrl = User.GetAvatarUrl();
+                    EmbedAuthorBuilder Author = new EmbedAuthorBuilder
+                    {
+                        Name = $"{User.Username}#{User.Discriminator}",
+                        IconUrl = User.GetAvatarUrl()
+                    };
                     Embed.WithAuthor(Author);
                     Embed.WithFooter($"Message: {PartialMessage.Id} | User: {User.Id}");
 
@@ -125,11 +129,13 @@ namespace Utili
         {
             string EncryptionKey = $"{GuildID * ChannelID}-{ChannelID * 3 - GuildID}";
 
-            RijndaelManaged objrij = new RijndaelManaged();
-            objrij.Mode = CipherMode.CBC;
-            objrij.Padding = PaddingMode.PKCS7;
-            objrij.KeySize = 0x80;
-            objrij.BlockSize = 0x80;
+            RijndaelManaged objrij = new RijndaelManaged
+            {
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                KeySize = 0x80,
+                BlockSize = 0x80
+            };
             byte[] passBytes = Encoding.UTF8.GetBytes(EncryptionKey);
             byte[] EncryptionkeyBytes = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
             int len = passBytes.Length;
@@ -149,11 +155,13 @@ namespace Utili
         {
             string EncryptionKey = $"{GuildID * ChannelID}-{ChannelID * 3 - GuildID}";
 
-            RijndaelManaged objrij = new RijndaelManaged();
-            objrij.Mode = CipherMode.CBC;
-            objrij.Padding = PaddingMode.PKCS7;
-            objrij.KeySize = 0x80;
-            objrij.BlockSize = 0x80;
+            RijndaelManaged objrij = new RijndaelManaged
+            {
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                KeySize = 0x80,
+                BlockSize = 0x80
+            };
             byte[] encryptedTextByte = Convert.FromBase64String(EncryptedText);
             byte[] passBytes = Encoding.UTF8.GetBytes(EncryptionKey);
             byte[] EncryptionkeyBytes = new byte[0x10];

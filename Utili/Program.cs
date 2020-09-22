@@ -44,7 +44,7 @@ namespace Utili
 
         #region System
 
-        private static void Main(string[] args)
+        private static void Main()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) & UseTest == false)
             {
@@ -56,7 +56,7 @@ namespace Utili
             if (!Debug)
             {
                 Console.WriteLine("See Output.txt for console.");
-                StreamWriter outputFile = null;
+                StreamWriter outputFile;
 
                 if (!File.Exists("Output.txt")) outputFile = File.CreateText("Output.txt");
                 else outputFile = File.AppendText("Output.txt");
@@ -180,6 +180,7 @@ namespace Utili
             Client.UserVoiceStateUpdated += Commence_UserVoiceStateUpdated;
             Client.ChannelCreated += Commence_ChannelCreated;
             Client.ReactionAdded += Commence_ReactionAdded;
+            Client.ReactionRemoved += Commence_ReactionRemoved;
             Client.JoinedGuild += Commence_ClientJoin;
             Client.LeftGuild += Commence_ClientLeave;
 
@@ -253,6 +254,11 @@ namespace Utili
                 try { QueriesPerSecond = Math.Round(Queries / Uptime.TotalSeconds, 2); } catch { QueriesPerSecond = 0; }
                 try { CacheQueriesPerSecond = Math.Round(CacheQueries / Uptime.TotalSeconds, 2); } catch { CacheQueriesPerSecond = 0; }
                 try { ReactionsAlteredPerSecond = Math.Round(ReactionsAltered / Uptime.TotalSeconds, 2); } catch { ReactionsAltered = 0; }
+
+                if(ReactionsAlteredPerSecond > MaxReactionsAlteredPerSecond)
+                {
+                    MaxReactionsAlteredPerSecond = ReactionsAlteredPerSecond;
+                }
 
                 try
                 {
@@ -373,10 +379,10 @@ namespace Utili
                 ApiKey = Config.Youtube.Key
             });
 
-            UpdateStats();
+            _ = UpdateStats();
 
             AntiProfane AntiProfane = new AntiProfane();
-            Task.Run(() => AntiProfane.AntiProfane_Ready());
+            _ = AntiProfane.AntiProfane_Ready();
 
             Ready = true;
 
@@ -414,7 +420,7 @@ namespace Utili
 
         private async Task Commence_MessageReceived(SocketMessage MessageParam)
         {
-            Task.Run(() => Client_MessageReceived(MessageParam));
+            _ = Client_MessageReceived(MessageParam);
         }
 
         private async Task Client_MessageReceived(SocketMessage MessageParam)
@@ -435,9 +441,6 @@ namespace Utili
             var Context = new SocketCommandContext(Client, Message);
 
             #endregion System
-
-            var GuildUser = Context.User as SocketGuildUser;
-            UserStatus Status = GuildUser.Status;
 
             #region Reject DMs
 
@@ -525,30 +528,30 @@ namespace Utili
             #region Start other scripts
 
             MessageLogs MessageLogs = new MessageLogs();
-            Task.Run(() => MessageLogs.MessageLogs_MessageReceived(MessageParam));
+            _ = MessageLogs.MessageLogs_MessageReceived(MessageParam);
 
             SpamFilter SpamFilter = new SpamFilter();
-            Task.Run(() => SpamFilter.SpamFilter_MessageReceived(MessageParam));
+            _ = SpamFilter.SpamFilter_MessageReceived(MessageParam);
 
             Filter Filter = new Filter();
-            Task.Run(() => Filter.Filter_MessageReceived(MessageParam));
+            _ = Filter.Filter_MessageReceived(MessageParam);
 
             AntiProfane AntiProfane = new AntiProfane();
-            Task.Run(() => AntiProfane.AntiProfane_MessageReceived(MessageParam));
+            _ = AntiProfane.AntiProfane_MessageReceived(MessageParam);
 
             Votes Votes = new Votes();
-            Task.Run(() => Votes.Votes_MessageReceived(MessageParam));
+            _ = Votes.Votes_MessageReceived(MessageParam);
 
             NoticeMessage NoticeMessage = new NoticeMessage();
-            Task.Run(() => NoticeMessage.NoticeMessage_MessageReceived(MessageParam));
+            _ = NoticeMessage.NoticeMessage_MessageReceived(MessageParam);
 
             Mirroring Mirroring = new Mirroring();
-            Task.Run(() => Mirroring.Mirroring_MessageReceived(MessageParam));
+            _ = Mirroring.Mirroring_MessageReceived(MessageParam);
 
             InactiveRole InactiveRole = new InactiveRole();
-            Task.Run(() => InactiveRole.InactiveRole_MessageReceived(MessageParam));
+            _ = InactiveRole.InactiveRole_MessageReceived(MessageParam);
 
-            if (LastStatsUpdate < DateTime.Now.AddMinutes(-10)) Task.Run(() => UpdateStats());
+            if (LastStatsUpdate < DateTime.Now.AddMinutes(-10)) _ = UpdateStats();
 
             #endregion Start other scripts
         }
@@ -618,16 +621,16 @@ namespace Utili
 
         private async Task Commence_UserJoin(SocketGuildUser User)
         {
-            Task.Run(() => Client_UserJoin(User));
+            _ = Client_UserJoin(User);
         }
 
         private async Task Client_UserJoin(SocketGuildUser User)
         {
             RolePersist RolePersist = new RolePersist();
-            Task.Run(() => RolePersist.UserJoin(User));
+            _ = RolePersist.UserJoin(User);
 
             JoinMessage JoinMessage = new JoinMessage();
-            Task.Run(() => JoinMessage.JoinMessage_UserJoined(User));
+            _ = JoinMessage.JoinMessage_UserJoined(User);
 
             DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
             SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
@@ -642,7 +645,7 @@ namespace Utili
 
         private async Task Commence_ClientJoin(SocketGuild Guild)
         {
-            Task.Run(() => Client_ClientJoin(Guild));
+            _ = Client_ClientJoin(Guild);
         }
 
         private async Task Client_ClientJoin(SocketGuild Guild)
@@ -662,7 +665,7 @@ namespace Utili
 
         private async Task Commence_UserLeft(SocketGuildUser User)
         {
-            Task.Run(() => Client_UserLeft(User));
+            _ = Client_UserLeft(User);
         }
 
         private async Task Client_UserLeft(SocketGuildUser User)
@@ -670,7 +673,7 @@ namespace Utili
             DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
 
             RolePersist RolePersist = new RolePersist();
-            Task.Run(() => RolePersist.UserLeft(User));
+            _ = RolePersist.UserLeft(User);
         }
 
         #endregion User Leave
@@ -679,7 +682,7 @@ namespace Utili
 
         private async Task Commence_ClientLeave(SocketGuild Guild)
         {
-            Task.Run(() => Client_ClientLeave(Guild));
+            _ = Client_ClientLeave(Guild);
         }
 
         private async Task Client_ClientLeave(SocketGuild Guild)
@@ -695,16 +698,16 @@ namespace Utili
 
         private async Task Commence_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
         {
-            Task.Run(() => Client_UserVoiceStateUpdated(UserParam, Before, After));
+            _ = Client_UserVoiceStateUpdated(UserParam, Before, After);
         }
 
         private async Task Client_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
         {
             SocketGuildUser User = UserParam as SocketGuildUser;
             VCLink VCLink = new VCLink();
-            Task.Run(() => VCLink.Client_UserVoiceStateUpdated(User, Before, After));
+            _ = VCLink.Client_UserVoiceStateUpdated(User, Before, After);
             VCRoles VCRoles = new VCRoles();
-            Task.Run(() => VCRoles.Client_UserVoiceStateUpdated(User, Before, After));
+            _ = VCRoles.Client_UserVoiceStateUpdated(User, Before, After);
 
             if (After.VoiceChannel != null)
             {
@@ -719,13 +722,13 @@ namespace Utili
 
         private async Task Commence_ChannelCreated(SocketChannel Channel)
         {
-            Task.Run(() => Client_ChannelCreated(Channel));
+            _ = Client_ChannelCreated(Channel);
         }
 
         private async Task Client_ChannelCreated(SocketChannel Channel)
         {
             MessageLogs MessageLogs = new MessageLogs();
-            Task.Run(() => MessageLogs.MessageLogs_ChannelCreated(Channel));
+            _ = MessageLogs.MessageLogs_ChannelCreated(Channel);
         }
 
         #endregion Channel Created
@@ -735,19 +738,25 @@ namespace Utili
         public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
         {
             MessageLogs MessageLogs = new MessageLogs();
-            Task.Run(() => MessageLogs.MessageLogs_MessageDeleted(PartialMessage, Channel));
+            _ = MessageLogs.MessageLogs_MessageDeleted(PartialMessage, Channel);
         }
 
         public async Task Commence_MessageUpdated(Cacheable<IMessage, ulong> PartialMessage, SocketMessage NewMessage, ISocketMessageChannel Channel)
         {
             MessageLogs MessageLogs = new MessageLogs();
-            Task.Run(() => MessageLogs.MessageLogs_MessageEdited(PartialMessage, NewMessage, Channel));
+            _ = MessageLogs.MessageLogs_MessageEdited(PartialMessage, NewMessage, Channel);
         }
 
         public async Task Commence_ReactionAdded(Cacheable<IUserMessage, ulong> Message, ISocketMessageChannel Channel, SocketReaction Reaction)
         {
+            ReactionsAltered += 1;
             Votes Votes = new Votes();
-            Task.Run(() => Votes.Votes_ReactionAdded(Message, Channel, Reaction));
+            _ = Votes.Votes_ReactionAdded(Message, Channel, Reaction);
+        }
+
+        public async Task Commence_ReactionRemoved(Cacheable<IUserMessage, ulong> Message, ISocketMessageChannel Channel, SocketReaction Reaction)
+        {
+            ReactionsAltered += 1;
         }
 
         #endregion Messages

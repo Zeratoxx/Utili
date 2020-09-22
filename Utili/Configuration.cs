@@ -12,8 +12,10 @@ namespace Utili
         {
             Config = new Configuration();
 
-            JsonSerializerOptions Options = new JsonSerializerOptions();
-            Options.WriteIndented = true;
+            JsonSerializerOptions Options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
 
             string Json;
             Json = JsonSerializer.Serialize(Config, Options);
@@ -22,8 +24,10 @@ namespace Utili
 
         public static void SaveConfig()
         {
-            JsonSerializerOptions Options = new JsonSerializerOptions();
-            Options.WriteIndented = true;
+            JsonSerializerOptions Options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
 
             string Json = JsonSerializer.Serialize(Config, Options);
             File.WriteAllText("Config.json", Json);

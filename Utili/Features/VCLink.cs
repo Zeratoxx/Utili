@@ -33,7 +33,6 @@ namespace Utili
                 string ID = "";
                 try { ID = GetFirstData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}").Value; }
                 catch { }
-                bool Success = false;
                 try
                 {
                     SocketTextChannel Channel = User.Guild.GetTextChannel(ulong.Parse(ID));
@@ -43,8 +42,6 @@ namespace Utili
                         await Channel.DeleteAsync();
                         DeleteData(User.Guild.Id.ToString(), $"VCLink-Channel-{Before.VoiceChannel.Id}");
                     }
-
-                    Success = true;
                 }
                 catch { };
             }
