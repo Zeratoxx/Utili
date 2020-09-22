@@ -23,9 +23,9 @@ namespace Utili
         public async Task Filter_MessageReceived(SocketMessage messageParam)
         {
             SocketUserMessage message = messageParam as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(Client, message);
+            SocketCommandContext context = new SocketCommandContext(_client, message);
 
-            if (context.User.Id == Client.CurrentUser.Id & context.Message.Embeds.Count > 0)
+            if (context.User.Id == _client.CurrentUser.Id & context.Message.Embeds.Count > 0)
             {
                 if (context.Message.Embeds.First().Author.Value.Name == "Message deleted") return;
             }
@@ -51,7 +51,7 @@ namespace Utili
                 if (delete)
                 {
                     await context.Message.DeleteAsync();
-                    if (context.User.Id != Client.CurrentUser.Id)
+                    if (context.User.Id != _client.CurrentUser.Id)
                     {
                         RestUserMessage sentMessage = await context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with image files (jpg, png) and instagram images."));
                         Thread.Sleep(5000);
@@ -82,7 +82,7 @@ namespace Utili
                 if (delete)
                 {
                     await context.Message.DeleteAsync();
-                    if (context.User.Id != Client.CurrentUser.Id)
+                    if (context.User.Id != _client.CurrentUser.Id)
                     {
                         RestUserMessage sentMessage = await context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with video files (mov, mp4) or youtube links"));
                         Thread.Sleep(5000);
@@ -114,7 +114,7 @@ namespace Utili
                 if (delete)
                 {
                     await context.Message.DeleteAsync();
-                    if (context.User.Id != Client.CurrentUser.Id)
+                    if (context.User.Id != _client.CurrentUser.Id)
                     {
                         RestUserMessage sentMessage = await context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with media files (png, jpg, mp4, mov, gif), youtube links and instagram images."));
                         Thread.Sleep(5000);
@@ -148,7 +148,7 @@ namespace Utili
                 if (delete)
                 {
                     await context.Message.DeleteAsync();
-                    if (context.User.Id != Client.CurrentUser.Id)
+                    if (context.User.Id != _client.CurrentUser.Id)
                     {
                         RestUserMessage sentMessage = await context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with music files (mp3, wav, m4a, flac), youtube links, spotify links or soundcloud links"));
                         Thread.Sleep(5000);
@@ -166,7 +166,7 @@ namespace Utili
                 if (delete)
                 {
                     await context.Message.DeleteAsync();
-                    if (context.User.Id != Client.CurrentUser.Id)
+                    if (context.User.Id != _client.CurrentUser.Id)
                     {
                         RestUserMessage sentMessage = await context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This channel only allows messages with attachments"));
                         Thread.Sleep(5000);
@@ -229,7 +229,7 @@ namespace Utili
                 foreach (char character in current.Reverse()) id += character;
                 try
                 {
-                    VideosResource.ListRequest request = Youtube.Videos.List("snippet");
+                    VideosResource.ListRequest request = _youtube.Videos.List("snippet");
                     request.Id = id;
                     VideoListResponse response = await request.ExecuteAsync();
                     if (response.Items.Count > 0) return true;

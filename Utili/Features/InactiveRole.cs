@@ -23,7 +23,7 @@ namespace Utili
         public async Task InactiveRole_MessageReceived(SocketMessage messageParam)
         {
             SocketUserMessage message = messageParam as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(Client, message);
+            SocketCommandContext context = new SocketCommandContext(_client, message);
 
             if (context.User.IsBot) return;
 
@@ -88,7 +88,7 @@ namespace Utili
 
         public static async Task ProcessGuild(ulong guildId, ulong roleId, bool depth = false)
         {
-            SocketGuild guild = Client.GetGuild(guildId);
+            SocketGuild guild = _client.GetGuild(guildId);
             SocketRole role = guild.GetRole(roleId);
 
             SocketRole immuneRole = null;

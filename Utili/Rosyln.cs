@@ -32,7 +32,7 @@ namespace Utili
 
                 string[] imports = { "Discord", "Discord.Commands", "Discord.WebSocket", "System.Linq", "System.Threading.Tasks" };
 
-                RosylnGlobals globals = new RosylnGlobals { Context = Context, Client = Program.Client };
+                RosylnGlobals globals = new RosylnGlobals { Context = Context, Client = Program._client };
                 try
                 {
                     object evaluation = await CSharpScript.EvaluateAsync<object>($"{code}", ScriptOptions.Default.WithReferences(references).WithImports(imports), globals: globals);

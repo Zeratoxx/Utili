@@ -18,7 +18,7 @@ namespace Utili
         public async Task MessageLogs_MessageReceived(SocketMessage messageParam)
         {
             SocketUserMessage message = messageParam as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(Program.Client, message);
+            SocketCommandContext context = new SocketCommandContext(Program._client, message);
 
             if (context.User.IsBot || context.User.IsWebhook) return;
 
@@ -81,7 +81,7 @@ namespace Utili
         public async Task MessageLogs_MessageEdited(Cacheable<IMessage, ulong> partialMessage, SocketMessage newMessage, ISocketMessageChannel channel)
         {
             SocketGuild guild = (channel as SocketTextChannel).Guild;
-            SocketCommandContext context = new SocketCommandContext(Program.Client, newMessage as SocketUserMessage);
+            SocketCommandContext context = new SocketCommandContext(Program._client, newMessage as SocketUserMessage);
 
             if (DataExists(guild.Id.ToString(), "MessageLogs-Channel", channel.Id.ToString()))
             {

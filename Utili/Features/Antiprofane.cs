@@ -23,14 +23,14 @@ namespace Utili
         public async Task AntiProfane_MessageReceived(SocketMessage messageParam)
         {
             SocketUserMessage message = messageParam as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(Client, message);
+            SocketCommandContext context = new SocketCommandContext(_client, message);
 
             if (DataExists(context.Guild.Id.ToString(), "AntiProfane-Enabled", "True"))
             {
                 if (await IsProfaneAsync(context.Message.Content))
                 {
                     await context.Message.DeleteAsync();
-                    if (context.User.Id != Client.CurrentUser.Id)
+                    if (context.User.Id != _client.CurrentUser.Id)
                     {
                         RestUserMessage sentMessage = await context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This server doesn't allow profane langugae.\n[Report false positive](https://discord.gg/WsxqABZ)"));
                         Thread.Sleep(5000);

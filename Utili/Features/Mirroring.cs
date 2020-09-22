@@ -18,7 +18,7 @@ namespace Utili
         public async Task Mirroring_MessageReceived(SocketMessage messageParam)
         {
             SocketUserMessage message = messageParam as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(Program.Client, message);
+            SocketCommandContext context = new SocketCommandContext(Program._client, message);
 
             if (context.User.IsBot) return;
 
@@ -43,7 +43,7 @@ namespace Utili
                         // If the to channel is in another guild
                         else
                         {
-                            toGuild = Program.Shards.GetGuild(ulong.Parse(value.Value.Split("G").Last()));
+                            toGuild = Program._shards.GetGuild(ulong.Parse(value.Value.Split("G").Last()));
                             toChannel = toGuild.GetTextChannel(ulong.Parse(value.Value.Split(" -> ").Last().Split(" G").First()));
                         }
 
@@ -173,7 +173,7 @@ namespace Utili
                 ITextChannel to;
                 try
                 {
-                    toGuild = Program.Shards.GetGuild(toGuildId);
+                    toGuild = Program._shards.GetGuild(toGuildId);
                     to = toGuild.GetTextChannel(toId);
                     if (toGuild.Id == Context.Guild.Id) throw new Exception();
 
@@ -211,7 +211,7 @@ namespace Utili
                 ITextChannel to;
                 try
                 {
-                    toGuild = Program.Shards.GetGuild(toGuildId);
+                    toGuild = Program._shards.GetGuild(toGuildId);
                     to = toGuild.GetTextChannel(toId);
                     if (toGuild.Id == Context.Guild.Id) throw new Exception();
                 }

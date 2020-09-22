@@ -18,7 +18,7 @@ namespace Utili
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                IOrderedEnumerable<SocketGuild> servers = Program.Shards.Guilds.OrderBy(x => x.Name);
+                IOrderedEnumerable<SocketGuild> servers = Program._shards.Guilds.OrderBy(x => x.Name);
 
                 int oldNumber = number;
                 number = (number - 1) * 10;
@@ -133,7 +133,7 @@ namespace Utili
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                await Context.Channel.SendMessageAsync(embed: Logic.GuildInfo(Program.Shards.GetGuild(guildId)));
+                await Context.Channel.SendMessageAsync(embed: Logic.GuildInfo(Program._shards.GetGuild(guildId)));
             }
         }
 

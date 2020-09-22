@@ -18,7 +18,7 @@ namespace Utili
         public async Task SpamFilter_MessageReceived(SocketMessage messageParam)
         {
             SocketUserMessage message = messageParam as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(Client, message);
+            SocketCommandContext context = new SocketCommandContext(_client, message);
 
             if (context.User.IsBot || context.User.IsWebhook) return;
 
@@ -93,7 +93,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Context.Guild.GetUser(Client.CurrentUser.Id).GuildPermissions.ManageMessages)
+                if (Context.Guild.GetUser(_client.CurrentUser.Id).GuildPermissions.ManageMessages)
                 {
                     DeleteData(Context.Guild.Id.ToString(), "SpamFilter-Enabled");
                     SaveData(Context.Guild.Id.ToString(), "SpamFilter-Enabled", "True");

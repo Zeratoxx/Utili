@@ -49,7 +49,7 @@ namespace Utili
             {
                 try
                 {
-                    SocketGuild guild = Client.GetGuild(guildId);
+                    SocketGuild guild = _client.GetGuild(guildId);
                     List<Data> guildChannels = allChannels.Where(x => x.GuildId == guildId.ToString()).ToList();
 
                     foreach (Data data in guildChannels)

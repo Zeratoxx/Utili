@@ -97,7 +97,7 @@ namespace Utili
         {
             try
             {
-                try { if (!Program.Client.Guilds.Select(x => x.Id).Contains(ulong.Parse(guildId))) ignoreCache = true; }
+                try { if (!Program._client.Guilds.Select(x => x.Id).Contains(ulong.Parse(guildId))) ignoreCache = true; }
                 catch { }
 
                 if (!ignoreCache)
@@ -134,7 +134,7 @@ namespace Utili
         {
             List<Data> data = new List<Data>();
 
-            try { if (!Program.Client.Guilds.Select(x => x.Id).Contains(ulong.Parse(guildId))) ignoreCache = true; }
+            try { if (!Program._client.Guilds.Select(x => x.Id).Contains(ulong.Parse(guildId))) ignoreCache = true; }
             catch { }
 
             if (!ignoreCache)

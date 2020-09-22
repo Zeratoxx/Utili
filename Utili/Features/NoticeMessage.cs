@@ -19,9 +19,9 @@ namespace Utili
         public async Task NoticeMessage_MessageReceived(SocketMessage messageParam)
         {
             SocketUserMessage message = messageParam as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(Client, message);
+            SocketCommandContext context = new SocketCommandContext(_client, message);
 
-            if (message.Author.Id == Client.CurrentUser.Id)
+            if (message.Author.Id == _client.CurrentUser.Id)
             {
                 await Task.Delay(5000);
                 IMessage newMsg = await context.Channel.GetMessageAsync(message.Id);
@@ -145,7 +145,7 @@ namespace Utili
                 #region Delete Similar
 
                 IEnumerable<IMessage> messages = await channel.GetMessagesAsync().FlattenAsync();
-                List<IMessage> botMessages = messages.Where(x => x.Author.Id == Client.CurrentUser.Id).ToList();
+                List<IMessage> botMessages = messages.Where(x => x.Author.Id == _client.CurrentUser.Id).ToList();
                 List<IMessage> embeddedMessages = botMessages.Where(x => x.Embeds.Count > 0).ToList();
                 List<IMessage> toDelete = new List<IMessage>();
 

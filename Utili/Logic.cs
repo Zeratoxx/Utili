@@ -104,7 +104,7 @@ namespace Utili
 
         public static bool BotHasPermissions(ITextChannel channel, ChannelPermission[] permissions, ISocketMessageChannel contextChannel, bool send = true)
         {
-            SocketGuildUser user = (channel as SocketGuildChannel).Guild.GetUser(Program.Client.CurrentUser.Id);
+            SocketGuildUser user = (channel as SocketGuildChannel).Guild.GetUser(Program._client.CurrentUser.Id);
 
             bool hasPermissions = true;
             List<string> errors = new List<string>();
@@ -140,7 +140,7 @@ namespace Utili
 
         public static bool BotHasPermissions(SocketGuild guild, GuildPermission[] permissions, ISocketMessageChannel contextChannel, bool send = true)
         {
-            SocketGuildUser user = guild.GetUser(Program.Client.CurrentUser.Id);
+            SocketGuildUser user = guild.GetUser(Program._client.CurrentUser.Id);
 
             bool hasPermissions = true;
             List<string> errors = new List<string>();
@@ -191,7 +191,7 @@ namespace Utili
 
         public static int GetMaxWorkers()
         {
-            int amount = (int)Math.Round(Program.Client.Guilds.Count / 40d);
+            int amount = (int)Math.Round(Program._client.Guilds.Count / 40d);
             if (amount == 0) return 1;
             return amount;
         }

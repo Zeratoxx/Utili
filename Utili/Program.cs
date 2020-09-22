@@ -28,10 +28,13 @@ namespace Utili
     {
         public static string VersionNumber = "1.11.8";
 
-        public static DiscordSocketClient Client;
-        public static DiscordShardedClient Shards;
-        private CommandService _commands;
-        public static YouTubeService Youtube;
+        // ReSharper disable InconsistentNaming
+        public static DiscordSocketClient _client;
+        public static DiscordShardedClient _shards;
+        public static CommandService _commands;
+        public static YouTubeService _youtube;
+        // ReSharper restore InconsistentNaming
+
         public static CancellationTokenSource ForceStop;
         public static Timer ReliabilityTimer;
         public static Timer LatencyTimer;
@@ -41,8 +44,8 @@ namespace Utili
         public static bool FirstStart = true;
         public static int Restarts = -1;
 
-        public static bool Debug = false;
-        public static bool UseTest = false;
+        public static bool Debug = true;
+        public static bool UseTest = true;
 
         private DateTime _lastStatsUpdate = DateTime.Now;
 
@@ -88,7 +91,7 @@ namespace Utili
                 {
                     try
                     {
-                        if (Client.ConnectionState != ConnectionState.Connected)
+                        if (_client.ConnectionState != ConnectionState.Connected)
                         {
                             if (e.InnerException == null) Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n\n");
                             else Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n{e.InnerException.Message}\n\nRestarting...\n\n");
@@ -98,9 +101,9 @@ namespace Utili
                             try { ReliabilityTimer.Stop(); } catch { }
                             try { ReliabilityTimer.Dispose(); } catch { }
 
-                            try { Client.StopAsync(); } catch { }
+                            try { _client.StopAsync(); } catch { }
 
-                            try { Client.Dispose(); } catch { }
+                            try { _client.Dispose(); } catch { }
 
                             try { Autopurge.StartRunthrough.Stop(); } catch { }
                             try { InactiveRole.StartRunthrough.Stop(); } catch { }
@@ -116,7 +119,7 @@ namespace Utili
                         }
                         else Console.WriteLine($"[{DateTime.Now}] [Exception] {e.Message}");
                     }
-                    catch //Only if Client.ConnectionState errors
+                    catch //Only if _client.ConnectionState errors
                     {
                         Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n");
                         retry = true;
@@ -135,14 +138,21 @@ namespace Utili
 
             try
             {
-                await Client.StopAsync();
-                await Shards.StopAsync();
-                Client.Dispose();
-                Shards.Dispose();
+                await _client.StopAsync();
+                await _shards.StopAsync();
+                _client.Dispose();
+                _shards.Dispose();
             }
             catch { }
 
             ShardId = -1;
+
+            if (UseTest)
+            {
+                ShardId = 0;
+                TotalShards = 1;
+            }
+
             TotalShards = 1;
 
             if (!UseTest)
@@ -159,7 +169,7 @@ namespace Utili
                 _ = Sharding.FlushDisconnected();
             }
 
-            Shards = new DiscordShardedClient(new DiscordSocketConfig
+            _shards = new DiscordShardedClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info,
                 MessageCacheSize = 5,
@@ -168,7 +178,7 @@ namespace Utili
                 AlwaysDownloadUsers = false
             });
 
-            Client = Shards.GetShard(ShardId);
+            _client = _shards.GetShard(ShardId);
 
             _commands = new CommandService(new CommandServiceConfig
             {
@@ -177,24 +187,24 @@ namespace Utili
                 LogLevel = LogSeverity.Debug
             });
 
-            Client.MessageReceived += Commence_MessageReceived;
-            Client.MessageDeleted += Commence_MessageDelete;
-            Client.MessageUpdated += Commence_MessageUpdated;
-            Client.UserJoined += Commence_UserJoin;
-            Client.UserLeft += Commence_UserLeft;
-            Client.UserVoiceStateUpdated += Commence_UserVoiceStateUpdated;
-            Client.ChannelCreated += Commence_ChannelCreated;
-            Client.ReactionAdded += Commence_ReactionAdded;
-            Client.ReactionRemoved += Commence_ReactionRemoved;
-            Client.JoinedGuild += Commence_ClientJoin;
-            Client.LeftGuild += Commence_ClientLeave;
+            _client.MessageReceived += Commence_MessageReceived;
+            _client.MessageDeleted += Commence_MessageDelete;
+            _client.MessageUpdated += Commence_MessageUpdated;
+            _client.UserJoined += Commence_UserJoin;
+            _client.UserLeft += Commence_UserLeft;
+            _client.UserVoiceStateUpdated += Commence_UserVoiceStateUpdated;
+            _client.ChannelCreated += Commence_ChannelCreated;
+            _client.ReactionAdded += Commence_ReactionAdded;
+            _client.ReactionRemoved += Commence_ReactionRemoved;
+            _client.JoinedGuild += Commence_ClientJoin;
+            _client.LeftGuild += Commence_ClientLeave;
 
             _commands.AddTypeReader(typeof(TimeSpan), new TimespanTypeReader());
 
             await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: null);
 
-            Client.Ready += Client_Ready;
-            Client.Log += Client_Log;
+            _client.Ready += Client_Ready;
+            _client.Log += Client_Log;
 
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
 
@@ -207,8 +217,8 @@ namespace Utili
             Queries = 0;
             CacheQueries = 0;
 
-            await Shards.LoginAsync(TokenType.Bot, token);
-            await Shards.StartAsync();
+            await _shards.LoginAsync(TokenType.Bot, token);
+            await _shards.StartAsync();
 
             LatencyTimer = new Timer(10000);
             LatencyTimer.Elapsed += UpdateLatency;
@@ -233,8 +243,8 @@ namespace Utili
             try { ReliabilityTimer.Stop(); } catch { }
             try { ReliabilityTimer.Dispose(); } catch { }
 
-            try { await Client.StopAsync(); } catch { }
-            try { Client.Dispose(); } catch { }
+            try { await _client.StopAsync(); } catch { }
+            try { _client.Dispose(); } catch { }
 
             Autopurge.StartRunthrough.Stop();
             InactiveRole.StartRunthrough.Stop();
@@ -317,7 +327,7 @@ namespace Utili
                 try
                 {
                     DateTime now = DateTime.Now;
-                    RestUserMessage sent = await Shards.GetGuild(682882628168450079).GetTextChannel(713125991563919492).SendMessageAsync("Testing send latency...");
+                    RestUserMessage sent = await _shards.GetGuild(682882628168450079).GetTextChannel(713125991563919492).SendMessageAsync("Testing send latency...");
                     SendLatency = (int)Math.Round((DateTime.Now - now).TotalMilliseconds);
 
                     now = DateTime.Now;
@@ -333,15 +343,15 @@ namespace Utili
 
         private async void CheckReliability(object sender, ElapsedEventArgs e)
         {
-            if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
+            if (_client.ConnectionState != ConnectionState.Connected || _client.Latency > 10000)
             {
                 for (int i = 0; i < 30; i++)
                 {
                     try { await Task.Delay(1000, ForceStop.Token); } catch { }
-                    if ((Client.ConnectionState == ConnectionState.Connected && Client.Latency < 10000) || ForceStop.IsCancellationRequested || !Ready) return;
+                    if ((_client.ConnectionState == ConnectionState.Connected && _client.Latency < 10000) || ForceStop.IsCancellationRequested || !Ready) return;
                 }
 
-                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{Client.ConnectionState} @ {Client.Latency}ms]");
+                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{_client.ConnectionState} @ {_client.Latency}ms]");
                 Ready = false;
                 ForceStop.Cancel();
             }
@@ -357,16 +367,16 @@ namespace Utili
 
         private async Task Client_Ready()
         {
-            Console.WriteLine($"[{DateTime.Now}] [Info] Logged in as bot user {Client.CurrentUser} ({Client.CurrentUser.Id})");
+            Console.WriteLine($"[{DateTime.Now}] [Info] Logged in as bot user {_client.CurrentUser} ({_client.CurrentUser.Id})");
             Restarts += 1;
 
             if (FirstStart)
             {
                 string guildArray = "";
-                foreach (SocketGuild guild in Client.Guilds) guildArray += $"'{guild.Id}',";
+                foreach (SocketGuild guild in _client.Guilds) guildArray += $"'{guild.Id}',";
                 guildArray = guildArray.Remove(guildArray.Length - 1);
 
-                Console.WriteLine($"[{DateTime.Now}] [Info] Loading cache for {Client.Guilds.Count} guilds...");
+                Console.WriteLine($"[{DateTime.Now}] [Info] Loading cache for {_client.Guilds.Count} guilds...");
 
                 Cache = GetDataWhere($"GuildID IN ({guildArray}) AND DataType NOT LIKE '%RolePersist-Role-%'");
 
@@ -376,9 +386,9 @@ namespace Utili
             }
             else Console.WriteLine($"[{DateTime.Now}] [Info] Skipped cache loading as this is not the first startup.");
 
-            await Client.SetGameAsync(".help", null, ActivityType.Watching);
+            await _client.SetGameAsync(".help", null, ActivityType.Watching);
 
-            Youtube = new YouTubeService(new BaseClientService.Initializer
+            _youtube = new YouTubeService(new BaseClientService.Initializer
             {
                 ApplicationName = Config.Youtube.ApplicationName,
                 ApiKey = Config.Youtube.Key
@@ -404,7 +414,7 @@ namespace Utili
                 {
                     try
                     {
-                        SocketGuild guild = Shards.GetGuild(682882628168450079);
+                        SocketGuild guild = _shards.GetGuild(682882628168450079);
                         SocketTextChannel channel = guild.GetTextChannel(731790673728241665);
 
                         if (Restarts == 0) await channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardId} is ready, running v{VersionNumber} on {machine}. This is the fist startup."));
@@ -432,7 +442,7 @@ namespace Utili
         {
             #region Delete System Messages
 
-            if (messageParam.Author.Id == Client.CurrentUser.Id & messageParam.GetType() == typeof(SocketSystemMessage))
+            if (messageParam.Author.Id == _client.CurrentUser.Id & messageParam.GetType() == typeof(SocketSystemMessage))
             {
                 await messageParam.DeleteAsync();
                 return;
@@ -443,7 +453,7 @@ namespace Utili
             #region System
 
             SocketUserMessage message = messageParam as SocketUserMessage;
-            SocketCommandContext context = new SocketCommandContext(Client, message);
+            SocketCommandContext context = new SocketCommandContext(_client, message);
 
             #endregion System
 
@@ -458,7 +468,7 @@ namespace Utili
 
             #region Command Handler
             
-            if (!(context.Message == null || context.Message.ToString() == "" || context.User.Id == Client.CurrentUser.Id || context.User.IsBot))
+            if (!(context.Message == null || context.Message.ToString() == "" || context.User.Id == _client.CurrentUser.Id || context.User.IsBot))
             {
                 if (!DataExists(context.Guild.Id.ToString(), "Commands-Disabled", context.Channel.Id.ToString()))
                 {
@@ -469,7 +479,7 @@ namespace Utili
 
                     if (UseTest) prefix = "-";
 
-                    if (message.HasStringPrefix(prefix, ref argPos) || message.HasMentionPrefix(Client.CurrentUser, ref argPos))
+                    if (message.HasStringPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))
                     {
                         try
                         {
@@ -575,7 +585,7 @@ namespace Utili
 
             AuthDiscordBotListApi api = new AuthDiscordBotListApi(655155797260501039, Config.DiscordBotListKey);
             IDblSelfBot me = await api.GetMeAsync();
-            try { await me.UpdateStatsAsync(Shards.Guilds.Count); } catch { }
+            try { await me.UpdateStatsAsync(_shards.Guilds.Count); } catch { }
 
             #endregion top.gg
 
@@ -586,7 +596,7 @@ namespace Utili
 
             FormUrlEncodedContent content = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("server_count", Shards.Guilds.Count.ToString()),
+                new KeyValuePair<string, string>("server_count", _shards.Guilds.Count.ToString()),
             });
 
             try { await httpClient.PostAsync("https://botsfordiscord.com/api/bot/655155797260501039", content); } catch { }
@@ -599,7 +609,7 @@ namespace Utili
 
             content = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("guildCount", Shards.Guilds.Count.ToString()),
+                new KeyValuePair<string, string>("guildCount", _shards.Guilds.Count.ToString()),
             });
 
             try { await httpClient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/655155797260501039/guilds", content); } catch { }
@@ -612,7 +622,7 @@ namespace Utili
 
             content = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("server_count", Shards.Guilds.Count.ToString()),
+                new KeyValuePair<string, string>("server_count", _shards.Guilds.Count.ToString()),
             });
 
             try { await httpClient.PostAsync("https://discord.boats/api/bot/655155797260501039", content); } catch { }
@@ -664,7 +674,7 @@ namespace Utili
             }
         }
 
-        #endregion Client Join
+        #endregion _client Join
 
         #region User Leave
 
@@ -697,7 +707,7 @@ namespace Utili
             DeleteData(guild.Id.ToString());
         }
 
-        #endregion Client Leave
+        #endregion _client Leave
 
         #region Voice Updated
 
