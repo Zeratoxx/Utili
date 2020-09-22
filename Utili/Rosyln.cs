@@ -1,11 +1,12 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.Scripting;
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using static Utili.Json;
 using static Utili.Logic;
 using static Utili.SendMessage;
@@ -19,24 +20,24 @@ namespace Utili
     public class RosylnCommands : ModuleBase<SocketCommandContext>
     {
         [Command("Execute"), Alias("Evaluate")]
-        public async Task Execute([Remainder] string Code)
+        public async Task Execute([Remainder] string code)
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                Microsoft.CodeAnalysis.MetadataReference[] References = {
-                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.WebSocket.dll")),
-                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.Core.dll")),
-                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/System.Linq.dll"))
+                MetadataReference[] references = {
+                    MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.WebSocket.dll")),
+                    MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.Core.dll")),
+                    MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/System.Linq.dll"))
                     };
 
-                string[] Imports = { "Discord", "Discord.Commands", "Discord.WebSocket", "System.Linq", "System.Threading.Tasks" };
+                string[] imports = { "Discord", "Discord.Commands", "Discord.WebSocket", "System.Linq", "System.Threading.Tasks" };
 
-                var globals = new RosylnGlobals { Context = Context, Client = Program.Client };
+                RosylnGlobals globals = new RosylnGlobals { Context = Context, Client = Program.Client };
                 try
                 {
-                    var Evaluation = await CSharpScript.EvaluateAsync<object>($"{Code}", ScriptOptions.Default.WithReferences(References).WithImports(Imports), globals: globals);
-                    if (Evaluation == null) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed"));
-                    else await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed", Evaluation.ToString()));
+                    object evaluation = await CSharpScript.EvaluateAsync<object>($"{code}", ScriptOptions.Default.WithReferences(references).WithImports(imports), globals: globals);
+                    if (evaluation == null) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed"));
+                    else await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed", evaluation.ToString()));
                 }
                 catch (CompilationErrorException e)
                 {
@@ -48,40 +49,40 @@ namespace Utili
         // This command makes Utili run code using one of my private bots.
 
         [Command("oExecute"), Alias("oEvaluate")]
-        public async Task ExecuteOther(string Name, [Remainder] string Code)
+        public async Task ExecuteOther(string name, [Remainder] string code)
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                string Token = "";
+                string token = "";
 
-                switch (Name.ToLower())
+                switch (name.ToLower())
                 {
                     case "filebot":
-                        Token = Config.OtherBotTokens.FileBot;
+                        token = Config.OtherBotTokens.FileBot;
                         break;
 
                     case "hubbot":
-                        Token = Config.OtherBotTokens.HubBot;
+                        token = Config.OtherBotTokens.HubBot;
                         break;
 
                     case "thoriumcube":
-                        Token = Config.OtherBotTokens.ThoriumCube;
+                        token = Config.OtherBotTokens.ThoriumCube;
                         break;
 
                     case "unwyre":
-                        Token = Config.OtherBotTokens.Unwyre;
+                        token = Config.OtherBotTokens.Unwyre;
                         break;
 
                     case "pingplus":
-                        Token = Config.OtherBotTokens.PingPlus;
+                        token = Config.OtherBotTokens.PingPlus;
                         break;
 
                     case "imgonly":
-                        Token = Config.OtherBotTokens.ImgOnly;
+                        token = Config.OtherBotTokens.ImgOnly;
                         break;
 
                     case "shards":
-                        Token = Config.OtherBotTokens.Shards;
+                        token = Config.OtherBotTokens.Shards;
                         break;
 
                     default:
@@ -89,49 +90,49 @@ namespace Utili
                         return;
                 }
 
-                DiscordSocketClient TempClient;
+                DiscordSocketClient tempClient;
 
-                TempClient = new DiscordSocketClient(new DiscordSocketConfig
+                tempClient = new DiscordSocketClient(new DiscordSocketConfig
                 {
                     LogLevel = LogSeverity.Critical,
                     MessageCacheSize = 100
                 });
-                TempClient.Log += Rosyln_Log;
+                tempClient.Log += Rosyln_Log;
 
-                await TempClient.LoginAsync(TokenType.Bot, Token);
-                await TempClient.StartAsync();
+                await tempClient.LoginAsync(TokenType.Bot, token);
+                await tempClient.StartAsync();
 
                 await Task.Delay(2000);
 
-                Microsoft.CodeAnalysis.MetadataReference[] References = {
-                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.WebSocket.dll")),
-                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.Core.dll")),
-                    Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/System.Linq.dll"))
+                MetadataReference[] references = {
+                    MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.WebSocket.dll")),
+                    MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/Discord.Net.Core.dll")),
+                    MetadataReference.CreateFromFile(Path.Combine(Directory.GetCurrentDirectory(), "Deps/System.Linq.dll"))
                     };
 
-                string[] Imports = { "Discord", "Discord.Commands", "Discord.WebSocket", "System.Linq", "System.Threading.Tasks" };
-                var globals = new RosylnGlobals { Context = null, Client = TempClient };
+                string[] imports = { "Discord", "Discord.Commands", "Discord.WebSocket", "System.Linq", "System.Threading.Tasks" };
+                RosylnGlobals globals = new RosylnGlobals { Context = null, Client = tempClient };
                 try
                 {
-                    var Evaluation = await CSharpScript.EvaluateAsync<object>($"{Code}", ScriptOptions.Default.WithReferences(References).WithImports(Imports), globals: globals);
-                    if (Evaluation == null) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed"));
-                    else await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed", Evaluation.ToString()));
+                    object evaluation = await CSharpScript.EvaluateAsync<object>($"{code}", ScriptOptions.Default.WithReferences(references).WithImports(imports), globals: globals);
+                    if (evaluation == null) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed"));
+                    else await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Executed", evaluation.ToString()));
                 }
                 catch (CompilationErrorException e)
                 {
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Execution failed", e.Message));
                 }
 
-                await TempClient.LogoutAsync();
-                TempClient.Dispose();
+                await tempClient.LogoutAsync();
+                tempClient.Dispose();
             }
         }
 
-        public async Task Rosyln_Log(LogMessage Message)
+        public async Task Rosyln_Log(LogMessage message)
         {
-            if (Message.Source.ToString() != "Rest")
+            if (message.Source != "Rest")
             {
-                Console.WriteLine($"[{DateTime.Now}] [Rosyln] [{Message.Source}] {Message.Message}");
+                Console.WriteLine($"[{DateTime.Now}] [Rosyln] [{message.Source}] {message.Message}");
             }
         }
     }

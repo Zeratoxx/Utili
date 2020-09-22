@@ -1,10 +1,10 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.Program;
@@ -16,172 +16,172 @@ namespace Utili
     {
         private static readonly List<(ulong, int)> MessageList = new List<(ulong, int)>();
 
-        public async Task NoticeMessage_MessageReceived(SocketMessage MessageParam)
+        public async Task NoticeMessage_MessageReceived(SocketMessage messageParam)
         {
-            var Message = MessageParam as SocketUserMessage;
-            var Context = new SocketCommandContext(Client, Message);
+            SocketUserMessage message = messageParam as SocketUserMessage;
+            SocketCommandContext context = new SocketCommandContext(Client, message);
 
-            if (Message.Author.Id == Client.CurrentUser.Id)
+            if (message.Author.Id == Client.CurrentUser.Id)
             {
                 await Task.Delay(5000);
-                var NewMSG = await Context.Channel.GetMessageAsync(Message.Id);
-                if (NewMSG.IsPinned) return;
+                IMessage newMsg = await context.Channel.GetMessageAsync(message.Id);
+                if (newMsg.IsPinned) return;
             }
 
-            int ThisNumber;
-            try { ThisNumber = MessageList.OrderBy(x => x.Item2).Last(x => x.Item1 == Context.Channel.Id).Item2 + 1; }
-            catch { ThisNumber = 0; }
+            int thisNumber;
+            try { thisNumber = MessageList.OrderBy(x => x.Item2).Last(x => x.Item1 == context.Channel.Id).Item2 + 1; }
+            catch { thisNumber = 0; }
 
-            MessageList.RemoveAll(x => x.Item1 == Context.Channel.Id);
-            MessageList.Add((Context.Channel.Id, ThisNumber));
+            MessageList.RemoveAll(x => x.Item1 == context.Channel.Id);
+            MessageList.Add((context.Channel.Id, thisNumber));
 
-            if (DataExists($"{Context.Guild.Id}", $"Notices-Channel", $"{Context.Channel.Id}"))
+            if (DataExists($"{context.Guild.Id}", "Notices-Channel", $"{context.Channel.Id}"))
             {
-                TimeSpan Delay = TimeSpan.FromSeconds(15);
-                try { Delay = TimeSpan.Parse(GetFirstData($"{Context.Guild.Id}", $"Notices-Delay-{Context.Channel.Id}").Value); }
+                TimeSpan delay = TimeSpan.FromSeconds(15);
+                try { delay = TimeSpan.Parse(GetFirstData($"{context.Guild.Id}", $"Notices-Delay-{context.Channel.Id}").Value); }
                 catch { }
 
-                await Task.Delay(int.Parse(Math.Ceiling(Delay.TotalMilliseconds).ToString()));
+                await Task.Delay(int.Parse(Math.Ceiling(delay.TotalMilliseconds).ToString()));
 
-                int NewNumber;
-                try { NewNumber = MessageList.OrderBy(x => x.Item2).Last(x => x.Item1 == Context.Channel.Id).Item2; }
-                catch { NewNumber = 0; }
+                int newNumber;
+                try { newNumber = MessageList.OrderBy(x => x.Item2).Last(x => x.Item1 == context.Channel.Id).Item2; }
+                catch { newNumber = 0; }
 
-                if (ThisNumber == NewNumber) await Update(Context.Channel as ITextChannel, true, true);
+                if (thisNumber == newNumber) await Update(context.Channel as ITextChannel, true, true);
                 else return;
             }
         }
 
-        public async Task Update(ITextChannel Channel, bool Save = true, bool KnownOn = false)
+        public async Task Update(ITextChannel channel, bool save = true, bool knownOn = false)
         {
-            if (!KnownOn) KnownOn = DataExists($"{Channel.Guild.Id}", $"Notices-Channel", $"{Channel.Id}");
-            if (KnownOn || !Save)
+            if (!knownOn) knownOn = DataExists($"{channel.Guild.Id}", "Notices-Channel", $"{channel.Id}");
+            if (knownOn || !save)
             {
-                IMessage NoticeMessage;
+                IMessage noticeMessage;
                 try
                 {
-                    Data MessageVar = GetFirstData($"{Channel.Guild.Id}", $"Notices-Message-{Channel.Id}");
-                    NoticeMessage = await Channel.GetMessageAsync(ulong.Parse(MessageVar.Value));
+                    Data messageVar = GetFirstData($"{channel.Guild.Id}", $"Notices-Message-{channel.Id}");
+                    noticeMessage = await channel.GetMessageAsync(ulong.Parse(messageVar.Value));
                 }
-                catch { NoticeMessage = null; }
+                catch { noticeMessage = null; }
 
-                string Title;
-                try { Title = GetFirstData($"{Channel.Guild.Id}", $"Notices-Title-{Channel.Id}").Value; }
-                catch { Title = ""; }
-                try { Title = Base64Decode(Title); } catch { };
+                string title;
+                try { title = GetFirstData($"{channel.Guild.Id}", $"Notices-Title-{channel.Id}").Value; }
+                catch { title = ""; }
+                try { title = Base64Decode(title); } catch { }
 
-                string Content;
-                try { Content = GetFirstData($"{Channel.Guild.Id}", $"Notices-Content-{Channel.Id}").Value; }
-                catch { Content = ""; }
-                try { Content = Base64Decode(Content); } catch { };
+                string content;
+                try { content = GetFirstData($"{channel.Guild.Id}", $"Notices-Content-{channel.Id}").Value; }
+                catch { content = ""; }
+                try { content = Base64Decode(content); } catch { }
 
-                string NormalText;
-                try { NormalText = GetFirstData($"{Channel.Guild.Id}", $"Notices-NormalText-{Channel.Id}").Value; }
-                catch { NormalText = ""; }
-                try { NormalText = Base64Decode(NormalText); } catch { };
+                string normalText;
+                try { normalText = GetFirstData($"{channel.Guild.Id}", $"Notices-NormalText-{channel.Id}").Value; }
+                catch { normalText = ""; }
+                try { normalText = Base64Decode(normalText); } catch { }
 
-                string Footer;
-                try { Footer = GetFirstData($"{Channel.Guild.Id}", $"Notices-Footer-{Channel.Id}").Value; }
-                catch { Footer = ""; }
-                try { Footer = Base64Decode(Footer); } catch { };
+                string footer;
+                try { footer = GetFirstData($"{channel.Guild.Id}", $"Notices-Footer-{channel.Id}").Value; }
+                catch { footer = ""; }
+                try { footer = Base64Decode(footer); } catch { }
 
-                string ImageURL;
-                try { ImageURL = GetFirstData($"{Channel.Guild.Id}", $"Notices-ImageURL-{Channel.Id}").Value; }
-                catch { ImageURL = ""; }
-                try { ImageURL = Base64Decode(ImageURL); } catch { };
+                string imageUrl;
+                try { imageUrl = GetFirstData($"{channel.Guild.Id}", $"Notices-ImageURL-{channel.Id}").Value; }
+                catch { imageUrl = ""; }
+                try { imageUrl = Base64Decode(imageUrl); } catch { }
 
-                string ThumbnailURL;
-                try { ThumbnailURL = GetFirstData($"{Channel.Guild.Id}", $"Notices-ThumbnailURL-{Channel.Id}").Value; }
-                catch { ThumbnailURL = ""; }
-                try { ThumbnailURL = Base64Decode(ThumbnailURL); } catch { };
+                string thumbnailUrl;
+                try { thumbnailUrl = GetFirstData($"{channel.Guild.Id}", $"Notices-ThumbnailURL-{channel.Id}").Value; }
+                catch { thumbnailUrl = ""; }
+                try { thumbnailUrl = Base64Decode(thumbnailUrl); } catch { }
 
-                string LargeImageURL;
-                try { LargeImageURL = GetFirstData($"{Channel.Guild.Id}", $"Notices-LargeImageURL-{Channel.Id}").Value; }
-                catch { LargeImageURL = ""; }
-                try { LargeImageURL = Base64Decode(LargeImageURL); } catch { };
+                string largeImageUrl;
+                try { largeImageUrl = GetFirstData($"{channel.Guild.Id}", $"Notices-LargeImageURL-{channel.Id}").Value; }
+                catch { largeImageUrl = ""; }
+                try { largeImageUrl = Base64Decode(largeImageUrl); } catch { }
 
-                string FooterImageURL;
-                try { FooterImageURL = GetFirstData($"{Channel.Guild.Id}", $"Notices-FooterImageURL-{Channel.Id}").Value; }
-                catch { FooterImageURL = ""; }
-                try { FooterImageURL = Base64Decode(FooterImageURL); } catch { };
+                string footerImageUrl;
+                try { footerImageUrl = GetFirstData($"{channel.Guild.Id}", $"Notices-FooterImageURL-{channel.Id}").Value; }
+                catch { footerImageUrl = ""; }
+                try { footerImageUrl = Base64Decode(footerImageUrl); } catch { }
 
-                string ColourString;
-                try { ColourString = GetFirstData($"{Channel.Guild.Id}", $"Notices-Colour-{Channel.Id}").Value; }
-                catch { ColourString = "255 255 255"; }
-                byte R = byte.Parse(ColourString.Split(" ").ToArray()[0]);
-                byte G = byte.Parse(ColourString.Split(" ").ToArray()[1]);
-                byte B = byte.Parse(ColourString.Split(" ").ToArray()[2]);
-                Color Colour = new Color(R, G, B);
+                string colourString;
+                try { colourString = GetFirstData($"{channel.Guild.Id}", $"Notices-Colour-{channel.Id}").Value; }
+                catch { colourString = "255 255 255"; }
+                byte r = byte.Parse(colourString.Split(" ").ToArray()[0]);
+                byte g = byte.Parse(colourString.Split(" ").ToArray()[1]);
+                byte b = byte.Parse(colourString.Split(" ").ToArray()[2]);
+                Color colour = new Color(r, g, b);
 
-                EmbedBuilder Embed = new EmbedBuilder();
-                if (Title != "") Embed.WithAuthor(new EmbedAuthorBuilder().WithName(Title));
-                if (Title == "" && ImageURL != "") Embed.WithAuthor(new EmbedAuthorBuilder().WithName("Title required for image!"));
-                if (ImageURL != "") Embed.WithAuthor(Embed.Author.WithIconUrl(ImageURL));
+                EmbedBuilder embed = new EmbedBuilder();
+                if (title != "") embed.WithAuthor(new EmbedAuthorBuilder().WithName(title));
+                if (title == "" && imageUrl != "") embed.WithAuthor(new EmbedAuthorBuilder().WithName("Title required for image!"));
+                if (imageUrl != "") embed.WithAuthor(embed.Author.WithIconUrl(imageUrl));
 
-                if (Footer != "") Embed.WithFooter(new EmbedFooterBuilder().WithText(Footer));
-                if (Footer == "" && FooterImageURL != "") Embed.WithFooter(new EmbedFooterBuilder().WithText("Footer required for image!"));
-                if (FooterImageURL != "") Embed.WithFooter(Embed.Footer.WithIconUrl(FooterImageURL));
+                if (footer != "") embed.WithFooter(new EmbedFooterBuilder().WithText(footer));
+                if (footer == "" && footerImageUrl != "") embed.WithFooter(new EmbedFooterBuilder().WithText("Footer required for image!"));
+                if (footerImageUrl != "") embed.WithFooter(embed.Footer.WithIconUrl(footerImageUrl));
 
-                if (Content != "") Embed.WithDescription(Content);
-                if (ThumbnailURL != "") Embed.WithThumbnailUrl(ThumbnailURL);
-                if (LargeImageURL != "") Embed.WithImageUrl(LargeImageURL);
-                Embed.WithColor(Colour);
+                if (content != "") embed.WithDescription(content);
+                if (thumbnailUrl != "") embed.WithThumbnailUrl(thumbnailUrl);
+                if (largeImageUrl != "") embed.WithImageUrl(largeImageUrl);
+                embed.WithColor(colour);
 
-                var Sent = await Channel.SendMessageAsync(NormalText, embed: Embed.Build());
+                IUserMessage sent = await channel.SendMessageAsync(normalText, embed: embed.Build());
 
-                if (Save)
+                if (save)
                 {
-                    await Sent.PinAsync();
-                    DeleteData($"{Channel.Guild.Id}", $"Notices-Message-{Channel.Id}");
-                    SaveData($"{Channel.Guild.Id}", $"Notices-Message-{Channel.Id}", $"{Sent.Id}");
+                    await sent.PinAsync();
+                    DeleteData($"{channel.Guild.Id}", $"Notices-Message-{channel.Id}");
+                    SaveData($"{channel.Guild.Id}", $"Notices-Message-{channel.Id}", $"{sent.Id}");
                 }
                 else
                 {
-                    SaveData($"{Channel.Guild.Id}", $"Notices-ExcludedMessage-{Channel.Id}", $"{Sent.Id}");
+                    SaveData($"{channel.Guild.Id}", $"Notices-ExcludedMessage-{channel.Id}", $"{sent.Id}");
                 }
 
-                try { await NoticeMessage.DeleteAsync(); } catch { }
+                try { await noticeMessage.DeleteAsync(); } catch { }
 
                 #region Delete Similar
 
-                var Messages = await Channel.GetMessagesAsync(100).FlattenAsync();
-                List<IMessage> BotMessages = Messages.Where(x => x.Author.Id == Client.CurrentUser.Id).ToList();
-                List<IMessage> EmbeddedMessages = BotMessages.Where(x => x.Embeds.Count > 0).ToList();
-                List<IMessage> ToDelete = new List<IMessage>();
+                IEnumerable<IMessage> messages = await channel.GetMessagesAsync().FlattenAsync();
+                List<IMessage> botMessages = messages.Where(x => x.Author.Id == Client.CurrentUser.Id).ToList();
+                List<IMessage> embeddedMessages = botMessages.Where(x => x.Embeds.Count > 0).ToList();
+                List<IMessage> toDelete = new List<IMessage>();
 
-                foreach (var Message in EmbeddedMessages)
+                foreach (IMessage message in embeddedMessages)
                 {
-                    bool Same = true;
+                    bool same = true;
 
-                    var MEmbed = Message.Embeds.First();
+                    IEmbed mEmbed = message.Embeds.First();
 
-                    if (MEmbed.Author.HasValue)
+                    if (mEmbed.Author.HasValue)
                     {
                         try
                         {
-                            if (MEmbed.Author.Value.IconUrl != Embed.Author.IconUrl) Same = false;
-                            if (MEmbed.Author.Value.Name != Embed.Author.Name) Same = false;
+                            if (mEmbed.Author.Value.IconUrl != embed.Author.IconUrl) same = false;
+                            if (mEmbed.Author.Value.Name != embed.Author.Name) same = false;
                         }
-                        catch { Same = false; }
+                        catch { same = false; }
                     }
                     else
                     {
-                        if (Embed.Author != null) Same = false;
+                        if (embed.Author != null) same = false;
                     }
 
-                    if (MEmbed.Description != Embed.Description) Same = false;
-                    if (MEmbed.Color != Embed.Color) Same = false;
+                    if (mEmbed.Description != embed.Description) same = false;
+                    if (mEmbed.Color != embed.Color) same = false;
 
-                    if (Same) ToDelete.Add(Message);
+                    if (same) toDelete.Add(message);
                 }
 
-                if (ToDelete.Count > 0)
+                if (toDelete.Count > 0)
                 {
-                    var Excluded = GetData(Channel.Guild.Id.ToString(), $"Notices-ExcludedMessage-{Channel.Id}");
-                    Excluded.AddRange(GetData(Channel.Guild.Id.ToString(), $"Notices-Message-{Channel.Id}"));
-                    foreach (var Data in Excluded) ToDelete.RemoveAll(x => x.Id.ToString() == Data.Value);
+                    List<Data> excluded = GetData(channel.Guild.Id.ToString(), $"Notices-ExcludedMessage-{channel.Id}");
+                    excluded.AddRange(GetData(channel.Guild.Id.ToString(), $"Notices-Message-{channel.Id}"));
+                    foreach (Data data in excluded) toDelete.RemoveAll(x => x.Id.ToString() == data.Value);
                 }
-                await Channel.DeleteMessagesAsync(ToDelete);
+                await channel.DeleteMessagesAsync(toDelete);
 
                 #endregion Delete Similar
             }
@@ -189,11 +189,12 @@ namespace Utili
             {
                 try
                 {
-                    Data MessageVar = GetFirstData($"{Channel.Guild.Id}", $"Notices-Message-{Channel.Id}");
-                    IMessage Message = await Channel.GetMessageAsync(ulong.Parse(MessageVar.Value));
-                    await Message.DeleteAsync();
+                    Data messageVar = GetFirstData($"{channel.Guild.Id}", $"Notices-Message-{channel.Id}");
+                    IMessage message = await channel.GetMessageAsync(ulong.Parse(messageVar.Value));
+                    await message.DeleteAsync();
                 }
-                catch { return; }
+                catch {
+                }
             }
         }
     }
@@ -222,17 +223,17 @@ namespace Utili
         [Command("Help")]
         public async Task Help()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Notices", HelpContent, $"Prefix these commands with {Prefix}notice"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Notices", HelpContent, $"Prefix these commands with {prefix}notice"));
         }
 
         [Command("")]
         public async Task Empty()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Notices", HelpContent, $"Prefix these commands with {Prefix}notice"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Notices", HelpContent, $"Prefix these commands with {prefix}notice"));
         }
 
         [Command("About")]
@@ -242,197 +243,197 @@ namespace Utili
         }
 
         [Command("SetTitle"), Alias("Title")]
-        public async Task SetTitle(ITextChannel Channel, [Remainder] string Content)
+        public async Task SetTitle(ITextChannel channel, [Remainder] string content)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Content.ToLower() == "none")
+                if (content.ToLower() == "none")
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-Title-{Channel.Id}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-Title-{channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Title removed"));
                 }
-                else if (Content.Length <= 500)
+                else if (content.Length <= 500)
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-Title-{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-Title-{Channel.Id}", $"{Base64Encode(Content)}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-Title-{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", $"Notices-Title-{channel.Id}", $"{Base64Encode(content)}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Title set"));
                 }
                 else { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Title can not exceed 500 characters")); }
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
 
         [Command("SetContent"), Alias("Content")]
-        public async Task SetContent(ITextChannel Channel, [Remainder] string Content)
+        public async Task SetContent(ITextChannel channel, [Remainder] string content)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Content.ToLower() == "none")
+                if (content.ToLower() == "none")
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-Content-{Channel.Id}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-Content-{channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Content removed"));
                 }
-                else if (Content.Length <= 1500)
+                else if (content.Length <= 1500)
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-Content-{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-Content-{Channel.Id}", $"{Base64Encode(Content)}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-Content-{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", $"Notices-Content-{channel.Id}", $"{Base64Encode(content)}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Content set"));
                 }
                 else { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Content can not exceed 1500 characters")); }
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
 
         [Command("SetFooter"), Alias("Footer")]
-        public async Task SetFooter(ITextChannel Channel, [Remainder] string Content)
+        public async Task SetFooter(ITextChannel channel, [Remainder] string content)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Content.ToLower() == "none")
+                if (content.ToLower() == "none")
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-Footer-{Channel.Id}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-Footer-{channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Footer removed"));
                 }
-                else if (Content.Length <= 1500)
+                else if (content.Length <= 1500)
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-Footer-{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-Footer-{Channel.Id}", $"{Base64Encode(Content)}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-Footer-{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", $"Notices-Footer-{channel.Id}", $"{Base64Encode(content)}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Footer set"));
                 }
                 else { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Footer can not exceed 1500 characters")); }
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
 
         [Command("SetColour"), Alias("SetColor", "Colour", "Color")]
-        public async Task SetColour(ITextChannel Channel, int R, int G, int B)
+        public async Task SetColour(ITextChannel channel, int r, int g, int b)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                Color Colour;
-                try { Colour = new Color(R, G, B); }
+                Color colour;
+                try { colour = new Color(r, g, b); }
                 catch { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid colour", "[Pick colour](https://www.rapidtables.com/web/color/RGB_Color.html)\n[Support Discord](https://discord.gg/WsxqABZ)")); return; }
 
-                DeleteData($"{Context.Guild.Id}", $"Notices-Colour-{Channel.Id}");
-                SaveData($"{Context.Guild.Id}", $"Notices-Colour-{Channel.Id}", $"{R} {G} {B}");
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Colour set", "Preview this colour in this embed.").ToEmbedBuilder().WithColor(Colour).Build());
+                DeleteData($"{Context.Guild.Id}", $"Notices-Colour-{channel.Id}");
+                SaveData($"{Context.Guild.Id}", $"Notices-Colour-{channel.Id}", $"{r} {g} {b}");
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Colour set", "Preview this colour in this embed.").ToEmbedBuilder().WithColor(colour).Build());
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
 
         [Command("SetIcon"), Alias("Icon", "SetAvatar", "Avatar")]
-        public async Task SetIcon(ITextChannel Channel, string ImageURL)
+        public async Task SetIcon(ITextChannel channel, string imageUrl)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (ImageURL.ToLower() == "none")
+                if (imageUrl.ToLower() == "none")
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-ImageURL-{Channel.Id}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-ImageURL-{channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Icon removed"));
                 }
-                else if (ImageURL.Length <= 1000)
+                else if (imageUrl.Length <= 1000)
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-ImageURL-{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-ImageURL-{Channel.Id}", $"{Base64Encode(ImageURL)}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-ImageURL-{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", $"Notices-ImageURL-{channel.Id}", $"{Base64Encode(imageUrl)}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Icon URL set", "Note that an invalid icon URL may result in the message not being sent at all"));
                 }
                 else { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Icon URL can not exceed 1000 characters")); }
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
 
         [Command("SetImage"), Alias("Image")]
-        public async Task SetImage(ITextChannel Channel, string ImageURL)
+        public async Task SetImage(ITextChannel channel, string imageUrl)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (ImageURL.ToLower() == "none")
+                if (imageUrl.ToLower() == "none")
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-LargeImageURL-{Channel.Id}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-LargeImageURL-{channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Image removed"));
                 }
-                else if (ImageURL.Length <= 1000)
+                else if (imageUrl.Length <= 1000)
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-LargeImageURL-{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-LargeImageURL-{Channel.Id}", $"{Base64Encode(ImageURL)}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-LargeImageURL-{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", $"Notices-LargeImageURL-{channel.Id}", $"{Base64Encode(imageUrl)}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Image URL set", "Note that an invalid image URL may result in the message not being sent at all"));
                 }
                 else { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Image URL can not exceed 1000 characters")); }
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
 
         [Command("SetThumbnail"), Alias("Thumbnail")]
-        public async Task SetThumbnail(ITextChannel Channel, string ImageURL)
+        public async Task SetThumbnail(ITextChannel channel, string imageUrl)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (ImageURL.ToLower() == "none")
+                if (imageUrl.ToLower() == "none")
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-ThumbnailURL-{Channel.Id}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-ThumbnailURL-{channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Thumbnail removed"));
                 }
-                else if (ImageURL.Length <= 1000)
+                else if (imageUrl.Length <= 1000)
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-ThumbnailURL-{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-ThumbnailURL-{Channel.Id}", $"{Base64Encode(ImageURL)}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-ThumbnailURL-{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", $"Notices-ThumbnailURL-{channel.Id}", $"{Base64Encode(imageUrl)}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Thumbnail URL set", "Note that an invalid thumbnail URL may result in the message not being sent at all"));
                 }
                 else { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Thumbnail URL can not exceed 1000 characters")); }
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
 
         [Command("SetFooterImage"), Alias("FooterImage")]
-        public async Task SetFooterURL(ITextChannel Channel, [Remainder] string ImageURL)
+        public async Task SetFooterUrl(ITextChannel channel, [Remainder] string imageUrl)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (ImageURL.ToLower() == "none")
+                if (imageUrl.ToLower() == "none")
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-FooterImageURL-{Channel.Id}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-FooterImageURL-{channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Footer image removed"));
                 }
-                else if (ImageURL.Length <= 1000)
+                else if (imageUrl.Length <= 1000)
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-FooterImageURL-{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-FooterImageURL-{Channel.Id}", $"{Base64Encode(ImageURL)}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-FooterImageURL-{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", $"Notices-FooterImageURL-{channel.Id}", $"{Base64Encode(imageUrl)}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Footer image set"));
                 }
                 else { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Footer image URL can not exceed 1000 characters")); }
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
 
         [Command("SetDelay"), Alias("Time", "SetTime", "Delay")]
-        public async Task SetDelay(ITextChannel Channel, TimeSpan Delay)
+        public async Task SetDelay(ITextChannel channel, TimeSpan delay)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Delay <= TimeSpan.FromMinutes(30) && Delay >= TimeSpan.FromSeconds(1))
+                if (delay <= TimeSpan.FromMinutes(30) && delay >= TimeSpan.FromSeconds(1))
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-Delay-{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-Delay-{Channel.Id}", $"{Delay}");
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Delay set", $"{DisplayTimespan(Delay)} after a conversation the notice will be posted"));
+                    DeleteData($"{Context.Guild.Id}", $"Notices-Delay-{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", $"Notices-Delay-{channel.Id}", $"{delay}");
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Delay set", $"{DisplayTimespan(delay)} after a conversation the notice will be posted"));
 
-                    NoticeMessage NoticeMessage = new NoticeMessage();
-                    await NoticeMessage.Update(Channel);
+                    NoticeMessage noticeMessage = new NoticeMessage();
+                    await noticeMessage.Update(channel);
                 }
                 else
                 {
@@ -442,79 +443,79 @@ namespace Utili
         }
 
         [Command("SetNormalText"), Alias("NormalText")]
-        public async Task SetNormalText(ITextChannel Channel, [Remainder] string Content)
+        public async Task SetNormalText(ITextChannel channel, [Remainder] string content)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Content.ToLower() == "none")
+                if (content.ToLower() == "none")
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-NormalText-{Channel.Id}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-NormalText-{channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Normal text removed"));
                 }
-                else if (Content.Length <= 1500)
+                else if (content.Length <= 1500)
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-NormalText-{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-NormalText-{Channel.Id}", $"{Base64Encode(Content)}");
+                    DeleteData($"{Context.Guild.Id}", $"Notices-NormalText-{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", $"Notices-NormalText-{channel.Id}", $"{Base64Encode(content)}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Normal text set"));
                 }
                 else { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Normal text can not exceed 1500 characters")); }
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
 
         [Command("Duplicate"), Alias("Move", "Copy")]
-        public async Task Duplicate(ITextChannel From, ITextChannel To)
+        public async Task Duplicate(ITextChannel from, ITextChannel to)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(To, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(to, new[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Title-{To.Id}");
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Content-{To.Id}");
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Colour-{To.Id}");
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{To.Id}");
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{To.Id}");
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{To.Id}");
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Delay-{To.Id}");
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Footer-{To.Id}");
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{To.Id}");
-                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Channel", To.Id.ToString());
+                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Title-{to.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Content-{to.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Colour-{to.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{to.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{to.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{to.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Delay-{to.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Notices-Footer-{to.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{to.Id}");
+                    DeleteData(Context.Guild.Id.ToString(), "Notices-Channel", to.Id.ToString());
 
-                    var Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Title-{From.Id}");
-                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Title-{To.Id}", Data.Value);
+                    Data data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Title-{from.Id}");
+                    if (data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Title-{to.Id}", data.Value);
 
-                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Content-{From.Id}");
-                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Content-{To.Id}", Data.Value);
+                    data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Content-{from.Id}");
+                    if (data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Content-{to.Id}", data.Value);
 
-                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Colour-{From.Id}");
-                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Colour-{To.Id}", Data.Value);
+                    data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Colour-{from.Id}");
+                    if (data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Colour-{to.Id}", data.Value);
 
-                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{From.Id}");
-                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{To.Id}", Data.Value);
+                    data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{from.Id}");
+                    if (data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-ImageURL-{to.Id}", data.Value);
 
-                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{From.Id}");
-                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{To.Id}", Data.Value);
+                    data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{from.Id}");
+                    if (data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-ThumbnailURL-{to.Id}", data.Value);
 
-                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{From.Id}");
-                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{To.Id}", Data.Value);
+                    data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{from.Id}");
+                    if (data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-LargeImageURL-{to.Id}", data.Value);
 
-                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Footer-{From.Id}");
-                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Footer-{To.Id}", Data.Value);
+                    data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Footer-{from.Id}");
+                    if (data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Footer-{to.Id}", data.Value);
 
-                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{From.Id}");
-                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{To.Id}", Data.Value);
+                    data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{from.Id}");
+                    if (data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-FooterImageURL-{to.Id}", data.Value);
 
-                    Data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Delay-{From.Id}");
-                    if (Data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Delay-{To.Id}", Data.Value);
+                    data = GetFirstData(Context.Guild.Id.ToString(), $"Notices-Delay-{from.Id}");
+                    if (data != null) SaveData(Context.Guild.Id.ToString(), $"Notices-Delay-{to.Id}", data.Value);
 
-                    SaveData(Context.Guild.Id.ToString(), $"Notices-Channel", To.Id.ToString());
+                    SaveData(Context.Guild.Id.ToString(), "Notices-Channel", to.Id.ToString());
 
-                    NoticeMessage NM = new NoticeMessage();
-                    await NM.Update(To);
+                    NoticeMessage nm = new NoticeMessage();
+                    await nm.Update(to);
 
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Notice duplicated", $"Notice settings for {From.Mention} were copied to {To.Mention}"));
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Notice duplicated", $"Notice settings for {from.Mention} were copied to {to.Mention}"));
                 }
             }
         }
@@ -522,37 +523,37 @@ namespace Utili
         [Command("Send")]
         public async Task Send()
         {
-            NoticeMessage NM = new NoticeMessage();
-            await NM.Update(Context.Channel as ITextChannel, false);
+            NoticeMessage nm = new NoticeMessage();
+            await nm.Update(Context.Channel as ITextChannel, false);
         }
 
         [Command("On"), Alias("Enable")]
-        public async Task On(ITextChannel Channel)
+        public async Task On(ITextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(channel, new[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageMessages }, Context.Channel))
                 {
-                    DeleteData($"{Context.Guild.Id}", $"Notices-Channel", $"{Channel.Id}");
-                    SaveData($"{Context.Guild.Id}", $"Notices-Channel", $"{Channel.Id}");
+                    DeleteData($"{Context.Guild.Id}", "Notices-Channel", $"{channel.Id}");
+                    SaveData($"{Context.Guild.Id}", "Notices-Channel", $"{channel.Id}");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Notice enabled", "Configure the notice using other commands in this category"));
 
-                    NoticeMessage NoticeMessage = new NoticeMessage();
-                    await NoticeMessage.Update(Channel);
+                    NoticeMessage noticeMessage = new NoticeMessage();
+                    await noticeMessage.Update(channel);
                 }
             }
         }
 
         [Command("Off"), Alias("Disable")]
-        public async Task Off(ITextChannel Channel)
+        public async Task Off(ITextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                DeleteData($"{Context.Guild.Id}", $"Notices-Channel", $"{Channel.Id}");
+                DeleteData($"{Context.Guild.Id}", "Notices-Channel", $"{channel.Id}");
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Notice disabled"));
 
-                NoticeMessage NoticeMessage = new NoticeMessage();
-                await NoticeMessage.Update(Channel);
+                NoticeMessage noticeMessage = new NoticeMessage();
+                await noticeMessage.Update(channel);
             }
         }
     }

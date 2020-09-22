@@ -1,5 +1,5 @@
-﻿using Discord.Commands;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Discord.Commands;
 using static Utili.SendMessage;
 
 namespace Utili
@@ -7,210 +7,210 @@ namespace Utili
     public class InvalidCommands : ModuleBase<SocketCommandContext>
     {
         [Command("On"), Alias("Enable")]
-        public async Task On([Remainder] string Args = "")
+        public async Task On([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExamples:\n{Prefix}autopurge on [channel]\n{Prefix}antiprofane on"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExamples:\n{prefix}autopurge on [channel]\n{prefix}antiprofane on"));
         }
 
         [Command("Off"), Alias("Disable")]
-        public async Task Off([Remainder] string Args = "")
+        public async Task Off([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExamples:\n{Prefix}autopurge off [channel]\n{Prefix}antiprofane off"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExamples:\n{prefix}autopurge off [channel]\n{prefix}antiprofane off"));
         }
 
         [Command("Time")]
-        public async Task Time([Remainder] string Args = "")
+        public async Task Time([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExamples:\n{Prefix}autopurge time [channel] [timespan]\n{Prefix}inactive time [timespan]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExamples:\n{prefix}autopurge time [channel] [timespan]\n{prefix}inactive time [timespan]"));
         }
 
         [Command("Channel")]
-        public async Task Channel([Remainder] string Args = "")
+        public async Task Channel([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}logs channel [channel]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}logs channel [channel]"));
         }
 
         [Command("upEmote")]
-        public async Task UpEmote([Remainder] string Args = "")
+        public async Task UpEmote([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}votes upEmote [emote | reset]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}votes upEmote [emote | reset]"));
         }
 
         [Command("downEmote")]
-        public async Task DownEmote([Remainder] string Args = "")
+        public async Task DownEmote([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}votes downEmote [emote | reset]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}votes downEmote [emote | reset]"));
         }
 
         [Command("Mode")]
-        public async Task Mode([Remainder] string Args = "")
+        public async Task Mode([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}votes mode [all | attachments]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}votes mode [all | attachments]"));
         }
 
         [Command("Title"), Alias("setTitle")]
-        public async Task Title([Remainder] string Args = "")
+        public async Task Title([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}notice title [channel] [message | none]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}notice title [channel] [message | none]"));
         }
 
         [Command("Content"), Alias("setContent")]
-        public async Task Content([Remainder] string Args = "")
+        public async Task Content([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}notice content [channel] [message | none]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}notice content [channel] [message | none]"));
         }
 
         [Command("NormalText"), Alias("setNormalText")]
-        public async Task NormalText([Remainder] string Args = "")
+        public async Task NormalText([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}notice normalText [channel] [message | none]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}notice normalText [channel] [message | none]"));
         }
 
         [Command("Colour"), Alias("setColour", "Color", "SetColor")]
-        public async Task Colour([Remainder] string Args = "")
+        public async Task Colour([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}notice colour [channel] [R] [G] [B]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}notice colour [channel] [R] [G] [B]"));
         }
 
         [Command("Image"), Alias("setImage")]
-        public async Task Image([Remainder] string Args = "")
+        public async Task Image([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}notice image [channel] [url | none]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}notice image [channel] [url | none]"));
         }
 
         [Command("Icon"), Alias("setIcon")]
-        public async Task Icon([Remainder] string Args = "")
+        public async Task Icon([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}notice icon [channel] [url | none]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}notice icon [channel] [url | none]"));
         }
 
         [Command("Thumbnail"), Alias("setThumbnail")]
-        public async Task Thumbnail([Remainder] string Args = "")
+        public async Task Thumbnail([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}notice thumbnail [channel] [url | none]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}notice thumbnail [channel] [url | none]"));
         }
 
         [Command("Delay"), Alias("setDelay")]
-        public async Task Delay([Remainder] string Args = "")
+        public async Task Delay([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}notice delay [channel] [timespan]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}notice delay [channel] [timespan]"));
         }
 
         [Command("Duplicate"), Alias("Copy", "Move")]
-        public async Task Duplicate([Remainder] string Args = "")
+        public async Task Duplicate([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}notice duplicate [from channel] [to channel]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}notice duplicate [from channel] [to channel]"));
         }
 
         [Command("Threshold")]
-        public async Task Threshold([Remainder] string Args = "")
+        public async Task Threshold([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}spam threshold [integer]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}spam threshold [integer]"));
         }
 
         [Command("Images")]
-        public async Task Images([Remainder] string Args = "")
+        public async Task Images([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}filter images [channel]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}filter images [channel]"));
         }
 
         [Command("Videos")]
-        public async Task Videos([Remainder] string Args = "")
+        public async Task Videos([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}filter videos [channel]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}filter videos [channel]"));
         }
 
         [Command("Media")]
-        public async Task Media([Remainder] string Args = "")
+        public async Task Media([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}filter media [channel]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}filter media [channel]"));
         }
 
         [Command("Music")]
-        public async Task Music([Remainder] string Args = "")
+        public async Task Music([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}filter music [channel]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}filter music [channel]"));
         }
 
         [Command("Attachments")]
-        public async Task Attachments([Remainder] string Args = "")
+        public async Task Attachments([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}filter attachments [channel]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}filter attachments [channel]"));
         }
 
         [Command("Mirror")]
-        public async Task Mirror([Remainder] string Args = "")
+        public async Task Mirror([Remainder] string args = "")
         {
-            string Prefix = ".";
-            try { Prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            string prefix = ".";
+            try { prefix = Data.GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{Prefix}mirroring mirror [from channel] [to channel]"));
+            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command", $"To use this command, you need to prefix it with something.\n\nExample:\n{prefix}mirroring mirror [from channel] [to channel]"));
         }
     }
 }

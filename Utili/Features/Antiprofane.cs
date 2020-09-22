@@ -1,11 +1,12 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using Discord.Rest;
+using Discord.WebSocket;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.Program;
@@ -19,21 +20,21 @@ namespace Utili
         public static List<string> BadWords;
         public static List<string> GoodWords;
 
-        public async Task AntiProfane_MessageReceived(SocketMessage MessageParam)
+        public async Task AntiProfane_MessageReceived(SocketMessage messageParam)
         {
-            var Message = MessageParam as SocketUserMessage;
-            var Context = new SocketCommandContext(Client, Message);
+            SocketUserMessage message = messageParam as SocketUserMessage;
+            SocketCommandContext context = new SocketCommandContext(Client, message);
 
-            if (DataExists(Context.Guild.Id.ToString(), "AntiProfane-Enabled", "True"))
+            if (DataExists(context.Guild.Id.ToString(), "AntiProfane-Enabled", "True"))
             {
-                if (await IsProfaneAsync(Context.Message.Content))
+                if (await IsProfaneAsync(context.Message.Content))
                 {
-                    await Context.Message.DeleteAsync();
-                    if (Context.User.Id != Client.CurrentUser.Id)
+                    await context.Message.DeleteAsync();
+                    if (context.User.Id != Client.CurrentUser.Id)
                     {
-                        var SentMessage = await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This server doesn't allow profane langugae.\n[Report false positive](https://discord.gg/WsxqABZ)"));
+                        RestUserMessage sentMessage = await context.Channel.SendMessageAsync(embed: GetEmbed("No", "Message deleted", "This server doesn't allow profane langugae.\n[Report false positive](https://discord.gg/WsxqABZ)"));
                         Thread.Sleep(5000);
-                        await SentMessage.DeleteAsync();
+                        await sentMessage.DeleteAsync();
                     }
                 }
             }
@@ -74,46 +75,46 @@ namespace Utili
             }
         }
 
-        private async Task<bool> IsProfaneAsync(string Content)
+        private async Task<bool> IsProfaneAsync(string content)
         {
-            List<string> DetectedWords = new List<string>();
-            string ToTest = Content;
-            ToTest = ToTest.Replace(" ", "");
-            ToTest = ToTest.Replace("_", "");
-            ToTest = ToTest.Replace("-", "");
-            ToTest = ToTest.Replace(".", "");
-            ToTest = ToTest.Replace("~", "");
-            ToTest = ToTest.Replace(",", "");
-            foreach (KeyValuePair<string, string> x in LeetRules) ToTest = ToTest.Replace(x.Key, x.Value);
-            ToTest = ToTest.ToLower();
-            foreach (string word in BadWords) if (ToTest.Contains(word)) if (!DetectedWords.Contains(word)) DetectedWords.Add(word);
+            List<string> detectedWords = new List<string>();
+            string toTest = content;
+            toTest = toTest.Replace(" ", "");
+            toTest = toTest.Replace("_", "");
+            toTest = toTest.Replace("-", "");
+            toTest = toTest.Replace(".", "");
+            toTest = toTest.Replace("~", "");
+            toTest = toTest.Replace(",", "");
+            foreach (KeyValuePair<string, string> x in LeetRules) toTest = toTest.Replace(x.Key, x.Value);
+            toTest = toTest.ToLower();
+            foreach (string word in BadWords) if (toTest.Contains(word)) if (!detectedWords.Contains(word)) detectedWords.Add(word);
             Regex rgx = new Regex("[^a-zA-Z0-9 -]");
 
-            ToTest = Content.Replace(" ", "").ToLower();
-            ToTest = rgx.Replace(ToTest, "");
-            foreach (string word in BadWords) if (ToTest.Contains(word)) if (!DetectedWords.Contains(word)) DetectedWords.Add(word);
+            toTest = content.Replace(" ", "").ToLower();
+            toTest = rgx.Replace(toTest, "");
+            foreach (string word in BadWords) if (toTest.Contains(word)) if (!detectedWords.Contains(word)) detectedWords.Add(word);
 
-            List<string> Iteration = DetectedWords;
+            List<string> iteration = detectedWords;
 
             try
             {
-                foreach (string DetectedWord in Iteration)
+                foreach (string detectedWord in iteration)
                 {
                     try
                     {
                         bool allow = false;
-                        foreach (string intendedWord in Content.ToLower().Split(" "))
+                        foreach (string intendedWord in content.ToLower().Split(" "))
                         {
-                            if (intendedWord.Contains(DetectedWord)) if (GoodWords.Contains(rgx.Replace(intendedWord, ""))) allow = true;
+                            if (intendedWord.Contains(detectedWord)) if (GoodWords.Contains(rgx.Replace(intendedWord, ""))) allow = true;
                         }
-                        if (allow) try { DetectedWords.Remove(DetectedWord); } catch { }
+                        if (allow) try { detectedWords.Remove(detectedWord); } catch { }
                     }
                     catch { }
                 }
             }
-            catch { };
+            catch { }
 
-            return (DetectedWords.Count != 0);
+            return (detectedWords.Count != 0);
         }
     }
 
@@ -129,17 +130,17 @@ namespace Utili
         [Command("Help")]
         public async Task Help()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Anti-Profane filter", HelpContent, $"Prefix these commands with {Prefix}antiprofane"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Anti-Profane filter", HelpContent, $"Prefix these commands with {prefix}antiprofane"));
         }
 
         [Command("")]
         public async Task Empty()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Anti-Profane filter", HelpContent, $"Prefix these commands with {Prefix}antiprofane"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Anti-Profane filter", HelpContent, $"Prefix these commands with {prefix}antiprofane"));
         }
 
         [Command("About")]
@@ -153,7 +154,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Context.Guild, new GuildPermission[] { GuildPermission.ReadMessages, GuildPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(Context.Guild, new[] { GuildPermission.ReadMessages, GuildPermission.ManageMessages }, Context.Channel))
                 {
                     DeleteData(Context.Guild.Id.ToString(), "AntiProfane-Enabled");
                     SaveData(Context.Guild.Id.ToString(), "AntiProfane-Enabled", "True");

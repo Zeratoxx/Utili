@@ -1,8 +1,10 @@
-﻿using Discord;
-using Discord.Commands;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using Discord.Rest;
+using Discord.WebSocket;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
@@ -12,49 +14,49 @@ namespace Utili
     public class OwnerCommands : ModuleBase<SocketCommandContext>
     {
         [Command("Servers")]
-        public async Task About(int Number)
+        public async Task About(int number)
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                var Servers = Program.Shards.Guilds.OrderBy(x => x.Name);
+                IOrderedEnumerable<SocketGuild> servers = Program.Shards.Guilds.OrderBy(x => x.Name);
 
-                int OldNumber = Number;
-                Number = (Number - 1) * 10;
+                int oldNumber = number;
+                number = (number - 1) * 10;
 
-                string Content = "";
-                decimal d = Servers.Count();
+                string content = "";
+                decimal d = servers.Count();
                 decimal temp = d / 10m;
-                decimal Pages = Math.Ceiling(temp);
+                decimal pages = Math.Ceiling(temp);
 
                 int i = 0;
-                int Read = 0;
-                bool Reading = false;
+                int read = 0;
+                bool reading = false;
 
-                foreach (var Server in Servers)
+                foreach (SocketGuild server in servers)
                 {
-                    if (!Reading)
+                    if (!reading)
                     {
-                        if (i == Number) Reading = true;
+                        if (i == number) reading = true;
                     }
-                    if (Reading)
+                    if (reading)
                     {
-                        if (Read == 10) Reading = false;
+                        if (read == 10) reading = false;
                         else
                         {
-                            Content += $"{i + 1}. {Server.Name} ({Server.Id})\n";
-                            Read += 1;
+                            content += $"{i + 1}. {server.Name} ({server.Id})\n";
+                            read += 1;
                         }
                     }
                     i++;
                 }
 
-                if (Content == "")
+                if (content == "")
                 {
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid page", $"There are pages 1-{Pages}"));
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid page", $"There are pages 1-{pages}"));
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Servers", Content, $"Page {OldNumber} of {Pages}"));
+                    await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Servers", content, $"Page {oldNumber} of {pages}"));
                 }
             }
         }
@@ -66,22 +68,22 @@ namespace Utili
             {
                 if (confirm.ToLower() == "confirm")
                 {
-                    if (BotHasPermissions(Context.Guild, new GuildPermission[] { GuildPermission.Administrator }, Context.Channel))
+                    if (BotHasPermissions(Context.Guild, new[] { GuildPermission.Administrator }, Context.Channel))
                     {
                         #region Clear
 
-                        foreach (var Cat in Context.Guild.CategoryChannels)
+                        foreach (SocketCategoryChannel cat in Context.Guild.CategoryChannels)
                         {
-                            await Cat.DeleteAsync();
+                            await cat.DeleteAsync();
                         }
-                        foreach (var Channel in Context.Guild.Channels)
+                        foreach (SocketGuildChannel channel in Context.Guild.Channels)
                         {
-                            await Channel.DeleteAsync();
+                            await channel.DeleteAsync();
                         }
-                        foreach (var DRole in Context.Guild.Roles)
+                        foreach (SocketRole dRole in Context.Guild.Roles)
                         {
-                            try { await DRole.DeleteAsync(); }
-                            catch { try { await DRole.ModifyAsync(x => x.Permissions = new GuildPermissions()); } catch { } };
+                            try { await dRole.DeleteAsync(); }
+                            catch { try { await dRole.ModifyAsync(x => x.Permissions = new GuildPermissions()); } catch { } }
                         }
 
                         #endregion Clear
@@ -90,27 +92,27 @@ namespace Utili
 
                         await Context.Guild.CreateTextChannelAsync("General");
 
-                        var Category = await Context.Guild.CreateCategoryChannelAsync($"Bots");
+                        RestCategoryChannel category = await Context.Guild.CreateCategoryChannelAsync("Bots");
 
-                        foreach (var Bot in Context.Guild.Users.Where(x => x.IsBot).OrderBy(x => x.Username))
+                        foreach (SocketGuildUser bot in Context.Guild.Users.Where(x => x.IsBot).OrderBy(x => x.Username))
                         {
-                            var Channel = await Context.Guild.CreateTextChannelAsync($"{Bot.Username}");
-                            await Channel.ModifyAsync(x => x.CategoryId = Category.Id);
-                            await Channel.AddPermissionOverwriteAsync(Bot, OverwritePermissions.AllowAll(Channel));
+                            RestTextChannel channel = await Context.Guild.CreateTextChannelAsync($"{bot.Username}");
+                            await channel.ModifyAsync(x => x.CategoryId = category.Id);
+                            await channel.AddPermissionOverwriteAsync(bot, OverwritePermissions.AllowAll(channel));
 
-                            var Channel2 = await Context.Guild.CreateVoiceChannelAsync($"{Bot.Username}");
-                            await Channel2.ModifyAsync(x => x.CategoryId = Category.Id);
-                            await Channel2.AddPermissionOverwriteAsync(Bot, OverwritePermissions.AllowAll(Channel2));
+                            RestVoiceChannel channel2 = await Context.Guild.CreateVoiceChannelAsync($"{bot.Username}");
+                            await channel2.ModifyAsync(x => x.CategoryId = category.Id);
+                            await channel2.AddPermissionOverwriteAsync(bot, OverwritePermissions.AllowAll(channel2));
                         }
 
                         #endregion Channels
 
                         #region Human Roles
 
-                        var Role = await Context.Guild.CreateRoleAsync("Tester", new GuildPermissions(administrator: true), Color.Green, true, false);
-                        foreach (var User in Context.Guild.Users.Where(x => !x.IsBot))
+                        RestRole role = await Context.Guild.CreateRoleAsync("Tester", new GuildPermissions(administrator: true), Color.Green, true, false);
+                        foreach (SocketGuildUser user in Context.Guild.Users.Where(x => !x.IsBot))
                         {
-                            await User.AddRoleAsync(Role);
+                            await user.AddRoleAsync(role);
                         }
 
                         #endregion Human Roles
@@ -118,59 +120,59 @@ namespace Utili
                 }
                 else
                 {
-                    string Prefix = ".";
-                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                    string prefix = ".";
+                    try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Warning", $"This command will **DELETE ALL CHANNELS AND ROLES**.\nThis **CAN NOT BE UNDONE**.\n\nThis command re-formats the server into a server for testing bots.\nUse {Prefix}TestServerReset Confirm to continue.\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Warning", $"This command will **DELETE ALL CHANNELS AND ROLES**.\nThis **CAN NOT BE UNDONE**.\n\nThis command re-formats the server into a server for testing bots.\nUse {prefix}TestServerReset Confirm to continue.\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 }
             }
         }
 
         [Command("GuildInfo")]
-        public async Task GuildInfo(ulong GuildID)
+        public async Task GuildInfo(ulong guildId)
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                await Context.Channel.SendMessageAsync(embed: Logic.GuildInfo(Program.Shards.GetGuild(GuildID)));
+                await Context.Channel.SendMessageAsync(embed: Logic.GuildInfo(Program.Shards.GetGuild(guildId)));
             }
         }
 
         [Command("AddVoteLink")]
-        public async Task AddVoteLink(string Title, string Content)
+        public async Task AddVoteLink(string title, string content)
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                SaveData(Title, "VoteLink", Content);
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Vote link saved", $"[{Title}]({Content})"));
+                SaveData(title, "VoteLink", content);
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Vote link saved", $"[{title}]({content})"));
             }
         }
 
         [Command("RemoveVoteLink")]
-        public async Task RemoveVoteLink(string Title, string Content)
+        public async Task RemoveVoteLink(string title, string content)
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                DeleteData(Title, "VoteLink", Content);
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Vote link deleted", $"[{Title}]({Content})"));
+                DeleteData(title, "VoteLink", content);
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Vote link deleted", $"[{title}]({content})"));
             }
         }
 
         [Command("Delete")]
-        public async Task Delete(string GuildID = null, string Type = null, string Value = null)
+        public async Task Delete(string guildId = null, string type = null, string value = null)
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                DeleteData(GuildID, Type, Value);
+                DeleteData(guildId, type, value);
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Deleted data"));
             }
         }
 
         [Command("Save")]
-        public async Task Save(string GuildID, string Type, string Value)
+        public async Task Save(string guildId, string type, string value)
         {
             if (OwnerPermission(Context.User, Context.Channel))
             {
-                SaveData(GuildID, Type, Value);
+                SaveData(guildId, type, value);
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Saved data"));
             }
         }

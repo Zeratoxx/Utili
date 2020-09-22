@@ -1,5 +1,4 @@
 ﻿using System.IO;
-
 using System.Text.Json;
 
 namespace Utili
@@ -12,33 +11,33 @@ namespace Utili
         {
             Config = new Configuration();
 
-            JsonSerializerOptions Options = new JsonSerializerOptions
+            JsonSerializerOptions options = new JsonSerializerOptions
             {
                 WriteIndented = true
             };
 
-            string Json;
-            Json = JsonSerializer.Serialize(Config, Options);
-            File.WriteAllText("Config.json", Json);
+            string json;
+            json = JsonSerializer.Serialize(Config, options);
+            File.WriteAllText("Config.json", json);
         }
 
         public static void SaveConfig()
         {
-            JsonSerializerOptions Options = new JsonSerializerOptions
+            JsonSerializerOptions options = new JsonSerializerOptions
             {
                 WriteIndented = true
             };
 
-            string Json = JsonSerializer.Serialize(Config, Options);
-            File.WriteAllText("Config.json", Json);
+            string json = JsonSerializer.Serialize(Config, options);
+            File.WriteAllText("Config.json", json);
         }
 
         public static bool LoadConfig()
         {
             try
             {
-                string Json = File.ReadAllText("Config.json");
-                Config = JsonSerializer.Deserialize<Configuration>(Json);
+                string json = File.ReadAllText("Config.json");
+                Config = JsonSerializer.Deserialize<Configuration>(json);
                 return true;
             }
             catch

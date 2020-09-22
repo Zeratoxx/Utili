@@ -1,11 +1,12 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.Webhook;
-using Discord.WebSocket;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using Discord.Webhook;
+using Discord.WebSocket;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
@@ -14,78 +15,78 @@ namespace Utili
 {
     internal class Mirroring
     {
-        public async Task Mirroring_MessageReceived(SocketMessage MessageParam)
+        public async Task Mirroring_MessageReceived(SocketMessage messageParam)
         {
-            var Message = MessageParam as SocketUserMessage;
-            var Context = new SocketCommandContext(Program.Client, Message);
+            SocketUserMessage message = messageParam as SocketUserMessage;
+            SocketCommandContext context = new SocketCommandContext(Program.Client, message);
 
-            if (Context.User.IsBot) return;
+            if (context.User.IsBot) return;
 
-            var Data = GetData(Context.Guild.Id.ToString(), "Mirroring-Link");
-            if (Data.Count == 0) return;
+            List<Data> data = GetData(context.Guild.Id.ToString(), "Mirroring-Link");
+            if (data.Count == 0) return;
 
-            foreach (var Value in Data)
+            foreach (Data value in data)
             {
                 try
                 {
                     // If the from channel is this channel
-                    if (Value.Value.Split(" -> ").First() == Context.Channel.Id.ToString())
+                    if (value.Value.Split(" -> ").First() == context.Channel.Id.ToString())
                     {
-                        SocketTextChannel ToChannel = null;
-                        SocketGuild ToGuild = Context.Guild;
+                        SocketTextChannel toChannel = null;
+                        SocketGuild toGuild = context.Guild;
 
                         // If the link is in this guild only
-                        if (!Value.Value.Split(" -> ").Last().Contains("G"))
+                        if (!value.Value.Split(" -> ").Last().Contains("G"))
                         {
-                            ToChannel = Context.Guild.GetTextChannel(ulong.Parse(Value.Value.Split(" -> ").Last()));
+                            toChannel = context.Guild.GetTextChannel(ulong.Parse(value.Value.Split(" -> ").Last()));
                         }
                         // If the to channel is in another guild
                         else
                         {
-                            ToGuild = Program.Shards.GetGuild(ulong.Parse(Value.Value.Split("G").Last()));
-                            ToChannel = ToGuild.GetTextChannel(ulong.Parse(Value.Value.Split(" -> ").Last().Split(" G").First()));
+                            toGuild = Program.Shards.GetGuild(ulong.Parse(value.Value.Split("G").Last()));
+                            toChannel = toGuild.GetTextChannel(ulong.Parse(value.Value.Split(" -> ").Last().Split(" G").First()));
                         }
 
-                        ulong WebhookID = 0;
-                        try { WebhookID = ulong.Parse(GetFirstData(ToChannel.Guild.Id.ToString(), $"Mirroring-WebhookID-{ToChannel.Id}").Value); }
+                        ulong webhookId = 0;
+                        try { webhookId = ulong.Parse(GetFirstData(toChannel.Guild.Id.ToString(), $"Mirroring-WebhookID-{toChannel.Id}").Value); }
                         catch { }
 
-                        IWebhook Web = null;
-                        bool Retry = false;
+                        IWebhook web = null;
+                        bool retry = false;
 
-                        try { Web = await ToChannel.GetWebhookAsync(WebhookID); }
-                        catch { Retry = true; }
-                        if (Web == null) Retry = true;
+                        try { web = await toChannel.GetWebhookAsync(webhookId); }
+                        catch { retry = true; }
+                        if (web == null) retry = true;
 
-                        if (Retry)
+                        if (retry)
                         {
-                            FileStream Avatar = File.OpenRead("Avatar.png");
-                            Web = await ToChannel.CreateWebhookAsync("Utili Mirroring", Avatar);
-                            Avatar.Close();
-                            DeleteData(ToChannel.Guild.Id.ToString(), $"Mirroring-WebhookID-{ToChannel.Id}");
-                            SaveData(ToChannel.Guild.Id.ToString(), $"Mirroring-WebhookID-{ToChannel.Id}", Web.Id.ToString());
+                            FileStream avatar = File.OpenRead("Avatar.png");
+                            web = await toChannel.CreateWebhookAsync("Utili Mirroring", avatar);
+                            avatar.Close();
+                            DeleteData(toChannel.Guild.Id.ToString(), $"Mirroring-WebhookID-{toChannel.Id}");
+                            SaveData(toChannel.Guild.Id.ToString(), $"Mirroring-WebhookID-{toChannel.Id}", web.Id.ToString());
                         }
 
                         await Task.Delay(500);
 
-                        DiscordWebhookClient Webhook = new DiscordWebhookClient(Web);
-                        string Username = $"{Context.User.Username}#{Context.User.Discriminator} [#{Context.Channel.Name} - {Context.Guild.Name}]";
-                        string AvatarURL = Context.User.GetAvatarUrl();
+                        DiscordWebhookClient webhook = new DiscordWebhookClient(web);
+                        string username = $"{context.User.Username}#{context.User.Discriminator} [#{context.Channel.Name} - {context.Guild.Name}]";
+                        string avatarUrl = context.User.GetAvatarUrl();
 
                         await Task.Delay(500);
 
-                        if (Context.Message.Content != null && Context.Message.Content != "")
+                        if (context.Message.Content != null && context.Message.Content != "")
                         {
-                            if (Context.Message.Embeds.Count == 0) await Webhook.SendMessageAsync(Context.Message.Content, username: Username, avatarUrl: AvatarURL);
-                            else await Webhook.SendMessageAsync(Context.Message.Content, embeds: Context.Message.Embeds, username: Username, avatarUrl: AvatarURL);
+                            if (context.Message.Embeds.Count == 0) await webhook.SendMessageAsync(context.Message.Content, username: username, avatarUrl: avatarUrl);
+                            else await webhook.SendMessageAsync(context.Message.Content, embeds: context.Message.Embeds, username: username, avatarUrl: avatarUrl);
                         }
 
-                        if (Context.Message.Attachments.Count != 0)
+                        if (context.Message.Attachments.Count != 0)
                         {
-                            string Links = "";
-                            foreach (string Attachment in Context.Message.Attachments.Select(x => x.Url)) Links += $"{Attachment}\n";
+                            string links = "";
+                            foreach (string attachment in context.Message.Attachments.Select(x => x.Url)) links += $"{attachment}\n";
 
-                            await Webhook.SendMessageAsync(Links, username: Username, avatarUrl: AvatarURL);
+                            await webhook.SendMessageAsync(links, username: username, avatarUrl: avatarUrl);
                         }
                     }
                 }
@@ -111,17 +112,17 @@ namespace Utili
         [Command("Help")]
         public async Task Help()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Mirroring", HelpContent, $"Prefix these commands with {Prefix}mirroring"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Mirroring", HelpContent, $"Prefix these commands with {prefix}mirroring"));
         }
 
         [Command("")]
         public async Task Empty()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Mirroring", HelpContent, $"Prefix these commands with {Prefix}mirroring"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Mirroring", HelpContent, $"Prefix these commands with {prefix}mirroring"));
         }
 
         [Command("About")]
@@ -131,70 +132,70 @@ namespace Utili
         }
 
         [Command("Mirror"), Alias("Enable")]
-        public async Task Mirror(ITextChannel From, ITextChannel To)
+        public async Task Mirror(ITextChannel from, ITextChannel to)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(To, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageWebhooks }, Context.Channel))
+                if (BotHasPermissions(to, new[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageWebhooks }, Context.Channel))
                 {
-                    if (BotHasPermissions(From, new ChannelPermission[] { ChannelPermission.ViewChannel }, Context.Channel))
+                    if (BotHasPermissions(from, new[] { ChannelPermission.ViewChannel }, Context.Channel))
                     {
-                        DeleteData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{From.Id} -> {To.Id}");
-                        SaveData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{From.Id} -> {To.Id}");
-                        await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mirroring enabled", $"Now mirroring {From.Mention} to {To.Mention}"));
+                        DeleteData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{from.Id} -> {to.Id}");
+                        SaveData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{from.Id} -> {to.Id}");
+                        await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mirroring enabled", $"Now mirroring {from.Mention} to {to.Mention}"));
                     }
                 }
             }
         }
 
         [Command("Disable"), Alias("Unmirror")]
-        public async Task Disable(ITextChannel From, ITextChannel To)
+        public async Task Disable(ITextChannel from, ITextChannel to)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                DeleteData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{From.Id} -> {To.Id}");
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mirroring disabled", $"No longer mirroring {From.Mention} to {To.Mention}"));
+                DeleteData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{from.Id} -> {to.Id}");
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mirroring disabled", $"No longer mirroring {from.Mention} to {to.Mention}"));
             }
         }
 
         [Command("Mirror"), Alias("Enable")]
-        public async Task Mirror(ITextChannel From, ulong ToGuildID, ulong ToID)
+        public async Task Mirror(ITextChannel from, ulong toGuildId, ulong toId)
         {
-            bool PublicAllowed = false;
-            if (DataExists(Context.Guild.Id.ToString(), "Mirroring-Public", From.Id.ToString())) PublicAllowed = true;
+            bool publicAllowed = false;
+            if (DataExists(Context.Guild.Id.ToString(), "Mirroring-Public", from.Id.ToString())) publicAllowed = true;
 
-            bool Allowed = PublicAllowed;
-            if (!Allowed) Allowed = Permission(Context.User, Context.Channel);
+            bool allowed = publicAllowed;
+            if (!allowed) allowed = Permission(Context.User, Context.Channel);
 
-            if (Allowed)
+            if (allowed)
             {
-                SocketGuild ToGuild;
-                ITextChannel To;
+                SocketGuild toGuild;
+                ITextChannel to;
                 try
                 {
-                    ToGuild = Program.Shards.GetGuild(ToGuildID);
-                    To = ToGuild.GetTextChannel(ToID);
-                    if (ToGuild.Id == Context.Guild.Id) throw new Exception();
+                    toGuild = Program.Shards.GetGuild(toGuildId);
+                    to = toGuild.GetTextChannel(toId);
+                    if (toGuild.Id == Context.Guild.Id) throw new Exception();
 
-                    if (!(Context.User as SocketGuildUser).GetPermissions(From).ViewChannel) throw new Exception();
+                    if (!(Context.User as SocketGuildUser).GetPermissions(from).ViewChannel) throw new Exception();
                 }
                 catch
                 {
-                    string Prefix = ".";
-                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                    string prefix = ".";
+                    try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                     return;
                 }
 
-                if (Permission(ToGuild.GetUser(Context.User.Id), Context.Channel, true))
+                if (Permission(toGuild.GetUser(Context.User.Id), Context.Channel, true))
                 {
-                    if (BotHasPermissions(To, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageWebhooks }, Context.Channel))
+                    if (BotHasPermissions(to, new[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages, ChannelPermission.ManageWebhooks }, Context.Channel))
                     {
-                        if (BotHasPermissions(From, new ChannelPermission[] { ChannelPermission.ViewChannel }, Context.Channel))
+                        if (BotHasPermissions(from, new[] { ChannelPermission.ViewChannel }, Context.Channel))
                         {
-                            DeleteData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{From.Id} -> {To.Id} G{ToGuild.Id}");
-                            SaveData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{From.Id} -> {To.Id} G{ToGuild.Id}");
-                            await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mirroring enabled", $"Now mirroring {From.Mention} to #{To.Name} in {ToGuild.Name}"));
+                            DeleteData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{from.Id} -> {to.Id} G{toGuild.Id}");
+                            SaveData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{from.Id} -> {to.Id} G{toGuild.Id}");
+                            await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mirroring enabled", $"Now mirroring {from.Mention} to #{to.Name} in {toGuild.Name}"));
                         }
                     }
                 }
@@ -202,71 +203,71 @@ namespace Utili
         }
 
         [Command("Disable"), Alias("Unmirror")]
-        public async Task Disable(ITextChannel From, ulong ToGuildID, ulong ToID)
+        public async Task Disable(ITextChannel from, ulong toGuildId, ulong toId)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                SocketGuild ToGuild = null;
-                ITextChannel To = null;
+                SocketGuild toGuild = null;
+                ITextChannel to = null;
                 try
                 {
-                    ToGuild = Program.Shards.GetGuild(ToGuildID);
-                    To = ToGuild.GetTextChannel(ToID);
-                    if (ToGuild.Id == Context.Guild.Id) throw new Exception();
+                    toGuild = Program.Shards.GetGuild(toGuildId);
+                    to = toGuild.GetTextChannel(toId);
+                    if (toGuild.Id == Context.Guild.Id) throw new Exception();
                 }
                 catch
                 {
-                    string Prefix = ".";
-                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                    string prefix = ".";
+                    try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                     return;
                 }
 
-                if (Permission(ToGuild.GetUser(Context.User.Id), Context.Channel))
+                if (Permission(toGuild.GetUser(Context.User.Id), Context.Channel))
                 {
-                    DeleteData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{From.Id} -> {To.Id} G{ToGuild.Id}");
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mirroring disabled", $"No longer mirroring {From.Mention} to #{To.Name} in {ToGuild.Name}"));
+                    DeleteData(Context.Guild.Id.ToString(), "Mirroring-Link", $"{from.Id} -> {to.Id} G{toGuild.Id}");
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Mirroring disabled", $"No longer mirroring {from.Mention} to #{to.Name} in {toGuild.Name}"));
                 }
             }
         }
 
         [Command("Clear")]
-        public async Task Clear(ITextChannel Channel)
+        public async Task Clear(ITextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                var Data = GetData(Type: "Mirroring-Link");
-                int Links = 0;
-                foreach (var Value in Data)
+                List<Data> data = GetData(type: "Mirroring-Link");
+                int links = 0;
+                foreach (Data value in data)
                 {
-                    if (Value.Value.Contains(Channel.Id.ToString()))
+                    if (value.Value.Contains(channel.Id.ToString()))
                     {
-                        DeleteData(Value.GuildID, Value.Type, Value.Value);
-                        Links += 1;
+                        DeleteData(value.GuildId, value.Type, value.Value);
+                        links += 1;
                     }
                 }
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Cleared mirroring links", $"Removed {Links} mirroring links which sent from or to this channel."));
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Cleared mirroring links", $"Removed {links} mirroring links which sent from or to this channel."));
             }
         }
 
         [Command("AllowPublic")]
-        public async Task AllowPublic(ITextChannel Channel)
+        public async Task AllowPublic(ITextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                DeleteData(Context.Guild.Id.ToString(), "Mirroring-Public", Channel.Id.ToString());
-                SaveData(Context.Guild.Id.ToString(), "Mirroring-Public", Channel.Id.ToString());
+                DeleteData(Context.Guild.Id.ToString(), "Mirroring-Public", channel.Id.ToString());
+                SaveData(Context.Guild.Id.ToString(), "Mirroring-Public", channel.Id.ToString());
 
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Public mirroring allowed", "Anyone who can view this channel can now create a permanent mirroring link to their own guilds. Disable this immediately if you ever use this channel to send sensitive information."));
             }
         }
 
         [Command("DisallowPublic")]
-        public async Task DisallowPublic(ITextChannel Channel)
+        public async Task DisallowPublic(ITextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                DeleteData(Context.Guild.Id.ToString(), "Mirroring-Public", Channel.Id.ToString());
+                DeleteData(Context.Guild.Id.ToString(), "Mirroring-Public", channel.Id.ToString());
 
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Public mirroring disallowed", "Any existing mirroring links have not been removed. Now, only people with the manage guild permission on this guild can create mirroring links to their own guilds."));
             }

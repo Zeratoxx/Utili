@@ -1,10 +1,11 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.Program;
@@ -14,83 +15,83 @@ namespace Utili
 {
     internal class Autopurge
     {
-        private readonly List<Task> Tasks = new List<Task>();
+        private readonly List<Task> _tasks = new List<Task>();
 
-        public static System.Timers.Timer StartRunthrough;
+        public static Timer StartRunthrough;
 
         public async Task Run()
         {
-            StartRunthrough = new System.Timers.Timer(5000);
+            StartRunthrough = new Timer(5000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
         }
 
-        private void StartRunthrough_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void StartRunthrough_Elapsed(object sender, ElapsedEventArgs e)
         {
             if (Ready)
             {
-                Tasks.RemoveAll(x => x.IsCompleted);
-                if (Tasks.Count < GetMaxWorkers()) Tasks.Add(Process());
+                _tasks.RemoveAll(x => x.IsCompleted);
+                if (_tasks.Count < GetMaxWorkers()) _tasks.Add(Process());
             }
         }
 
         public async Task Process()
         {
-            List<Data> AllChannels = GetData(Type: "Autopurge-Channel");
-            List<ulong> AllGuilds = new List<ulong>();
+            List<Data> allChannels = GetData(type: "Autopurge-Channel");
+            List<ulong> allGuilds = new List<ulong>();
 
-            foreach (Data Data in AllChannels)
+            foreach (Data data in allChannels)
             {
-                if (!AllGuilds.Contains(ulong.Parse(Data.GuildID))) AllGuilds.Add(ulong.Parse(Data.GuildID));
+                if (!allGuilds.Contains(ulong.Parse(data.GuildId))) allGuilds.Add(ulong.Parse(data.GuildId));
             }
 
-            foreach (ulong GuildID in AllGuilds)
+            foreach (ulong guildId in allGuilds)
             {
                 try
                 {
-                    SocketGuild Guild = Client.GetGuild(GuildID);
-                    List<Data> GuildChannels = AllChannels.Where(x => x.GuildID == GuildID.ToString()).ToList();
+                    SocketGuild guild = Client.GetGuild(guildId);
+                    List<Data> guildChannels = allChannels.Where(x => x.GuildId == guildId.ToString()).ToList();
 
-                    foreach (Data Data in GuildChannels)
+                    foreach (Data data in guildChannels)
                     {
                         try
                         {
-                            SocketTextChannel Channel = Guild.GetTextChannel(ulong.Parse(Data.Value));
-                            List<IMessage> MessagesToDelete = new List<IMessage>();
+                            SocketTextChannel channel = guild.GetTextChannel(ulong.Parse(data.Value));
+                            List<IMessage> messagesToDelete = new List<IMessage>();
 
-                            TimeSpan TimeSpan = TimeSpan.Parse("00:15:00");
-                            try { TimeSpan = TimeSpan.Parse(GetFirstData(GuildID.ToString(), $"Autopurge-Timespan-{Channel.Id}").Value); } catch { }
+                            TimeSpan timeSpan = TimeSpan.Parse("00:15:00");
+                            try { timeSpan = TimeSpan.Parse(GetFirstData(guildId.ToString(), $"Autopurge-Timespan-{channel.Id}").Value); } catch { }
 
-                            bool BotsOnly = false;
-                            if (DataExists(Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots")) BotsOnly = true;
+                            bool botsOnly = false;
+                            if (DataExists(guild.Id.ToString(), $"Autopurge-Mode-{channel.Id}", "Bots")) botsOnly = true;
 
-                            var Messages = await Channel.GetMessagesAsync(1000).FlattenAsync();
+                            IEnumerable<IMessage> messages = await channel.GetMessagesAsync(1000).FlattenAsync();
 
-                            foreach (var Message in Messages)
+                            foreach (IMessage message in messages)
                             {
-                                bool Delete = true;
+                                bool delete = true;
 
-                                TimeSpan MessageAge = DateTime.Now - Message.Timestamp.LocalDateTime;
+                                TimeSpan messageAge = DateTime.Now - message.Timestamp.LocalDateTime;
 
                                 // Don't delete if the message is younger than the desired timespan
-                                if (MessageAge < TimeSpan) Delete = false;
+                                if (messageAge < timeSpan) delete = false;
 
                                 // Don't delete if the message can't be deleted (too old)
-                                if (MessageAge > TimeSpan.FromHours(335.75)) Delete = false;
+                                if (messageAge > TimeSpan.FromHours(335.75)) delete = false;
 
                                 // Don't delete if the message is pinned
-                                if (Message.IsPinned) Delete = false;
+                                if (message.IsPinned) delete = false;
 
-                                if (BotsOnly)
+                                if (botsOnly)
                                 {
                                     // Don't delete if the message was sent by a human
-                                    if (!Message.Author.IsBot) Delete = false;
+                                    if (!message.Author.IsBot) delete = false;
                                 }
 
-                                if (Delete) MessagesToDelete.Add(Message);
+                                if (delete) messagesToDelete.Add(message);
                             }
 
-                            await Channel.DeleteMessagesAsync(MessagesToDelete);
+                            await channel.DeleteMessagesAsync(messagesToDelete);
                         }
                         catch { }
                     }
@@ -114,17 +115,17 @@ namespace Utili
         [Command("Help")]
         public async Task Help()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Autopurge", HelpContent, $"Prefix these commands with {Prefix}autopurge"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Autopurge", HelpContent, $"Prefix these commands with {prefix}autopurge"));
         }
 
         [Command("")]
         public async Task Empty()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Autopurge", HelpContent, $"Prefix these commands with {Prefix}autopurge"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Autopurge", HelpContent, $"Prefix these commands with {prefix}autopurge"));
         }
 
         [Command("About")]
@@ -134,63 +135,63 @@ namespace Utili
         }
 
         [Command("Time"), Alias("Timespan")]
-        public async Task Time(ITextChannel Channel, TimeSpan Time)
+        public async Task Time(ITextChannel channel, TimeSpan time)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Time > TimeSpan.FromDays(13) + TimeSpan.FromHours(23))
+                if (time > TimeSpan.FromDays(13) + TimeSpan.FromHours(23))
                 {
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"The maximum autopurge timespan is 13 days and 23 hours. (13d23h)"));
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", "The maximum autopurge timespan is 13 days and 23 hours. (13d23h)"));
                     return;
                 }
 
-                DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}");
-                SaveData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{Channel.Id}", Time.ToString());
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge time", $"Messages older than {DisplayTimespan(Time)} will be deleted.\nThis setting is only for {Channel.Mention}.\nNote that messages are only purged every so often so this timer may not be completely accurate."));
+                DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{channel.Id}");
+                SaveData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{channel.Id}", time.ToString());
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge time", $"Messages older than {DisplayTimespan(time)} will be deleted.\nThis setting is only for {channel.Mention}.\nNote that messages are only purged every so often so this timer may not be completely accurate."));
             }
         }
 
         [Command("Mode")]
-        public async Task Mode(ITextChannel Channel, string Mode)
+        public async Task Mode(ITextChannel channel, string mode)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Mode.ToLower() == "all")
+                if (mode.ToLower() == "all")
                 {
-                    DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}");
-                    SaveData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "All");
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge mode", $"All messages (except pinned messages) will be deleted."));
+                    DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{channel.Id}");
+                    SaveData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{channel.Id}", "All");
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge mode", "All messages (except pinned messages) will be deleted."));
                 }
-                else if (Mode.ToLower() == "bots" || Mode.ToLower() == "bot")
+                else if (mode.ToLower() == "bots" || mode.ToLower() == "bot")
                 {
-                    DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}");
-                    SaveData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{Channel.Id}", "Bots");
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge mode", $"All messages sent by bots (except pinned messages) will be deleted."));
+                    DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{channel.Id}");
+                    SaveData(Context.Guild.Id.ToString(), $"Autopurge-Mode-{channel.Id}", "Bots");
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge mode", "All messages sent by bots (except pinned messages) will be deleted."));
                 }
             }
         }
 
         [Command("On"), Alias("Enable")]
-        public async Task On(ITextChannel Channel)
+        public async Task On(ITextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(channel, new[] { ChannelPermission.ViewChannel, ChannelPermission.ManageMessages }, Context.Channel))
                 {
-                    DeleteData(Context.Guild.Id.ToString(), "Autopurge-Channel", Channel.Id.ToString());
-                    SaveData(Context.Guild.Id.ToString(), "Autopurge-Channel", Channel.Id.ToString());
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Autopurge enabled", $"Autopurge enabled in {Channel.Mention}"));
+                    DeleteData(Context.Guild.Id.ToString(), "Autopurge-Channel", channel.Id.ToString());
+                    SaveData(Context.Guild.Id.ToString(), "Autopurge-Channel", channel.Id.ToString());
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Autopurge enabled", $"Autopurge enabled in {channel.Mention}"));
                 }
             }
         }
 
         [Command("Off"), Alias("Disable")]
-        public async Task Off(ITextChannel Channel)
+        public async Task Off(ITextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                DeleteData(Context.Guild.Id.ToString(), "Autopurge-Channel", Channel.Id.ToString());
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Autopurge disabled", $"Autopurge disabled in {Channel.Mention}"));
+                DeleteData(Context.Guild.Id.ToString(), "Autopurge-Channel", channel.Id.ToString());
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Autopurge disabled", $"Autopurge disabled in {channel.Mention}"));
             }
         }
     }

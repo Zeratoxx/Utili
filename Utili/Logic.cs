@@ -1,8 +1,9 @@
-﻿using Discord;
-using Discord.WebSocket;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using Discord;
+using Discord.WebSocket;
 using static Utili.Data;
 using static Utili.SendMessage;
 
@@ -10,217 +11,201 @@ namespace Utili
 {
     internal class Logic
     {
-        public static bool Permission(SocketUser User, ISocketMessageChannel Channel, bool CrossGuild = false)
+        public static bool Permission(SocketUser user, ISocketMessageChannel channel, bool crossGuild = false)
         {
-            SocketGuildUser user = User as SocketGuildUser;
-            if (user.GuildPermissions.ManageGuild == true) return true;
-            else
-            {
-                if (!CrossGuild) Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission to use that command"));
-                else Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission in that guild to use that command"));
-                return false;
-            }
+            SocketGuildUser guildUser = user as SocketGuildUser;
+            if (guildUser.GuildPermissions.ManageGuild) return true;
+            if (!crossGuild) channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission to use that command"));
+            else channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageGuild` permission in that guild to use that command"));
+            return false;
         }
 
-        public static bool MessagePermission(SocketUser User, ISocketMessageChannel Channel, ISocketMessageChannel SendChannel)
+        public static bool MessagePermission(SocketUser user, ISocketMessageChannel channel, ISocketMessageChannel sendChannel)
         {
-            SocketGuildUser user = User as SocketGuildUser;
-            if (user.GetPermissions(Channel as SocketGuildChannel).ManageMessages == true) return true;
-            else
-            {
-                SendChannel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageMessages` permission to use that command"));
-                return false;
-            }
+            SocketGuildUser guildUser = user as SocketGuildUser;
+            if (guildUser.GetPermissions(channel as SocketGuildChannel).ManageMessages) return true;
+            sendChannel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `ManageMessages` permission to use that command"));
+            return false;
         }
 
-        public static bool AdminPermission(SocketUser User, ISocketMessageChannel Channel)
+        public static bool AdminPermission(SocketUser user, ISocketMessageChannel channel)
         {
-            SocketGuildUser user = User as SocketGuildUser;
-            if (user.GuildPermissions.Administrator == true) return true;
-            else
-            {
-                Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `Administrator` permission to use that command"));
-                return false;
-            }
+            SocketGuildUser guildUser = user as SocketGuildUser;
+            if (guildUser.GuildPermissions.Administrator) return true;
+            channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need the `Administrator` permission to use that command"));
+            return false;
         }
 
-        public static bool OwnerPermission(SocketUser User, ISocketMessageChannel Channel)
+        public static bool OwnerPermission(SocketUser user, ISocketMessageChannel channel)
         {
-            SocketGuildUser user = User as SocketGuildUser;
-            if (user.Id == 218613903653863427) return true;
-            else
-            {
-                try { Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "That command is only for the bot owner")); }
-                catch { }
-                return false;
-            }
+            SocketGuildUser guildUser = user as SocketGuildUser;
+            if (guildUser.Id == 218613903653863427) return true;
+            try { channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "That command is only for the bot owner")); }
+            catch { }
+            return false;
         }
 
-        public static string DisplayTimespan(TimeSpan Time, bool Short = false)
+        public static string DisplayTimespan(TimeSpan time, bool @short = false)
         {
-            if (Time == TimeSpan.FromSeconds(0)) return "0 seconds";
+            if (time == TimeSpan.FromSeconds(0)) return "0 seconds";
 
-            string String = "";
+            string @string = "";
 
-            if (!Short)
+            if (!@short)
             {
-                if (Time.Days > 1) String += $"{Time.Days} days, ";
-                else if (Time.Days == 1) String += $"1 day, ";
+                if (time.Days > 1) @string += $"{time.Days} days, ";
+                else if (time.Days == 1) @string += "1 day, ";
 
-                if (Time.Hours > 1) String += $"{Time.Hours} hours, ";
-                else if (Time.Hours == 1) String += $"1 hour, ";
+                if (time.Hours > 1) @string += $"{time.Hours} hours, ";
+                else if (time.Hours == 1) @string += "1 hour, ";
 
-                if (Time.Minutes > 1) String += $"{Time.Minutes} minutes, ";
-                else if (Time.Minutes == 1) String += $"1 minute, ";
+                if (time.Minutes > 1) @string += $"{time.Minutes} minutes, ";
+                else if (time.Minutes == 1) @string += "1 minute, ";
 
-                if (Time.Seconds > 1) String += $"{Time.Seconds} seconds, ";
-                else if (Time.Seconds == 1) String += $"1 second, ";
+                if (time.Seconds > 1) @string += $"{time.Seconds} seconds, ";
+                else if (time.Seconds == 1) @string += "1 second, ";
 
-                if (Time.Milliseconds > 1) String += $"{Time.Milliseconds} milliseconds, ";
-                else if (Time.Milliseconds == 1) String += $"1 millisecond, ";
+                if (time.Milliseconds > 1) @string += $"{time.Milliseconds} milliseconds, ";
+                else if (time.Milliseconds == 1) @string += "1 millisecond, ";
             }
             else
             {
-                if (Time.Days > 0) String += $"{Time.Days}d, ";
-                if (Time.Hours > 0) String += $"{Time.Hours}h, ";
-                if (Time.Minutes > 0) String += $"{Time.Minutes}m, ";
+                if (time.Days > 0) @string += $"{time.Days}d, ";
+                if (time.Hours > 0) @string += $"{time.Hours}h, ";
+                if (time.Minutes > 0) @string += $"{time.Minutes}m, ";
             }
 
-            return String.Remove(String.Length - 2);
+            return @string.Remove(@string.Length - 2);
         }
 
-        public static Embed GuildInfo(SocketGuild Guild)
+        public static Embed GuildInfo(SocketGuild guild)
         {
-            EmbedBuilder Embed = GetLargeEmbed(Guild.Name, $"ID {Guild.Id}", ImageURL: Guild.IconUrl).ToEmbedBuilder();
+            EmbedBuilder embed = GetLargeEmbed(guild.Name, $"ID {guild.Id}", imageUrl: guild.IconUrl).ToEmbedBuilder();
 
-            Embed.AddField("Owner", $"{Guild.Owner}", true);
+            embed.AddField("Owner", $"{guild.Owner}", true);
 
-            int Members = Guild.Users.Where(x => x.IsBot == false).Count();
-            int Bots = Guild.Users.Where(x => x.IsBot == true).Count();
-            Embed.AddField("Humans", Members, true);
-            Embed.AddField("Bots", Bots, true);
+            int members = guild.Users.Where(x => x.IsBot == false).Count();
+            int bots = guild.Users.Where(x => x.IsBot).Count();
+            embed.AddField("Humans", members, true);
+            embed.AddField("Bots", bots, true);
 
-            Embed.AddField("Age", $"{DisplayTimespan(DateTime.Now - Guild.CreatedAt, true)}", true);
+            embed.AddField("Age", $"{DisplayTimespan(DateTime.Now - guild.CreatedAt, true)}", true);
 
-            Embed.AddField("Database entries", $"{GetData(Guild.Id.ToString()).Count()}", true);
+            embed.AddField("Database entries", $"{GetData(guild.Id.ToString()).Count()}", true);
 
-            Embed.AddField($"Channels", $"{Guild.Channels.Count}", true);
+            embed.AddField("Channels", $"{guild.Channels.Count}", true);
 
-            Embed.AddField($"Roles", Guild.Roles.Where(x => x.IsManaged == false).Count(), true);
+            embed.AddField("Roles", guild.Roles.Where(x => x.IsManaged == false).Count(), true);
 
-            Embed.AddField("Custom Emotes", $"{Guild.Emotes.Count}", true);
+            embed.AddField("Custom Emotes", $"{guild.Emotes.Count}", true);
 
-            return Embed.Build();
+            return embed.Build();
         }
 
-        public static bool BotHasPermissions(ITextChannel Channel, ChannelPermission[] Permissions, ISocketMessageChannel ContextChannel, bool Send = true)
+        public static bool BotHasPermissions(ITextChannel channel, ChannelPermission[] permissions, ISocketMessageChannel contextChannel, bool send = true)
         {
-            SocketGuildUser User = (Channel as SocketGuildChannel).Guild.GetUser(Program.Client.CurrentUser.Id);
+            SocketGuildUser user = (channel as SocketGuildChannel).Guild.GetUser(Program.Client.CurrentUser.Id);
 
-            bool HasPermissions = true;
-            List<string> Errors = new List<string>();
-            foreach (ChannelPermission Permission in Permissions)
+            bool hasPermissions = true;
+            List<string> errors = new List<string>();
+            foreach (ChannelPermission permission in permissions)
             {
-                if (!User.GetPermissions(Channel as IGuildChannel).Has(Permission))
+                if (!user.GetPermissions(channel).Has(permission))
                 {
-                    HasPermissions = false;
-                    Errors.Add($"`{Permission}`");
+                    hasPermissions = false;
+                    errors.Add($"`{permission}`");
                 }
             }
 
-            if (HasPermissions) return true;
-            else
+            if (hasPermissions) return true;
+            if (send)
             {
-                if (Send)
+                string content = "";
+                int i = 0;
+                foreach (string error in errors)
                 {
-                    string Content = "";
-                    int i = 0;
-                    foreach (string Error in Errors)
-                    {
-                        if (i == Errors.Count - 1) Content += Error; //If last one
-                        else if (i == Errors.Count - 2) Content += $"{Error} and the "; //If second last one
-                        else Content += $"{Error}, the "; //Any other one
+                    if (i == errors.Count - 1) content += error; //If last one
+                    else if (i == errors.Count - 2) content += $"{error} and the "; //If second last one
+                    else content += $"{error}, the "; //Any other one
 
-                        i++;
-                    }
-
-                    ContextChannel.SendMessageAsync(embed: GetEmbed("No", "I don't have permission", $"I need the {Content} permission to do that\n[Support Discord](https://discord.gg/WsxqABZ)"));
-                    return false;
+                    i++;
                 }
-                else return false;
+
+                contextChannel.SendMessageAsync(embed: GetEmbed("No", "I don't have permission", $"I need the {content} permission to do that\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                return false;
             }
+
+            return false;
         }
 
-        public static bool BotHasPermissions(SocketGuild Guild, GuildPermission[] Permissions, ISocketMessageChannel ContextChannel, bool Send = true)
+        public static bool BotHasPermissions(SocketGuild guild, GuildPermission[] permissions, ISocketMessageChannel contextChannel, bool send = true)
         {
-            SocketGuildUser User = Guild.GetUser(Program.Client.CurrentUser.Id);
+            SocketGuildUser user = guild.GetUser(Program.Client.CurrentUser.Id);
 
-            bool HasPermissions = true;
-            List<string> Errors = new List<string>();
-            foreach (GuildPermission Permission in Permissions)
+            bool hasPermissions = true;
+            List<string> errors = new List<string>();
+            foreach (GuildPermission permission in permissions)
             {
-                if (!User.GuildPermissions.Has(Permission))
+                if (!user.GuildPermissions.Has(permission))
                 {
-                    HasPermissions = false;
-                    Errors.Add($"`{Permission}`");
+                    hasPermissions = false;
+                    errors.Add($"`{permission}`");
                 }
             }
 
-            if (HasPermissions) return true;
-            else
+            if (hasPermissions) return true;
+            if (send)
             {
-                if (Send)
+                string content = "";
+                int i = 0;
+                foreach (string error in errors)
                 {
-                    string Content = "";
-                    int i = 0;
-                    foreach (string Error in Errors)
-                    {
-                        if (i == Errors.Count - 1) Content += Error; //If last one
-                        else if (i == Errors.Count - 2) Content += $"{Error} and the "; //If second last one
-                        else Content += $"{Error}, the "; //Any other one
+                    if (i == errors.Count - 1) content += error; //If last one
+                    else if (i == errors.Count - 2) content += $"{error} and the "; //If second last one
+                    else content += $"{error}, the "; //Any other one
 
-                        i++;
-                    }
-
-                    ContextChannel.SendMessageAsync(embed: GetEmbed("No", "I don't have permission", $"I need the {Content} guild permission to do that\n[Support Discord](https://discord.gg/WsxqABZ)"));
-                    return false;
+                    i++;
                 }
-                else return false;
+
+                contextChannel.SendMessageAsync(embed: GetEmbed("No", "I don't have permission", $"I need the {content} guild permission to do that\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                return false;
             }
+
+            return false;
         }
 
-        public static Emote GetGuildEmote(string Input, SocketGuild Guild)
+        public static Emote GetGuildEmote(string input, SocketGuild guild)
         {
-            try { return Guild.Emotes.First(x => x.Name == Input); } catch { };
-            try { return Guild.Emotes.First(x => x.Name == Input.Split(":").ToArray()[1]); } catch { };
+            try { return guild.Emotes.First(x => x.Name == input); } catch { }
+            try { return guild.Emotes.First(x => x.Name == input.Split(":").ToArray()[1]); } catch { }
 
             return null;
         }
 
-        public static Emoji GetDiscordEmote(string Input)
+        public static Emoji GetDiscordEmote(string input)
         {
-            try { return new Emoji(Input); } catch { };
+            try { return new Emoji(input); } catch { }
 
             return null;
         }
 
         public static int GetMaxWorkers()
         {
-            int Amount = (int)Math.Round(Program.Client.Guilds.Count / 40d);
-            if (Amount == 0) return 1;
-            else return Amount;
+            int amount = (int)Math.Round(Program.Client.Guilds.Count / 40d);
+            if (amount == 0) return 1;
+            return amount;
         }
 
         public static string Base64Encode(string plainText)
         {
-            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            byte[] plainTextBytes = Encoding.UTF8.GetBytes(plainText);
             return Convert.ToBase64String(plainTextBytes);
         }
 
         public static string Base64Decode(string base64EncodedData)
         {
-            var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
-            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+            byte[] base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
+            return Encoding.UTF8.GetString(base64EncodedBytes);
         }
     }
 }

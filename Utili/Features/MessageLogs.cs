@@ -1,11 +1,12 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
@@ -14,120 +15,120 @@ namespace Utili
 {
     internal class MessageLogs
     {
-        public async Task MessageLogs_MessageReceived(SocketMessage MessageParam)
+        public async Task MessageLogs_MessageReceived(SocketMessage messageParam)
         {
-            var Message = MessageParam as SocketUserMessage;
-            var Context = new SocketCommandContext(Program.Client, Message);
+            SocketUserMessage message = messageParam as SocketUserMessage;
+            SocketCommandContext context = new SocketCommandContext(Program.Client, message);
 
-            if (Context.User.IsBot || Context.User.IsWebhook) return;
+            if (context.User.IsBot || context.User.IsWebhook) return;
 
-            Random Random = new Random();
+            Random random = new Random();
 
-            if (DataExists(Context.Guild.Id.ToString(), "MessageLogs-Channel", Context.Channel.Id.ToString()))
+            if (DataExists(context.Guild.Id.ToString(), "MessageLogs-Channel", context.Channel.Id.ToString()))
             {
-                await SaveMessageAsync(Context);
+                await SaveMessageAsync(context);
 
                 // Every so often, delete message log channel entries for non-existant channels
-                if (Random.Next(0, 10) == 5)
+                if (random.Next(0, 10) == 5)
                 {
-                    var ChannelData = GetData(Context.Guild.Id.ToString(), "MessageLogs-Channel");
-                    foreach (Data Channel in ChannelData)
+                    List<Data> channelData = GetData(context.Guild.Id.ToString(), "MessageLogs-Channel");
+                    foreach (Data channel in channelData)
                     {
-                        if (!Context.Guild.TextChannels.Select(x => x.Id).Contains(ulong.Parse(Channel.Value)) && Context.Guild.TextChannels.Count > 0)
+                        if (!context.Guild.TextChannels.Select(x => x.Id).Contains(ulong.Parse(channel.Value)) && context.Guild.TextChannels.Count > 0)
                         {
-                            DeleteData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Value);
+                            DeleteData(context.Guild.Id.ToString(), "MessageLogs-Channel", channel.Value);
                         }
                     }
                 }
             }
 
             // Every so often, delete logs older than 30 days to comply with Discord's rules
-            if (Random.Next(0, 25) == 10) RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE(Timestamp < '{ToSQLTime(DateTime.Now - TimeSpan.FromDays(30))}')");
+            if (random.Next(0, 25) == 10) RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE(Timestamp < '{ToSqlTime(DateTime.Now - TimeSpan.FromDays(30))}')");
         }
 
-        public async Task MessageLogs_MessageDeleted(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
+        public async Task MessageLogs_MessageDeleted(Cacheable<IMessage, ulong> partialMessage, ISocketMessageChannel channel)
         {
-            var Guild = (Channel as SocketTextChannel).Guild;
-            if (DataExists(Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString()))
+            SocketGuild guild = (channel as SocketTextChannel).Guild;
+            if (DataExists(guild.Id.ToString(), "MessageLogs-Channel", channel.Id.ToString()))
             {
-                MessageData Message = await GetMessageAsync(PartialMessage.Id);
-                string Content = Decrypt(Message.EncryptedContent, ulong.Parse(Message.GuildID), ulong.Parse(Message.ChannelID));
+                MessageData message = await GetMessageAsync(partialMessage.Id);
+                string content = Decrypt(message.EncryptedContent, ulong.Parse(message.GuildId), ulong.Parse(message.ChannelId));
 
-                if (Message.ChannelID == Channel.Id.ToString())
+                if (message.ChannelId == channel.Id.ToString())
                 {
-                    RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE ID = {Message.ID}");
-                    var LogChannel = Guild.GetTextChannel(ulong.Parse(GetFirstData(Guild.Id.ToString(), "MessageLogs-LogChannel").Value));
-                    var User = Guild.GetUser(ulong.Parse(Message.UserID));
+                    RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE ID = {message.Id}");
+                    SocketTextChannel logChannel = guild.GetTextChannel(ulong.Parse(GetFirstData(guild.Id.ToString(), "MessageLogs-LogChannel").Value));
+                    SocketGuildUser user = guild.GetUser(ulong.Parse(message.UserId));
 
-                    EmbedBuilder Embed = new EmbedBuilder();
-                    Embed.WithColor(245, 66, 66);
-                    Embed.WithCurrentTimestamp();
-                    Embed.WithDescription($"**Message sent by {User.Mention} deleted in {(Channel as SocketTextChannel).Mention}**\n{Content}");
+                    EmbedBuilder embed = new EmbedBuilder();
+                    embed.WithColor(245, 66, 66);
+                    embed.WithCurrentTimestamp();
+                    embed.WithDescription($"**Message sent by {user.Mention} deleted in {(channel as SocketTextChannel).Mention}**\n{content}");
 
-                    EmbedAuthorBuilder Author = new EmbedAuthorBuilder
+                    EmbedAuthorBuilder author = new EmbedAuthorBuilder
                     {
-                        Name = $"{User.Username}#{User.Discriminator}",
-                        IconUrl = User.GetAvatarUrl()
+                        Name = $"{user.Username}#{user.Discriminator}",
+                        IconUrl = user.GetAvatarUrl()
                     };
-                    Embed.WithAuthor(Author);
-                    Embed.WithFooter($"Message: {PartialMessage.Id} | User: {User.Id}");
+                    embed.WithAuthor(author);
+                    embed.WithFooter($"Message: {partialMessage.Id} | User: {user.Id}");
 
-                    await LogChannel.SendMessageAsync(embed: Embed.Build());
+                    await logChannel.SendMessageAsync(embed: embed.Build());
                 }
             }
         }
 
-        public async Task MessageLogs_MessageEdited(Cacheable<IMessage, ulong> PartialMessage, SocketMessage NewMessage, ISocketMessageChannel Channel)
+        public async Task MessageLogs_MessageEdited(Cacheable<IMessage, ulong> partialMessage, SocketMessage newMessage, ISocketMessageChannel channel)
         {
-            var Guild = (Channel as SocketTextChannel).Guild;
-            var Context = new SocketCommandContext(Program.Client, NewMessage as SocketUserMessage);
+            SocketGuild guild = (channel as SocketTextChannel).Guild;
+            SocketCommandContext context = new SocketCommandContext(Program.Client, newMessage as SocketUserMessage);
 
-            if (DataExists(Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString()))
+            if (DataExists(guild.Id.ToString(), "MessageLogs-Channel", channel.Id.ToString()))
             {
-                MessageData Message = await GetMessageAsync(PartialMessage.Id);
-                string Content = Decrypt(Message.EncryptedContent, ulong.Parse(Message.GuildID), ulong.Parse(Message.ChannelID));
+                MessageData message = await GetMessageAsync(partialMessage.Id);
+                string content = Decrypt(message.EncryptedContent, ulong.Parse(message.GuildId), ulong.Parse(message.ChannelId));
 
-                if (DataExists(Message.GuildID.ToString(), "MessageLogs-Channel", Message.ChannelID.ToString()))
+                if (DataExists(message.GuildId, "MessageLogs-Channel", message.ChannelId))
                 {
-                    if (NewMessage.Content == Content) return;
+                    if (newMessage.Content == content) return;
 
-                    RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE ID = {Message.ID}");
-                    var LogChannel = Guild.GetTextChannel(ulong.Parse(GetFirstData(Guild.Id.ToString(), "MessageLogs-LogChannel").Value));
-                    var User = Guild.GetUser(ulong.Parse(Message.UserID));
+                    RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE ID = {message.Id}");
+                    SocketTextChannel logChannel = guild.GetTextChannel(ulong.Parse(GetFirstData(guild.Id.ToString(), "MessageLogs-LogChannel").Value));
+                    SocketGuildUser user = guild.GetUser(ulong.Parse(message.UserId));
 
-                    EmbedBuilder Embed = new EmbedBuilder();
-                    Embed.WithColor(66, 182, 245);
-                    Embed.WithCurrentTimestamp();
-                    Embed.WithDescription($"**Message sent by {User.Mention} edited in {(Channel as SocketTextChannel).Mention}**  [Jump]({NewMessage.GetJumpUrl()})");
-                    Embed.AddField("Before", Content);
-                    Embed.AddField("After", NewMessage.Content);
-                    EmbedAuthorBuilder Author = new EmbedAuthorBuilder
+                    EmbedBuilder embed = new EmbedBuilder();
+                    embed.WithColor(66, 182, 245);
+                    embed.WithCurrentTimestamp();
+                    embed.WithDescription($"**Message sent by {user.Mention} edited in {(channel as SocketTextChannel).Mention}**  [Jump]({newMessage.GetJumpUrl()})");
+                    embed.AddField("Before", content);
+                    embed.AddField("After", newMessage.Content);
+                    EmbedAuthorBuilder author = new EmbedAuthorBuilder
                     {
-                        Name = $"{User.Username}#{User.Discriminator}",
-                        IconUrl = User.GetAvatarUrl()
+                        Name = $"{user.Username}#{user.Discriminator}",
+                        IconUrl = user.GetAvatarUrl()
                     };
-                    Embed.WithAuthor(Author);
-                    Embed.WithFooter($"Message: {PartialMessage.Id} | User: {User.Id}");
+                    embed.WithAuthor(author);
+                    embed.WithFooter($"Message: {partialMessage.Id} | User: {user.Id}");
 
-                    await SaveMessageAsync(Context);
+                    await SaveMessageAsync(context);
 
-                    await LogChannel.SendMessageAsync(embed: Embed.Build());
+                    await logChannel.SendMessageAsync(embed: embed.Build());
                 }
             }
         }
 
-        public async Task MessageLogs_ChannelCreated(SocketChannel ChannelParam)
+        public async Task MessageLogs_ChannelCreated(SocketChannel channelParam)
         {
-            SocketTextChannel Channel = ChannelParam as SocketTextChannel;
-            if (DataExists(Channel.Guild.Id.ToString(), "MessageLogs-DefaultOn"))
+            SocketTextChannel channel = channelParam as SocketTextChannel;
+            if (DataExists(channel.Guild.Id.ToString(), "MessageLogs-DefaultOn"))
             {
-                SaveData(Channel.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString());
+                SaveData(channel.Guild.Id.ToString(), "MessageLogs-Channel", channel.Id.ToString());
             }
         }
 
-        public static string Encrypt(string textData, ulong GuildID, ulong ChannelID)
+        public static string Encrypt(string textData, ulong guildId, ulong channelId)
         {
-            string EncryptionKey = $"{GuildID * ChannelID}-{ChannelID * 3 - GuildID}";
+            string encryptionKey = $"{guildId * channelId}-{channelId * 3 - guildId}";
 
             RijndaelManaged objrij = new RijndaelManaged
             {
@@ -136,24 +137,24 @@ namespace Utili
                 KeySize = 0x80,
                 BlockSize = 0x80
             };
-            byte[] passBytes = Encoding.UTF8.GetBytes(EncryptionKey);
-            byte[] EncryptionkeyBytes = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+            byte[] passBytes = Encoding.UTF8.GetBytes(encryptionKey);
+            byte[] encryptionkeyBytes = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
             int len = passBytes.Length;
-            if (len > EncryptionkeyBytes.Length)
+            if (len > encryptionkeyBytes.Length)
             {
-                len = EncryptionkeyBytes.Length;
+                len = encryptionkeyBytes.Length;
             }
-            Array.Copy(passBytes, EncryptionkeyBytes, len);
-            objrij.Key = EncryptionkeyBytes;
-            objrij.IV = EncryptionkeyBytes;
+            Array.Copy(passBytes, encryptionkeyBytes, len);
+            objrij.Key = encryptionkeyBytes;
+            objrij.IV = encryptionkeyBytes;
             ICryptoTransform objtransform = objrij.CreateEncryptor();
             byte[] textDataByte = Encoding.UTF8.GetBytes(textData);
             return Convert.ToBase64String(objtransform.TransformFinalBlock(textDataByte, 0, textDataByte.Length));
         }
 
-        public static string Decrypt(string EncryptedText, ulong GuildID, ulong ChannelID)
+        public static string Decrypt(string encryptedText, ulong guildId, ulong channelId)
         {
-            string EncryptionKey = $"{GuildID * ChannelID}-{ChannelID * 3 - GuildID}";
+            string encryptionKey = $"{guildId * channelId}-{channelId * 3 - guildId}";
 
             RijndaelManaged objrij = new RijndaelManaged
             {
@@ -162,19 +163,19 @@ namespace Utili
                 KeySize = 0x80,
                 BlockSize = 0x80
             };
-            byte[] encryptedTextByte = Convert.FromBase64String(EncryptedText);
-            byte[] passBytes = Encoding.UTF8.GetBytes(EncryptionKey);
-            byte[] EncryptionkeyBytes = new byte[0x10];
+            byte[] encryptedTextByte = Convert.FromBase64String(encryptedText);
+            byte[] passBytes = Encoding.UTF8.GetBytes(encryptionKey);
+            byte[] encryptionkeyBytes = new byte[0x10];
             int len = passBytes.Length;
-            if (len > EncryptionkeyBytes.Length)
+            if (len > encryptionkeyBytes.Length)
             {
-                len = EncryptionkeyBytes.Length;
+                len = encryptionkeyBytes.Length;
             }
-            Array.Copy(passBytes, EncryptionkeyBytes, len);
-            objrij.Key = EncryptionkeyBytes;
-            objrij.IV = EncryptionkeyBytes;
-            byte[] TextByte = objrij.CreateDecryptor().TransformFinalBlock(encryptedTextByte, 0, encryptedTextByte.Length);
-            return Encoding.UTF8.GetString(TextByte);
+            Array.Copy(passBytes, encryptionkeyBytes, len);
+            objrij.Key = encryptionkeyBytes;
+            objrij.IV = encryptionkeyBytes;
+            byte[] textByte = objrij.CreateDecryptor().TransformFinalBlock(encryptedTextByte, 0, encryptedTextByte.Length);
+            return Encoding.UTF8.GetString(textByte);
         }
     }
 
@@ -191,17 +192,17 @@ namespace Utili
         [Command("Help")]
         public async Task Help()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Message Logs", HelpContent, $"Prefix these commands with {Prefix}logs"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Message Logs", HelpContent, $"Prefix these commands with {prefix}logs"));
         }
 
         [Command("")]
         public async Task Empty()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Message Logs", HelpContent, $"Prefix these commands with {Prefix}logs"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Message Logs", HelpContent, $"Prefix these commands with {prefix}logs"));
         }
 
         [Command("About")]
@@ -211,29 +212,29 @@ namespace Utili
         }
 
         [Command("Channel")]
-        public async Task LogChannel(ITextChannel Channel)
+        public async Task LogChannel(ITextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages }, Context.Channel))
+                if (BotHasPermissions(channel, new[] { ChannelPermission.ViewChannel, ChannelPermission.SendMessages }, Context.Channel))
                 {
                     DeleteData(Context.Guild.Id.ToString(), "MessageLogs-LogChannel");
-                    SaveData(Context.Guild.Id.ToString(), "MessageLogs-LogChannel", Channel.Id.ToString());
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set message logs channel", $"Deleted and edited messages in channels where this feature is turned on will be logged in {Channel.Mention}"));
+                    SaveData(Context.Guild.Id.ToString(), "MessageLogs-LogChannel", channel.Id.ToString());
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set message logs channel", $"Deleted and edited messages in channels where this feature is turned on will be logged in {channel.Mention}"));
                 }
             }
         }
 
         [Command("On")]
-        public async Task On(SocketTextChannel Channel)
+        public async Task On(SocketTextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel }, Context.Channel))
+                if (BotHasPermissions(channel, new[] { ChannelPermission.ViewChannel }, Context.Channel))
                 {
-                    DeleteData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString());
-                    SaveData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString());
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Now logging channel", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!"));
+                    DeleteData(Context.Guild.Id.ToString(), "MessageLogs-Channel", channel.Id.ToString());
+                    SaveData(Context.Guild.Id.ToString(), "MessageLogs-Channel", channel.Id.ToString());
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Now logging channel", "Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!"));
                 }
             }
         }
@@ -247,40 +248,40 @@ namespace Utili
                 {
                     DeleteData(Context.Guild.Id.ToString(), "MessageLogs-DefaultOn");
                     SaveData(Context.Guild.Id.ToString(), "MessageLogs-DefaultOn", "true");
-                    var Typing = Context.Channel.EnterTypingState();
+                    IDisposable typing = Context.Channel.EnterTypingState();
 
-                    int Failed = 0;
+                    int failed = 0;
 
-                    foreach (var Channel in Context.Guild.TextChannels)
+                    foreach (SocketTextChannel channel in Context.Guild.TextChannels)
                     {
-                        if (BotHasPermissions(Channel, new ChannelPermission[] { ChannelPermission.ViewChannel }, Context.Channel, false))
+                        if (BotHasPermissions(channel, new[] { ChannelPermission.ViewChannel }, Context.Channel, false))
                         {
-                            DeleteData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString());
-                            SaveData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString());
+                            DeleteData(Context.Guild.Id.ToString(), "MessageLogs-Channel", channel.Id.ToString());
+                            SaveData(Context.Guild.Id.ToString(), "MessageLogs-Channel", channel.Id.ToString());
                         }
-                        else Failed += 1;
+                        else failed += 1;
                     }
 
-                    Typing.Dispose();
-                    if (Failed == 0) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Now logging all channels", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!"));
-                    else if (Failed == 1) await Context.Channel.SendMessageAsync(embed: GetEmbed("Neutral", "Now logging most channels", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!\nI don't have the `ReadMessages` permission in {Failed} channel"));
-                    else await Context.Channel.SendMessageAsync(embed: GetEmbed("Neutral", "Now logging most channels", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!\nI don't have the `ReadMessages` permission in {Failed} channels"));
+                    typing.Dispose();
+                    if (failed == 0) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Now logging all channels", "Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!"));
+                    else if (failed == 1) await Context.Channel.SendMessageAsync(embed: GetEmbed("Neutral", "Now logging most channels", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!\nI don't have the `ReadMessages` permission in {failed} channel"));
+                    else await Context.Channel.SendMessageAsync(embed: GetEmbed("Neutral", "Now logging most channels", $"Deleted and edited messages will be sent in the log channel\nMake sure you have a log channel set!\nI don't have the `ReadMessages` permission in {failed} channels"));
                 }
             }
             else
             {
-                string Prefix = ".";
-                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                string prefix = ".";
+                try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
             }
         }
 
         [Command("Off")]
-        public async Task Off(SocketTextChannel Channel)
+        public async Task Off(SocketTextChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                DeleteData(Context.Guild.Id.ToString(), "MessageLogs-Channel", Channel.Id.ToString());
+                DeleteData(Context.Guild.Id.ToString(), "MessageLogs-Channel", channel.Id.ToString());
                 await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "No longer logging channel"));
             }
         }
@@ -301,9 +302,9 @@ namespace Utili
             }
             else
             {
-                string Prefix = ".";
-                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                string prefix = ".";
+                try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
             }
         }
     }

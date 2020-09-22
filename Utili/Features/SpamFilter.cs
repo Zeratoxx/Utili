@@ -1,9 +1,9 @@
-﻿using Discord.Commands;
-using Discord.WebSocket;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord.Commands;
+using Discord.WebSocket;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.Program;
@@ -15,24 +15,24 @@ namespace Utili
     {
         public static List<(ulong, DateTime)> SpamTracker = new List<(ulong, DateTime)>();
 
-        public async Task SpamFilter_MessageReceived(SocketMessage MessageParam)
+        public async Task SpamFilter_MessageReceived(SocketMessage messageParam)
         {
-            var Message = MessageParam as SocketUserMessage;
-            var Context = new SocketCommandContext(Client, Message);
+            SocketUserMessage message = messageParam as SocketUserMessage;
+            SocketCommandContext context = new SocketCommandContext(Client, message);
 
-            if (Context.User.IsBot || Context.User.IsWebhook) return;
+            if (context.User.IsBot || context.User.IsWebhook) return;
 
-            if (DataExists(Context.Guild.Id.ToString(), "SpamFilter-Enabled", "True"))
+            if (DataExists(context.Guild.Id.ToString(), "SpamFilter-Enabled", "True"))
             {
-                int Threshold = 5;
-                try { Threshold = int.Parse(GetFirstData(Context.Guild.Id.ToString(), "SpamFilter-Threshold").Value); } catch { }
+                int threshold = 5;
+                try { threshold = int.Parse(GetFirstData(context.Guild.Id.ToString(), "SpamFilter-Threshold").Value); } catch { }
 
-                SpamTracker.Add((Context.User.Id, DateTime.Now));
+                SpamTracker.Add((context.User.Id, DateTime.Now));
 
                 SpamTracker.RemoveAll(x => x.Item2 < DateTime.Now - TimeSpan.FromSeconds(7));
-                if (SpamTracker.Where(x => x.Item1 == Context.User.Id).Count() >= Threshold)
+                if (SpamTracker.Where(x => x.Item1 == context.User.Id).Count() >= threshold)
                 {
-                    await Context.Message.DeleteAsync();
+                    await context.Message.DeleteAsync();
                 }
             }
         }
@@ -51,17 +51,17 @@ namespace Utili
         [Command("Help")]
         public async Task Help()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Spam Filter", HelpContent, $"Prefix these commands with {Prefix}spam"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Spam Filter", HelpContent, $"Prefix these commands with {prefix}spam"));
         }
 
         [Command("")]
         public async Task Empty()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Spam Filter", HelpContent, $"Prefix these commands with {Prefix}spam"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Spam Filter", HelpContent, $"Prefix these commands with {prefix}spam"));
         }
 
         [Command("About")]
@@ -71,14 +71,14 @@ namespace Utili
         }
 
         [Command("Threshold")]
-        public async Task Threshold(int Threshold)
+        public async Task Threshold(int threshold)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (Threshold > 1 & Threshold < 21)
+                if (threshold > 1 & threshold < 21)
                 {
                     DeleteData(Context.Guild.Id.ToString(), "SpamFilter-Threshold");
-                    SaveData(Context.Guild.Id.ToString(), "SpamFilter-Threshold", Threshold.ToString());
+                    SaveData(Context.Guild.Id.ToString(), "SpamFilter-Threshold", threshold.ToString());
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Threshold set", "The lower the threshold the easier it is to trigger the filter\nThe recommended value is 5"));
                 }
                 else
@@ -99,7 +99,7 @@ namespace Utili
                     SaveData(Context.Guild.Id.ToString(), "SpamFilter-Enabled", "True");
                     await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Spam filter enabled"));
                 }
-                else await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "I don't have permission", $"I need the guild permission `ManageMessages` to do that\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                else await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "I don't have permission", "I need the guild permission `ManageMessages` to do that\n[Support Discord](https://discord.gg/WsxqABZ)"));
             }
         }
 

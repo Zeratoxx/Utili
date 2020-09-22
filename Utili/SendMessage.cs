@@ -4,81 +4,81 @@ namespace Utili
 {
     internal class SendMessage
     {
-        public static Embed GetEmbed(string Marking, string ShortMessage, string LongMessage = null)
+        public static Embed GetEmbed(string marking, string shortMessage, string longMessage = null)
         {
-            EmbedBuilder Embed = new EmbedBuilder();
+            EmbedBuilder embed = new EmbedBuilder();
 
-            EmbedAuthorBuilder EmbedAuthor = new EmbedAuthorBuilder();
+            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder();
 
-            switch (Marking)
+            switch (marking)
             {
                 case "Yes":
-                    EmbedAuthor.IconUrl = "https://cdn.discordapp.com/attachments/591310067979255808/670237090214182913/Check.png";
-                    Embed.WithColor(67, 181, 129);
+                    embedAuthor.IconUrl = "https://cdn.discordapp.com/attachments/591310067979255808/670237090214182913/Check.png";
+                    embed.WithColor(67, 181, 129);
                     break;
 
                 case "No":
-                    EmbedAuthor.IconUrl = "https://media.discordapp.net/attachments/591310067979255808/670237599218008078/Cross.png?width=678&height=678";
-                    Embed.WithColor(181, 67, 67);
+                    embedAuthor.IconUrl = "https://media.discordapp.net/attachments/591310067979255808/670237599218008078/Cross.png?width=678&height=678";
+                    embed.WithColor(181, 67, 67);
                     break;
 
                 case "Neutral":
-                    EmbedAuthor.IconUrl = "https://cdn.discordapp.com/attachments/591310067979255808/670237899656265748/Line.png";
-                    Embed.WithColor(195, 195, 195);
+                    embedAuthor.IconUrl = "https://cdn.discordapp.com/attachments/591310067979255808/670237899656265748/Line.png";
+                    embed.WithColor(195, 195, 195);
                     break;
 
                 default:
-                    Embed.WithColor(195, 195, 195);
+                    embed.WithColor(195, 195, 195);
                     break;
             }
 
-            EmbedAuthor.WithName(ShortMessage);
+            embedAuthor.WithName(shortMessage);
 
-            Embed.WithAuthor(EmbedAuthor);
+            embed.WithAuthor(embedAuthor);
 
-            if (LongMessage != null) Embed.WithDescription(LongMessage);
+            if (longMessage != null) embed.WithDescription(longMessage);
 
-            return Embed.Build();
+            return embed.Build();
         }
 
-        public static Embed GetLargeEmbed(string Title, string Content, string Footer = null, string Marking = null, string ImageURL = null)
+        public static Embed GetLargeEmbed(string title, string content, string footer = null, string marking = null, string imageUrl = null)
         {
-            EmbedBuilder Embed = new EmbedBuilder();
+            EmbedBuilder embed = new EmbedBuilder();
 
-            EmbedAuthorBuilder EmbedAuthor = new EmbedAuthorBuilder();
-            EmbedAuthor.WithName(Title);
+            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder();
+            embedAuthor.WithName(title);
 
-            switch (Marking)
+            switch (marking)
             {
                 case "Yes":
-                    EmbedAuthor.IconUrl = "https://cdn.discordapp.com/attachments/591310067979255808/670237090214182913/Check.png";
-                    Embed.WithColor(67, 181, 129);
+                    embedAuthor.IconUrl = "https://cdn.discordapp.com/attachments/591310067979255808/670237090214182913/Check.png";
+                    embed.WithColor(67, 181, 129);
                     break;
 
                 case "No":
-                    EmbedAuthor.IconUrl = "https://media.discordapp.net/attachments/591310067979255808/670237599218008078/Cross.png?width=678&height=678";
-                    Embed.WithColor(181, 67, 67);
+                    embedAuthor.IconUrl = "https://media.discordapp.net/attachments/591310067979255808/670237599218008078/Cross.png?width=678&height=678";
+                    embed.WithColor(181, 67, 67);
                     break;
 
                 case "Neutral":
-                    EmbedAuthor.IconUrl = "https://cdn.discordapp.com/attachments/591310067979255808/670237899656265748/Line.png";
-                    Embed.WithColor(195, 195, 195);
+                    embedAuthor.IconUrl = "https://cdn.discordapp.com/attachments/591310067979255808/670237899656265748/Line.png";
+                    embed.WithColor(195, 195, 195);
                     break;
 
                 default:
-                    Embed.WithColor(67, 181, 129);
+                    embed.WithColor(67, 181, 129);
                     break;
             }
 
-            if (ImageURL != null) EmbedAuthor.IconUrl = ImageURL;
+            if (imageUrl != null) embedAuthor.IconUrl = imageUrl;
 
-            Embed.WithAuthor(EmbedAuthor);
+            embed.WithAuthor(embedAuthor);
 
-            Embed.WithDescription(Content);
+            embed.WithDescription(content);
 
-            if (Footer != null) Embed.WithFooter(Footer);
+            if (footer != null) embed.WithFooter(footer);
 
-            return Embed.Build();
+            return embed.Build();
         }
     }
 }

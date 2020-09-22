@@ -1,50 +1,50 @@
-﻿using Discord.Commands;
+﻿using System.Threading.Tasks;
+using Discord.Commands;
 using Discord.WebSocket;
-using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
 
 namespace Utili
 {
-    internal class VCRoles
+    internal class VcRoles
     {
-        public async Task Client_UserVoiceStateUpdated(SocketGuildUser User, SocketVoiceState Before, SocketVoiceState After)
+        public async Task Client_UserVoiceStateUpdated(SocketGuildUser user, SocketVoiceState before, SocketVoiceState after)
         {
-            if (Before.VoiceChannel == After.VoiceChannel) return;
+            if (before.VoiceChannel == after.VoiceChannel) return;
 
             #region Remove Before Role
 
-            if (Before.VoiceChannel != null)
+            if (before.VoiceChannel != null)
             {
-                string ID = "";
-                try { ID = GetFirstData(User.Guild.Id.ToString(), $"VCRoles-Role-{Before.VoiceChannel.Id}").Value; }
+                string id = "";
+                try { id = GetFirstData(user.Guild.Id.ToString(), $"VCRoles-Role-{before.VoiceChannel.Id}").Value; }
                 catch { }
 
                 try
                 {
-                    SocketRole Role = User.Guild.GetRole(ulong.Parse(ID));
-                    await User.RemoveRoleAsync(Role);
+                    SocketRole role = user.Guild.GetRole(ulong.Parse(id));
+                    await user.RemoveRoleAsync(role);
                 }
-                catch { };
+                catch { }
             }
 
             #endregion Remove Before Role
 
             #region Add After Role
 
-            if (After.VoiceChannel != null)
+            if (after.VoiceChannel != null)
             {
-                string ID = "";
-                try { ID = GetFirstData(User.Guild.Id.ToString(), $"VCRoles-Role-{After.VoiceChannel.Id}").Value; }
+                string id = "";
+                try { id = GetFirstData(user.Guild.Id.ToString(), $"VCRoles-Role-{after.VoiceChannel.Id}").Value; }
                 catch { }
 
                 try
                 {
-                    SocketRole Role = User.Guild.GetRole(ulong.Parse(ID));
-                    await User.AddRoleAsync(Role);
+                    SocketRole role = user.Guild.GetRole(ulong.Parse(id));
+                    await user.AddRoleAsync(role);
                 }
-                catch { };
+                catch { }
             }
 
             #endregion Add After Role
@@ -52,7 +52,7 @@ namespace Utili
     }
 
     [Group("VCRoles")]
-    public class VCRoleCommands : ModuleBase<SocketCommandContext>
+    public class VcRoleCommands : ModuleBase<SocketCommandContext>
     {
         public static string HelpContent =
                 "help - Show this list\n" +
@@ -63,17 +63,17 @@ namespace Utili
         [Command("Help")]
         public async Task Help()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("VC Roles", HelpContent, $"Prefix these commands with {Prefix}vcroles"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("VC Roles", HelpContent, $"Prefix these commands with {prefix}vcroles"));
         }
 
         [Command("")]
         public async Task Empty()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("VC Roles", HelpContent, $"Prefix these commands with {Prefix}vcroles"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("VC Roles", HelpContent, $"Prefix these commands with {prefix}vcroles"));
         }
 
         [Command("About")]
@@ -83,25 +83,25 @@ namespace Utili
         }
 
         [Command("Link"), Alias("Add")]
-        public async Task Link(SocketRole Role, [Remainder] SocketVoiceChannel Channel)
+        public async Task Link(SocketRole role, [Remainder] SocketVoiceChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                DeleteData(Context.Guild.Id.ToString(), $"VCRoles-Role-{Channel.Id}");
-                SaveData(Context.Guild.Id.ToString(), $"VCRoles-Role-{Channel.Id}", Role.Id.ToString());
+                DeleteData(Context.Guild.Id.ToString(), $"VCRoles-Role-{channel.Id}");
+                SaveData(Context.Guild.Id.ToString(), $"VCRoles-Role-{channel.Id}", role.Id.ToString());
 
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Role linked", $"While users are in the voice channel {Channel.Name}, they will be given the role {Role.Mention}."));
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Role linked", $"While users are in the voice channel {channel.Name}, they will be given the role {role.Mention}."));
             }
         }
 
         [Command("Unlink"), Alias("Remove")]
-        public async Task Unlink([Remainder] SocketVoiceChannel Channel)
+        public async Task Unlink([Remainder] SocketVoiceChannel channel)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                DeleteData(Context.Guild.Id.ToString(), $"VCRoles-Role-{Channel.Id}");
+                DeleteData(Context.Guild.Id.ToString(), $"VCRoles-Role-{channel.Id}");
 
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Role unlinked", $"No roles will be modified when users join {Channel.Name}"));
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Role unlinked", $"No roles will be modified when users join {channel.Name}"));
             }
         }
     }

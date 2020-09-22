@@ -1,10 +1,11 @@
-﻿using Discord;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
@@ -30,83 +31,83 @@ namespace Utili
         }
 
         [Command("Prune"), Alias("Purge", "Clear")]
-        public async Task Prune(int Amount)
+        public async Task Prune(int amount)
         {
-            Amount += 1; //Account for the command message
+            amount += 1; //Account for the command message
             if (MessagePermission(Context.User, Context.Channel, Context.Channel))
             {
-                if (BotHasPermissions(Context.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(Context.Channel as ITextChannel, new[] { ChannelPermission.ManageMessages }, Context.Channel))
                 {
-                    bool SendWarning = false;
+                    bool sendWarning = false;
 
-                    var Messages = await Context.Channel.GetMessagesAsync(Amount * 1000).FlattenAsync();
-                    Messages = Messages.Where(x => !x.IsPinned);
+                    IEnumerable<IMessage> messages = await Context.Channel.GetMessagesAsync(amount * 1000).FlattenAsync();
+                    messages = messages.Where(x => !x.IsPinned);
 
-                    if (Messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14)).Count() != Messages.Count()) SendWarning = true;
+                    if (messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14)).Count() != messages.Count()) sendWarning = true;
 
-                    Messages = Messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14));
+                    messages = messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14));
 
-                    Messages.OrderBy(x => x.CreatedAt);
-                    Messages = Messages.Take(Amount);
+                    messages.OrderBy(x => x.CreatedAt);
+                    messages = messages.Take(amount);
 
-                    await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(Messages);
+                    await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
 
-                    RestUserMessage Message;
-                    if (SendWarning) Message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{Messages.Count() - 1} messages pruned", "I can't delete messages over 2 weeks old"));
-                    else Message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{Messages.Count() - 1} messages pruned"));
+                    RestUserMessage message;
+                    if (sendWarning) message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{messages.Count() - 1} messages pruned", "I can't delete messages over 2 weeks old"));
+                    else message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{messages.Count() - 1} messages pruned"));
 
                     await Task.Delay(5000);
 
-                    await Message.DeleteAsync();
+                    await message.DeleteAsync();
                 }
             }
         }
 
         [Command("Prune"), Alias("Purge", "Clear")]
-        public async Task Prune(int Amount, IUser User)
+        public async Task Prune(int amount, IUser user)
         {
             if (MessagePermission(Context.User, Context.Channel, Context.Channel))
             {
-                if (BotHasPermissions(Context.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(Context.Channel as ITextChannel, new[] { ChannelPermission.ManageMessages }, Context.Channel))
                 {
                     await Context.Message.DeleteAsync();
 
                     await Task.Delay(1000); //Wait for message to delete in order to be accurate
 
-                    bool SendWarning = false;
+                    bool sendWarning = false;
 
-                    var Messages = await Context.Channel.GetMessagesAsync(Amount * 1000).FlattenAsync();
-                    Messages = Messages.Where(x => !x.IsPinned);
-                    Messages = Messages.Where(x => x.Author.Id == User.Id);
+                    IEnumerable<IMessage> messages = await Context.Channel.GetMessagesAsync(amount * 1000).FlattenAsync();
+                    messages = messages.Where(x => !x.IsPinned);
+                    messages = messages.Where(x => x.Author.Id == user.Id);
 
-                    if (Messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14)).Count() != Messages.Count()) SendWarning = true;
+                    if (messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14)).Count() != messages.Count()) sendWarning = true;
 
-                    Messages = Messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14));
+                    messages = messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14));
 
-                    Messages.OrderBy(x => x.CreatedAt);
-                    Messages = Messages.Take(Amount);
+                    messages.OrderBy(x => x.CreatedAt);
+                    messages = messages.Take(amount);
 
-                    await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(Messages);
+                    await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
 
-                    RestUserMessage Message;
-                    if (SendWarning) Message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{Messages.Count()} messages pruned", $"Deleted messages sent by {User.Mention}\nI can't delete messages over 2 weeks old"));
-                    else Message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{Messages.Count()} messages pruned", $"Deleted messages sent by {User.Mention}"));
+                    RestUserMessage message;
+                    if (sendWarning) message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{messages.Count()} messages pruned", $"Deleted messages sent by {user.Mention}\nI can't delete messages over 2 weeks old"));
+                    else message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{messages.Count()} messages pruned", $"Deleted messages sent by {user.Mention}"));
 
                     await Task.Delay(5000);
 
-                    await Message.DeleteAsync();
+                    await message.DeleteAsync();
                 }
             }
         }
 
         [Command("Prune"), Alias("Purge", "Clear")]
-        public async Task Prune(int Amount, string thing, int Skip)
+        public async Task Prune(int amount, string thing, int skip)
         {
             if (thing.ToLower() != "skip")
             {
-                string Prefix = ".";
-                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                string prefix = ".";
+                try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 return;
             }
 
@@ -115,66 +116,66 @@ namespace Utili
 
             if (MessagePermission(Context.User, Context.Channel, Context.Channel))
             {
-                if (BotHasPermissions(Context.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(Context.Channel as ITextChannel, new[] { ChannelPermission.ManageMessages }, Context.Channel))
                 {
-                    bool SendWarning = false;
+                    bool sendWarning = false;
 
-                    var Messages = await Context.Channel.GetMessagesAsync((Amount + Skip) * 1000).FlattenAsync();
-                    Messages = Messages.Where(x => !x.IsPinned);
+                    IEnumerable<IMessage> messages = await Context.Channel.GetMessagesAsync((amount + skip) * 1000).FlattenAsync();
+                    messages = messages.Where(x => !x.IsPinned);
 
-                    if (Messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14)).Count() != Messages.Count()) SendWarning = true;
+                    if (messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14)).Count() != messages.Count()) sendWarning = true;
 
-                    Messages = Messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14));
+                    messages = messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14));
 
-                    Messages.OrderBy(x => x.CreatedAt);
-                    Messages = Messages.Skip(Skip).Take(Amount);
+                    messages.OrderBy(x => x.CreatedAt);
+                    messages = messages.Skip(skip).Take(amount);
 
-                    await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(Messages);
+                    await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
 
-                    RestUserMessage Message;
-                    if (SendWarning) Message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{Messages.Count() - 1} messages pruned", "I can't delete messages over 2 weeks old"));
-                    else Message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{Messages.Count()} messages pruned"));
+                    RestUserMessage message;
+                    if (sendWarning) message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{messages.Count() - 1} messages pruned", "I can't delete messages over 2 weeks old"));
+                    else message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{messages.Count()} messages pruned"));
 
                     await Task.Delay(5000);
 
-                    await Message.DeleteAsync();
+                    await message.DeleteAsync();
                 }
             }
         }
 
         [Command("Prune"), Alias("Purge", "Clear")]
-        public async Task Prune(int Amount, ulong UserID)
+        public async Task Prune(int amount, ulong userId)
         {
             if (MessagePermission(Context.User, Context.Channel, Context.Channel))
             {
-                if (BotHasPermissions(Context.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.ManageMessages }, Context.Channel))
+                if (BotHasPermissions(Context.Channel as ITextChannel, new[] { ChannelPermission.ManageMessages }, Context.Channel))
                 {
                     await Context.Message.DeleteAsync();
 
-                    bool SendWarning = false;
+                    bool sendWarning = false;
 
                     await Task.Delay(1000);
 
-                    var Messages = await Context.Channel.GetMessagesAsync(Amount * 1000).FlattenAsync();
-                    Messages = Messages.Where(x => !x.IsPinned);
-                    Messages = Messages.Where(x => x.Author.Id == UserID);
+                    IEnumerable<IMessage> messages = await Context.Channel.GetMessagesAsync(amount * 1000).FlattenAsync();
+                    messages = messages.Where(x => !x.IsPinned);
+                    messages = messages.Where(x => x.Author.Id == userId);
 
-                    if (Messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14)).Count() != Messages.Count()) SendWarning = true;
+                    if (messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14)).Count() != messages.Count()) sendWarning = true;
 
-                    Messages = Messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14));
+                    messages = messages.Where(x => x.CreatedAt > DateTime.Now.AddDays(-14));
 
-                    Messages.OrderBy(x => x.CreatedAt);
-                    Messages = Messages.Take(Amount);
+                    messages.OrderBy(x => x.CreatedAt);
+                    messages = messages.Take(amount);
 
-                    await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(Messages);
+                    await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
 
-                    RestUserMessage Message;
-                    if (SendWarning) Message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{Messages.Count()} messages pruned", $"Deleted messages sent by user with ID {UserID}\nI can't delete messages over 2 weeks old"));
-                    else Message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{Messages.Count()} messages pruned", $"Deleted messages sent by user with ID {UserID}"));
+                    RestUserMessage message;
+                    if (sendWarning) message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{messages.Count()} messages pruned", $"Deleted messages sent by user with ID {userId}\nI can't delete messages over 2 weeks old"));
+                    else message = await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"{messages.Count()} messages pruned", $"Deleted messages sent by user with ID {userId}"));
 
                     await Task.Delay(5000);
 
-                    await Message.DeleteAsync();
+                    await message.DeleteAsync();
                 }
             }
         }
@@ -190,7 +191,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Context.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.ManageRoles }, Context.Channel))
+                if (BotHasPermissions(Context.Channel as ITextChannel, new[] { ChannelPermission.ManageRoles }, Context.Channel))
                 {
                     await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Join Role Command", JoinRoleHelpContent));
                 }
@@ -198,15 +199,15 @@ namespace Utili
         }
 
         [Command("JoinRole")]
-        public async Task JoinRole(IRole Role)
+        public async Task JoinRole(IRole role)
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Context.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.ManageRoles }, Context.Channel))
+                if (BotHasPermissions(Context.Channel as ITextChannel, new[] { ChannelPermission.ManageRoles }, Context.Channel))
                 {
                     DeleteData(Context.Guild.Id.ToString(), "JoinRole");
-                    SaveData(Context.Guild.Id.ToString(), "JoinRole", Role.Id.ToString());
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set join role", $"New users will be given role {Role.Mention}"));
+                    SaveData(Context.Guild.Id.ToString(), "JoinRole", role.Id.ToString());
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set join role", $"New users will be given role {role.Mention}"));
                 }
             }
         }
@@ -219,13 +220,13 @@ namespace Utili
                 if (none.ToLower() == "none")
                 {
                     DeleteData(Context.Guild.Id.ToString(), "JoinRole");
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Removed join role", $"New users will not be given a role"));
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Removed join role", "New users will not be given a role"));
                 }
                 else
                 {
-                    string Prefix = ".";
-                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                    string prefix = ".";
+                    try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 }
             }
         }
@@ -245,80 +246,80 @@ namespace Utili
         }
 
         [Command("React")]
-        public async Task React(ISocketMessageChannel Channel, ulong MessageID, [Remainder] string ReactionString)
+        public async Task React(ISocketMessageChannel channel, ulong messageId, [Remainder] string reactionString)
         {
-            IUserMessage Message = null;
-            bool Success = true;
+            IUserMessage message = null;
+            bool success = true;
             try
             {
-                Message = await Channel.GetMessageAsync(MessageID) as IUserMessage;
+                message = await channel.GetMessageAsync(messageId) as IUserMessage;
             }
             catch
             {
-                Success = false;
+                success = false;
             }
 
-            if (!Success || Message == null)
+            if (!success || message == null)
             {
-                string Prefix = ".";
-                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                string prefix = ".";
+                try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 return;
             }
 
-            if (MessagePermission(Context.User, Channel, Context.Channel))
+            if (MessagePermission(Context.User, channel, Context.Channel))
             {
-                if (BotHasPermissions(Message.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.AddReactions }, Context.Channel))
+                if (BotHasPermissions(message.Channel as ITextChannel, new[] { ChannelPermission.AddReactions }, Context.Channel))
                 {
-                    IEmote Emote = null;
-                    if (GetGuildEmote(ReactionString, Context.Guild) != null) Emote = GetGuildEmote(ReactionString, Context.Guild);
-                    else Emote = GetDiscordEmote(ReactionString);
+                    IEmote emote = null;
+                    if (GetGuildEmote(reactionString, Context.Guild) != null) emote = GetGuildEmote(reactionString, Context.Guild);
+                    else emote = GetDiscordEmote(reactionString);
 
-                    Task Task = Message.AddReactionAsync(Emote);
+                    Task task = message.AddReactionAsync(emote);
 
-                    while (!Task.IsCompleted) await Task.Delay(20);
-                    if (Task.IsCompletedSuccessfully) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"Added reaction", $"The {Emote} reaction was added to a message in {(Message.Channel as SocketTextChannel).Mention}"));
+                    while (!task.IsCompleted) await Task.Delay(20);
+                    if (task.IsCompletedSuccessfully) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Added reaction", $"The {emote} reaction was added to a message in {(message.Channel as SocketTextChannel).Mention}"));
                     else await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid emote", "Use the actual emote in your command\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 }
             }
         }
 
         [Command("React")]
-        public async Task React(ulong MessageID, [Remainder] string ReactionString)
+        public async Task React(ulong messageId, [Remainder] string reactionString)
         {
-            ISocketMessageChannel Channel = Context.Channel;
+            ISocketMessageChannel channel = Context.Channel;
 
-            IUserMessage Message = null;
-            bool Success = true;
+            IUserMessage message = null;
+            bool success = true;
             try
             {
-                Message = await Channel.GetMessageAsync(MessageID) as IUserMessage;
+                message = await channel.GetMessageAsync(messageId) as IUserMessage;
             }
             catch
             {
-                Success = false;
+                success = false;
             }
 
-            if (!Success || Message == null)
+            if (!success || message == null)
             {
-                string Prefix = ".";
-                try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                string prefix = ".";
+                try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 return;
             }
 
-            if (MessagePermission(Context.User, Channel, Context.Channel))
+            if (MessagePermission(Context.User, channel, Context.Channel))
             {
-                if (BotHasPermissions(Message.Channel as ITextChannel, new ChannelPermission[] { ChannelPermission.AddReactions }, Context.Channel))
+                if (BotHasPermissions(message.Channel as ITextChannel, new[] { ChannelPermission.AddReactions }, Context.Channel))
                 {
-                    IEmote Emote = null;
-                    if (GetGuildEmote(ReactionString, Context.Guild) != null) Emote = GetGuildEmote(ReactionString, Context.Guild);
-                    else Emote = GetDiscordEmote(ReactionString);
+                    IEmote emote = null;
+                    if (GetGuildEmote(reactionString, Context.Guild) != null) emote = GetGuildEmote(reactionString, Context.Guild);
+                    else emote = GetDiscordEmote(reactionString);
 
-                    Task Task = Message.AddReactionAsync(Emote);
+                    Task task = message.AddReactionAsync(emote);
 
-                    while (!Task.IsCompleted) await Task.Delay(20);
-                    if (Task.IsCompletedSuccessfully) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", $"Added reaction", $"The {Emote} reaction was added to a message in {(Message.Channel as SocketTextChannel).Mention}"));
+                    while (!task.IsCompleted) await Task.Delay(20);
+                    if (task.IsCompletedSuccessfully) await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Added reaction", $"The {emote} reaction was added to a message in {(message.Channel as SocketTextChannel).Mention}"));
                     else await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid emote", "Use the actual emote in your command\n[Support Discord](https://discord.gg/WsxqABZ)"));
                 }
             }
@@ -329,20 +330,20 @@ namespace Utili
         #region WhoHas
 
         [Command("WhoHas")]
-        public async Task WhoHas(IRole Role, int Page = 1)
+        public async Task WhoHas(IRole role, int page = 1)
         {
-            var Users = Context.Guild.Users.Where(x => x.Roles.Where(b => b.Id == Role.Id).Count() == 1).OrderBy(x => x.JoinedAt).ToList();
-            int TotalPages = int.Parse(Math.Ceiling(decimal.Parse(Users.Count.ToString()) / decimal.Parse("50")).ToString());
-            Users = Users.Skip((Page - 1) * 50).Take(50).ToList();
+            List<SocketGuildUser> users = Context.Guild.Users.Where(x => x.Roles.Where(b => b.Id == role.Id).Count() == 1).OrderBy(x => x.JoinedAt).ToList();
+            int totalPages = int.Parse(Math.Ceiling(decimal.Parse(users.Count.ToString()) / decimal.Parse("50")).ToString());
+            users = users.Skip((page - 1) * 50).Take(50).ToList();
 
-            if ((Page < 1 || Page > TotalPages) && TotalPages != 0) { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid page")); return; }
+            if ((page < 1 || page > totalPages) && totalPages != 0) { await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid page")); return; }
 
-            string Output = "";
-            foreach (var User in Users) Output += $"{User.Mention}\n";
-            if (Output == "") Output = "There are no users with that role.";
+            string output = "";
+            foreach (SocketGuildUser user in users) output += $"{user.Mention}\n";
+            if (output == "") output = "There are no users with that role.";
 
-            if (TotalPages == 0) Page = 0;
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed($"Users with @{Role.Name}", Output, $"Page {Page} of {TotalPages}"));
+            if (totalPages == 0) page = 0;
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed($"Users with @{role.Name}", output, $"Page {page} of {totalPages}"));
         }
 
         #endregion WhoHas

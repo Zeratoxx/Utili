@@ -1,8 +1,8 @@
-﻿using Discord;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using System.Linq;
-using System.Threading.Tasks;
 using static Utili.Data;
 using static Utili.Logic;
 using static Utili.SendMessage;
@@ -11,30 +11,30 @@ namespace Utili
 {
     internal class RolePersist
     {
-        public async Task UserJoin(SocketGuildUser User)
+        public async Task UserJoin(SocketGuildUser user)
         {
-            if (DataExists(User.Guild.Id.ToString(), "RolePersist-Enabled", "True"))
+            if (DataExists(user.Guild.Id.ToString(), "RolePersist-Enabled", "True"))
             {
-                foreach (Data Data in GetData(User.Guild.Id.ToString(), $"RolePersist-Role-{User.Id}", IgnoreCache: true))
+                foreach (Data data in GetData(user.Guild.Id.ToString(), $"RolePersist-Role-{user.Id}", ignoreCache: true))
                 {
                     try
                     {
-                        var Role = User.Guild.Roles.First(x => x.Id.ToString() == Data.Value);
-                        _ = User.AddRoleAsync(Role);
+                        SocketRole role = user.Guild.Roles.First(x => x.Id.ToString() == data.Value);
+                        _ = user.AddRoleAsync(role);
                     }
-                    catch { };
+                    catch { }
                 }
-                DeleteData(User.Guild.Id.ToString(), $"RolePersist-Role-{User.Id}");
+                DeleteData(user.Guild.Id.ToString(), $"RolePersist-Role-{user.Id}");
             }
         }
 
-        public async Task UserLeft(SocketGuildUser User)
+        public async Task UserLeft(SocketGuildUser user)
         {
-            if (DataExists(User.Guild.Id.ToString(), "RolePersist-Enabled", "True"))
+            if (DataExists(user.Guild.Id.ToString(), "RolePersist-Enabled", "True"))
             {
-                foreach (var Role in User.Roles)
+                foreach (SocketRole role in user.Roles)
                 {
-                    SaveData(User.Guild.Id.ToString(), $"RolePersist-Role-{User.Id}", Role.Id.ToString(), IgnoreCache: true);
+                    SaveData(user.Guild.Id.ToString(), $"RolePersist-Role-{user.Id}", role.Id.ToString(), ignoreCache: true);
                 }
             }
         }
@@ -52,17 +52,17 @@ namespace Utili
         [Command("Help")]
         public async Task Help()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Role Persist", HelpContent, $"Prefix these commands with {Prefix}rolePersist"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Role Persist", HelpContent, $"Prefix these commands with {prefix}rolePersist"));
         }
 
         [Command("")]
         public async Task Empty()
         {
-            string Prefix = ".";
-            try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Role Persist", HelpContent, $"Prefix these commands with {Prefix}rolePersist"));
+            string prefix = ".";
+            try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Role Persist", HelpContent, $"Prefix these commands with {prefix}rolePersist"));
         }
 
         [Command("About")]
@@ -76,7 +76,7 @@ namespace Utili
         {
             if (Permission(Context.User, Context.Channel))
             {
-                if (BotHasPermissions(Context.Guild, new GuildPermission[] { GuildPermission.ManageRoles }, Context.Channel))
+                if (BotHasPermissions(Context.Guild, new[] { GuildPermission.ManageRoles }, Context.Channel))
                 {
                     DeleteData(Context.Guild.Id.ToString(), "RolePersist-Enabled");
                     SaveData(Context.Guild.Id.ToString(), "RolePersist-Enabled", "True");

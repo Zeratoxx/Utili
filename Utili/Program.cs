@@ -1,10 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using DiscordBotsList.Api;
-using Google.Apis.Services;
-using Google.Apis.YouTube.v3;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,9 +8,19 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
+using Discord;
+using Discord.Commands;
+using Discord.Rest;
+using Discord.WebSocket;
+using DiscordBotsList.Api;
+using DiscordBotsList.Api.Objects;
+using Google.Apis.Services;
+using Google.Apis.YouTube.v3;
 using static Utili.Data;
 using static Utili.Json;
 using static Utili.SendMessage;
+using Timer = System.Timers.Timer;
 
 namespace Utili
 {
@@ -26,21 +30,21 @@ namespace Utili
 
         public static DiscordSocketClient Client;
         public static DiscordShardedClient Shards;
-        private CommandService Commands;
+        private CommandService _commands;
         public static YouTubeService Youtube;
         public static CancellationTokenSource ForceStop;
-        public static System.Timers.Timer ReliabilityTimer;
-        public static System.Timers.Timer LatencyTimer;
-        public static int TotalShards = 0;
-        public static int ShardID = -1;
-        public static bool Ready = false;
+        public static Timer ReliabilityTimer;
+        public static Timer LatencyTimer;
+        public static int TotalShards;
+        public static int ShardId = -1;
+        public static bool Ready;
         public static bool FirstStart = true;
         public static int Restarts = -1;
 
         public static bool Debug = false;
         public static bool UseTest = false;
 
-        private DateTime LastStatsUpdate = DateTime.Now;
+        private DateTime _lastStatsUpdate = DateTime.Now;
 
         #region System
 
@@ -48,7 +52,7 @@ namespace Utili
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) & UseTest == false)
             {
-                Console.WriteLine($"WARNING:\nRunning Utili on a non-linux machine!\n\nUse the test bot if you've changed code.\nPress Y to continue...");
+                Console.WriteLine("WARNING:\nRunning Utili on a non-linux machine!\n\nUse the test bot if you've changed code.\nPress Y to continue...");
                 if (Console.ReadKey().Key != ConsoleKey.Y) Environment.Exit(0);
                 Console.Clear();
             }
@@ -65,16 +69,16 @@ namespace Utili
                 Console.SetError(outputFile);
             }
 
-            bool Retry = true;
+            bool retry = true;
 
             while (true)
             {
                 try
                 {
-                    if (Retry)
+                    if (retry)
                     {
                         Console.WriteLine($"[{DateTime.Now}] [Info] Starting MainAsync.");
-                        Retry = false;
+                        retry = false;
                         ForceStop = new CancellationTokenSource();
                         Ready = false;
                         new Program().MainAsync().GetAwaiter().GetResult();
@@ -94,8 +98,9 @@ namespace Utili
                             try { ReliabilityTimer.Stop(); } catch { }
                             try { ReliabilityTimer.Dispose(); } catch { }
 
-                            try { Client.StopAsync(); } catch { };
-                            try { Client.Dispose(); } catch { };
+                            try { Client.StopAsync(); } catch { }
+
+                            try { Client.Dispose(); } catch { }
 
                             try { Autopurge.StartRunthrough.Stop(); } catch { }
                             try { InactiveRole.StartRunthrough.Stop(); } catch { }
@@ -107,14 +112,14 @@ namespace Utili
 
                             Thread.Sleep(5000);
 
-                            Retry = true;
+                            retry = true;
                         }
                         else Console.WriteLine($"[{DateTime.Now}] [Exception] {e.Message}");
                     }
                     catch //Only if Client.ConnectionState errors
                     {
                         Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n");
-                        Retry = true;
+                        retry = true;
                         Thread.Sleep(5000);
                     }
                 }
@@ -137,15 +142,15 @@ namespace Utili
             }
             catch { }
 
-            ShardID = -1;
+            ShardId = -1;
             TotalShards = 1;
 
             if (!UseTest)
             {
                 TotalShards = await Sharding.GetTotalShards();
                 Console.WriteLine($"[{DateTime.Now}] [Sharding] Waiting for a shard to become available (0-{TotalShards - 1})");
-                ShardID = await Sharding.GetShardID();
-                Console.WriteLine($"[{DateTime.Now}] [Sharding] Found available shard {ShardID}. Continuing with startup.");
+                ShardId = await Sharding.GetShardId();
+                Console.WriteLine($"[{DateTime.Now}] [Sharding] Found available shard {ShardId}. Continuing with startup.");
             }
 
             if (!UseTest)
@@ -163,9 +168,9 @@ namespace Utili
                 AlwaysDownloadUsers = false
             });
 
-            Client = Shards.GetShard(ShardID);
+            Client = Shards.GetShard(ShardId);
 
-            Commands = new CommandService(new CommandServiceConfig
+            _commands = new CommandService(new CommandServiceConfig
             {
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Async,
@@ -184,40 +189,40 @@ namespace Utili
             Client.JoinedGuild += Commence_ClientJoin;
             Client.LeftGuild += Commence_ClientLeave;
 
-            Commands.AddTypeReader(typeof(TimeSpan), new TimespanTypeReader());
+            _commands.AddTypeReader(typeof(TimeSpan), new TimespanTypeReader());
 
-            await Commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: null);
+            await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: null);
 
             Client.Ready += Client_Ready;
             Client.Log += Client_Log;
 
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
 
-            string Token;
+            string token;
 
-            if (!UseTest) Token = Config.Token;
-            else Token = Config.TestToken;
+            if (!UseTest) token = Config.Token;
+            else token = Config.TestToken;
 
             QueryTimer = DateTime.Now;
             Queries = 0;
             CacheQueries = 0;
 
-            await Shards.LoginAsync(TokenType.Bot, Token);
+            await Shards.LoginAsync(TokenType.Bot, token);
             await Shards.StartAsync();
 
-            LatencyTimer = new System.Timers.Timer(10000);
+            LatencyTimer = new Timer(10000);
             LatencyTimer.Elapsed += UpdateLatency;
             LatencyTimer.Start();
 
-            Autopurge Autopurge = new Autopurge();
-            InactiveRole InactiveRole = new InactiveRole();
+            Autopurge autopurge = new Autopurge();
+            InactiveRole inactiveRole = new InactiveRole();
 
-            _ = Autopurge.Run();
-            _ = InactiveRole.Run();
+            _ = autopurge.Run();
+            _ = inactiveRole.Run();
 
             ForceStop = new CancellationTokenSource();
 
-            ReliabilityTimer = new System.Timers.Timer(5000);
+            ReliabilityTimer = new Timer(5000);
             ReliabilityTimer.Elapsed += CheckReliability;
             ReliabilityTimer.Start();
 
@@ -228,8 +233,8 @@ namespace Utili
             try { ReliabilityTimer.Stop(); } catch { }
             try { ReliabilityTimer.Dispose(); } catch { }
 
-            try { await Client.StopAsync(); } catch { };
-            try { Client.Dispose(); } catch { };
+            try { await Client.StopAsync(); } catch { }
+            try { Client.Dispose(); } catch { }
 
             Autopurge.StartRunthrough.Stop();
             InactiveRole.StartRunthrough.Stop();
@@ -244,16 +249,16 @@ namespace Utili
             throw new Exception("MainAsync was terminated.");
         }
 
-        private async void UpdateLatency(object sender, System.Timers.ElapsedEventArgs e)
+        private async void UpdateLatency(object sender, ElapsedEventArgs e)
         {
             if (!Ready) return;
 
             try
             {
-                TimeSpan Uptime = DateTime.Now - QueryTimer;
-                try { QueriesPerSecond = Math.Round(Queries / Uptime.TotalSeconds, 2); } catch { QueriesPerSecond = 0; }
-                try { CacheQueriesPerSecond = Math.Round(CacheQueries / Uptime.TotalSeconds, 2); } catch { CacheQueriesPerSecond = 0; }
-                try { ReactionsAlteredPerSecond = Math.Round(ReactionsAltered / Uptime.TotalSeconds, 2); } catch { ReactionsAltered = 0; }
+                TimeSpan uptime = DateTime.Now - QueryTimer;
+                try { QueriesPerSecond = Math.Round(Queries / uptime.TotalSeconds, 2); } catch { QueriesPerSecond = 0; }
+                try { CacheQueriesPerSecond = Math.Round(CacheQueries / uptime.TotalSeconds, 2); } catch { CacheQueriesPerSecond = 0; }
+                try { ReactionsAlteredPerSecond = Math.Round(ReactionsAltered / uptime.TotalSeconds, 2); } catch { ReactionsAltered = 0; }
 
                 if(ReactionsAlteredPerSecond > MaxReactionsAlteredPerSecond)
                 {
@@ -262,43 +267,43 @@ namespace Utili
 
                 try
                 {
-                    DateTime Now = DateTime.Now;
-                    GetData("Ping Test", IgnoreCache: true);
-                    DBLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+                    DateTime now = DateTime.Now;
+                    GetData("Ping Test", ignoreCache: true);
+                    DbLatency = (int)Math.Round((DateTime.Now - now).TotalMilliseconds);
                 }
-                catch { };
+                catch { }
 
                 CacheItems = Cache.Count;
 
-                string Output = "";
+                string output = "";
 
-                var Grouped = CommonItemsRegistry.GroupBy(x => x.Type);
-                var Sorted = Grouped.OrderByDescending(x => x.Count());
+                IEnumerable<IGrouping<string, Data>> grouped = CommonItemsRegistry.GroupBy(x => x.Type);
+                IOrderedEnumerable<IGrouping<string, Data>> sorted = grouped.OrderByDescending(x => x.Count());
 
-                foreach (var Value in Sorted.Take(8))
+                foreach (IGrouping<string, Data> value in sorted.Take(8))
                 {
-                    Output += $"{Value.Count()}: {Value.Key}\n";
+                    output += $"{value.Count()}: {value.Key}\n";
                 }
 
-                CommonItemsOutput = Output;
+                CommonItemsOutput = output;
 
-                Output = "";
+                output = "";
 
-                foreach (var Value in CommonItemsSaved.Take(8))
+                foreach (Data value in CommonItemsSaved.Take(8))
                 {
-                    Output += $"{Value}\n";
+                    output += $"{value}\n";
                 }
 
-                CommonItemsSavedOutput = Output;
+                CommonItemsSavedOutput = output;
 
-                Output = "";
+                output = "";
 
-                foreach (var Value in CommonItemsGot.Take(8))
+                foreach (Data value in CommonItemsGot.Take(8))
                 {
-                    Output += $"{Value}\n";
+                    output += $"{value}\n";
                 }
 
-                CommonItemsGotOutput = Output;
+                CommonItemsGotOutput = output;
 
                 CommonItemsRegistry.Clear();
                 CommonItemsGot.Clear();
@@ -311,22 +316,22 @@ namespace Utili
 
                 try
                 {
-                    DateTime Now = DateTime.Now;
-                    var Sent = await Shards.GetGuild(682882628168450079).GetTextChannel(713125991563919492).SendMessageAsync("Testing send latency...");
-                    SendLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+                    DateTime now = DateTime.Now;
+                    RestUserMessage sent = await Shards.GetGuild(682882628168450079).GetTextChannel(713125991563919492).SendMessageAsync("Testing send latency...");
+                    SendLatency = (int)Math.Round((DateTime.Now - now).TotalMilliseconds);
 
-                    Now = DateTime.Now;
-                    await Sent.ModifyAsync(x => x.Content = "Testing edit latency...");
-                    EditLatency = (int)Math.Round((DateTime.Now - Now).TotalMilliseconds);
+                    now = DateTime.Now;
+                    await sent.ModifyAsync(x => x.Content = "Testing edit latency...");
+                    EditLatency = (int)Math.Round((DateTime.Now - now).TotalMilliseconds);
 
-                    await Sent.DeleteAsync();
+                    await sent.DeleteAsync();
                 }
-                catch { SendLatency = 0; EditLatency = 0; };
+                catch { SendLatency = 0; EditLatency = 0; }
             }
-            catch { };
+            catch { }
         }
 
-        private async void CheckReliability(object sender, System.Timers.ElapsedEventArgs e)
+        private async void CheckReliability(object sender, ElapsedEventArgs e)
         {
             if (Client.ConnectionState != ConnectionState.Connected || Client.Latency > 10000)
             {
@@ -342,11 +347,11 @@ namespace Utili
             }
         }
 
-        private async Task Client_Log(LogMessage Message)
+        private async Task Client_Log(LogMessage message)
         {
-            if (Message.Source.ToString() != "Rest" && !Message.Message.Contains("PRESENCE_UPDATE") && !Message.Message.Contains("Unknown dispatch"))
+            if (message.Source != "Rest" && !message.Message.Contains("PRESENCE_UPDATE") && !message.Message.Contains("Unknown dispatch"))
             {
-                Console.WriteLine($"[{DateTime.Now}] [{Message.Source}] {Message.Message}");
+                Console.WriteLine($"[{DateTime.Now}] [{message.Source}] {message.Message}");
             }
         }
 
@@ -357,13 +362,13 @@ namespace Utili
 
             if (FirstStart)
             {
-                string GuildArray = "";
-                foreach (var Guild in Client.Guilds) GuildArray += $"'{Guild.Id}',";
-                GuildArray = GuildArray.Remove(GuildArray.Length - 1);
+                string guildArray = "";
+                foreach (SocketGuild guild in Client.Guilds) guildArray += $"'{guild.Id}',";
+                guildArray = guildArray.Remove(guildArray.Length - 1);
 
                 Console.WriteLine($"[{DateTime.Now}] [Info] Loading cache for {Client.Guilds.Count} guilds...");
 
-                Cache = GetDataWhere($"GuildID IN ({GuildArray}) AND DataType NOT LIKE '%RolePersist-Role-%'");
+                Cache = GetDataWhere($"GuildID IN ({guildArray}) AND DataType NOT LIKE '%RolePersist-Role-%'");
 
                 Console.WriteLine($"[{DateTime.Now}] [Info] {Cache.Count} items loaded.");
 
@@ -373,7 +378,7 @@ namespace Utili
 
             await Client.SetGameAsync(".help", null, ActivityType.Watching);
 
-            Youtube = new YouTubeService(new BaseClientService.Initializer()
+            Youtube = new YouTubeService(new BaseClientService.Initializer
             {
                 ApplicationName = Config.Youtube.ApplicationName,
                 ApiKey = Config.Youtube.Key
@@ -381,8 +386,8 @@ namespace Utili
 
             _ = UpdateStats();
 
-            AntiProfane AntiProfane = new AntiProfane();
-            _ = AntiProfane.AntiProfane_Ready();
+            AntiProfane antiProfane = new AntiProfane();
+            _ = antiProfane.AntiProfane_Ready();
 
             Ready = true;
 
@@ -390,23 +395,23 @@ namespace Utili
             {
                 await Task.Delay(10000);
 
-                string Machine = "Undefined Machine";
-                try { Machine = Environment.MachineName; } catch { }
-                if (Machine == null) Machine = "Undefined Machine";
+                string machine = "Undefined Machine";
+                try { machine = Environment.MachineName; } catch { }
+                if (machine == null) machine = "Undefined Machine";
 
-                bool Success = false;
-                while (!Success)
+                bool success = false;
+                while (!success)
                 {
                     try
                     {
-                        SocketGuild Guild = Shards.GetGuild(682882628168450079);
-                        SocketTextChannel Channel = Guild.GetTextChannel(731790673728241665);
+                        SocketGuild guild = Shards.GetGuild(682882628168450079);
+                        SocketTextChannel channel = guild.GetTextChannel(731790673728241665);
 
-                        if (Restarts == 0) await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. This is the fist startup."));
-                        else if (Restarts == 1) await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restart has occurred."));
-                        else await Channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardID} is ready, running v{VersionNumber} on {Machine}. Since first startup {Restarts} restarts have occurred."));
+                        if (Restarts == 0) await channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardId} is ready, running v{VersionNumber} on {machine}. This is the fist startup."));
+                        else if (Restarts == 1) await channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardId} is ready, running v{VersionNumber} on {machine}. Since first startup {Restarts} restart has occurred."));
+                        else await channel.SendMessageAsync(embed: GetEmbed("Yes", "Checking in", $"Shard {ShardId} is ready, running v{VersionNumber} on {machine}. Since first startup {Restarts} restarts have occurred."));
 
-                        Success = true;
+                        success = true;
                         Console.WriteLine($"[{DateTime.Now}] [Info] Sent check-in to log channel.");
                     }
                     catch { await Task.Delay(5000); }
@@ -418,18 +423,18 @@ namespace Utili
 
         #region Receive
 
-        private async Task Commence_MessageReceived(SocketMessage MessageParam)
+        private async Task Commence_MessageReceived(SocketMessage messageParam)
         {
-            _ = Client_MessageReceived(MessageParam);
+            _ = Client_MessageReceived(messageParam);
         }
 
-        private async Task Client_MessageReceived(SocketMessage MessageParam)
+        private async Task Client_MessageReceived(SocketMessage messageParam)
         {
             #region Delete System Messages
 
-            if (MessageParam.Author.Id == Client.CurrentUser.Id & MessageParam.GetType() == typeof(SocketSystemMessage))
+            if (messageParam.Author.Id == Client.CurrentUser.Id & messageParam.GetType() == typeof(SocketSystemMessage))
             {
-                await MessageParam.DeleteAsync();
+                await messageParam.DeleteAsync();
                 return;
             }
 
@@ -437,14 +442,14 @@ namespace Utili
 
             #region System
 
-            var Message = MessageParam as SocketUserMessage;
-            var Context = new SocketCommandContext(Client, Message);
+            SocketUserMessage message = messageParam as SocketUserMessage;
+            SocketCommandContext context = new SocketCommandContext(Client, message);
 
             #endregion System
 
             #region Reject DMs
 
-            if (Message.Channel.GetType() == typeof(SocketDMChannel) & !Context.User.IsBot)
+            if (message.Channel.GetType() == typeof(SocketDMChannel) & !context.User.IsBot)
             {
                 return;
             }
@@ -452,29 +457,29 @@ namespace Utili
             #endregion Reject DMs
 
             #region Command Handler
-
-            if (!(Context.Message == null || Context.Message.ToString() == "" || Context.User.Id == Client.CurrentUser.Id || Context.User.IsBot))
+            
+            if (!(context.Message == null || context.Message.ToString() == "" || context.User.Id == Client.CurrentUser.Id || context.User.IsBot))
             {
-                if (!DataExists(Context.Guild.Id.ToString(), "Commands-Disabled", Context.Channel.Id.ToString()))
+                if (!DataExists(context.Guild.Id.ToString(), "Commands-Disabled", context.Channel.Id.ToString()))
                 {
-                    int ArgPos = 0;
+                    int argPos = 0;
 
-                    string Prefix = ".";
-                    try { Prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                    string prefix = ".";
+                    try { prefix = GetFirstData(context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-                    if (UseTest) Prefix = "-";
+                    if (UseTest) prefix = "-";
 
-                    if (Message.HasStringPrefix(Prefix, ref ArgPos) || Message.HasMentionPrefix(Client.CurrentUser, ref ArgPos))
+                    if (message.HasStringPrefix(prefix, ref argPos) || message.HasMentionPrefix(Client.CurrentUser, ref argPos))
                     {
                         try
                         {
-                            var Result = await Commands.ExecuteAsync(Context, ArgPos, null);
+                            IResult result = await _commands.ExecuteAsync(context, argPos, null);
 
-                            if (!Result.IsSuccess)
+                            if (!result.IsSuccess)
                             {
-                                if (Result.ErrorReason != "Unknown command.")
+                                if (result.ErrorReason != "Unknown command.")
                                 {
-                                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {Prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                                    await context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
 
                                     #region Command Logging
 
@@ -482,7 +487,7 @@ namespace Utili
                                     if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
                                     else sw = File.AppendText("Command Log.txt");
 
-                                    sw.WriteLine($"[{DateTime.Now}] [Command] [{Context.Guild.Name} | {Context.Guild.Id}] [{Context.Channel.Name} | {Context.Channel.Id}] [{Context.User} | {Context.User.Id}] {Context.Message.Content}");
+                                    sw.WriteLine($"[{DateTime.Now}] [Command] [{context.Guild.Name} | {context.Guild.Id}] [{context.Channel.Name} | {context.Channel.Id}] [{context.User} | {context.User.Id}] {context.Message.Content}");
 
                                     sw.Close();
 
@@ -493,7 +498,7 @@ namespace Utili
                                     if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
                                     else sw = File.AppendText("Command Log.txt");
 
-                                    sw.WriteLine($"[{DateTime.Now}] [Command] [Error] {Result.ErrorReason}");
+                                    sw.WriteLine($"[{DateTime.Now}] [Command] [Error] {result.ErrorReason}");
 
                                     sw.Close();
 
@@ -508,7 +513,7 @@ namespace Utili
                                 if (!File.Exists("Command Log.txt")) sw = File.CreateText("Command Log.txt");
                                 else sw = File.AppendText("Command Log.txt");
 
-                                sw.WriteLine($"[{DateTime.Now}] [Command] [{Context.Guild.Name} | {Context.Guild.Id}] [{Context.Channel.Name} | {Context.Channel.Id}] [{Context.User} | {Context.User.Id}] {Context.Message.Content}");
+                                sw.WriteLine($"[{DateTime.Now}] [Command] [{context.Guild.Name} | {context.Guild.Id}] [{context.Channel.Name} | {context.Channel.Id}] [{context.User} | {context.User.Id}] {context.Message.Content}");
 
                                 sw.Close();
 
@@ -517,7 +522,7 @@ namespace Utili
                         }
                         catch
                         {
-                            await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "An unexpected error occured", $"Please report this"));
+                            await context.Channel.SendMessageAsync(embed: GetEmbed("No", "An unexpected error occurred", "Please report this"));
                         }
                     }
                 }
@@ -527,31 +532,31 @@ namespace Utili
 
             #region Start other scripts
 
-            MessageLogs MessageLogs = new MessageLogs();
-            _ = MessageLogs.MessageLogs_MessageReceived(MessageParam);
+            MessageLogs messageLogs = new MessageLogs();
+            _ = messageLogs.MessageLogs_MessageReceived(messageParam);
 
-            SpamFilter SpamFilter = new SpamFilter();
-            _ = SpamFilter.SpamFilter_MessageReceived(MessageParam);
+            SpamFilter spamFilter = new SpamFilter();
+            _ = spamFilter.SpamFilter_MessageReceived(messageParam);
 
-            Filter Filter = new Filter();
-            _ = Filter.Filter_MessageReceived(MessageParam);
+            Filter filter = new Filter();
+            _ = filter.Filter_MessageReceived(messageParam);
 
-            AntiProfane AntiProfane = new AntiProfane();
-            _ = AntiProfane.AntiProfane_MessageReceived(MessageParam);
+            AntiProfane antiProfane = new AntiProfane();
+            _ = antiProfane.AntiProfane_MessageReceived(messageParam);
 
-            Votes Votes = new Votes();
-            _ = Votes.Votes_MessageReceived(MessageParam);
+            Votes votes = new Votes();
+            _ = votes.Votes_MessageReceived(messageParam);
 
-            NoticeMessage NoticeMessage = new NoticeMessage();
-            _ = NoticeMessage.NoticeMessage_MessageReceived(MessageParam);
+            NoticeMessage noticeMessage = new NoticeMessage();
+            _ = noticeMessage.NoticeMessage_MessageReceived(messageParam);
 
-            Mirroring Mirroring = new Mirroring();
-            _ = Mirroring.Mirroring_MessageReceived(MessageParam);
+            Mirroring mirroring = new Mirroring();
+            _ = mirroring.Mirroring_MessageReceived(messageParam);
 
-            InactiveRole InactiveRole = new InactiveRole();
-            _ = InactiveRole.InactiveRole_MessageReceived(MessageParam);
+            InactiveRole inactiveRole = new InactiveRole();
+            _ = inactiveRole.InactiveRole_MessageReceived(messageParam);
 
-            if (LastStatsUpdate < DateTime.Now.AddMinutes(-10)) _ = UpdateStats();
+            if (_lastStatsUpdate < DateTime.Now.AddMinutes(-10)) _ = UpdateStats();
 
             #endregion Start other scripts
         }
@@ -564,53 +569,53 @@ namespace Utili
         {
             if (UseTest) return;
 
-            LastStatsUpdate = DateTime.Now;
+            _lastStatsUpdate = DateTime.Now;
 
             #region top.gg
 
-            AuthDiscordBotListApi API = new AuthDiscordBotListApi(655155797260501039, Config.DiscordBotListKey);
-            var Me = await API.GetMeAsync();
-            try { await Me.UpdateStatsAsync(Shards.Guilds.Count); } catch { }
+            AuthDiscordBotListApi api = new AuthDiscordBotListApi(655155797260501039, Config.DiscordBotListKey);
+            IDblSelfBot me = await api.GetMeAsync();
+            try { await me.UpdateStatsAsync(Shards.Guilds.Count); } catch { }
 
             #endregion top.gg
 
             #region Bots For Discord
 
-            HttpClient HttpClient = new HttpClient();
-            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.BotsForDiscordKey);
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.BotsForDiscordKey);
 
-            var Content = new FormUrlEncodedContent(new[]
+            FormUrlEncodedContent content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("server_count", Shards.Guilds.Count.ToString()),
             });
 
-            try { await HttpClient.PostAsync("https://botsfordiscord.com/api/bot/655155797260501039", Content); } catch { };
+            try { await httpClient.PostAsync("https://botsfordiscord.com/api/bot/655155797260501039", content); } catch { }
 
             #endregion Bots For Discord
 
             #region Bots On Discord
 
-            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.BotsOnDiscordKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.BotsOnDiscordKey);
 
-            Content = new FormUrlEncodedContent(new[]
+            content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("guildCount", Shards.Guilds.Count.ToString()),
             });
 
-            try { await HttpClient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/655155797260501039/guilds", Content); } catch { };
+            try { await httpClient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/655155797260501039/guilds", content); } catch { }
 
             #endregion Bots On Discord
 
             #region Discord Boats
 
-            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.DiscordBoatsKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.DiscordBoatsKey);
 
-            Content = new FormUrlEncodedContent(new[]
+            content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("server_count", Shards.Guilds.Count.ToString()),
             });
 
-            try { await HttpClient.PostAsync("https://discord.boats/api/bot/655155797260501039", Content); } catch { };
+            try { await httpClient.PostAsync("https://discord.boats/api/bot/655155797260501039", content); } catch { }
 
             #endregion Discord Boats
         }
@@ -619,42 +624,42 @@ namespace Utili
 
         #region User Join
 
-        private async Task Commence_UserJoin(SocketGuildUser User)
+        private async Task Commence_UserJoin(SocketGuildUser user)
         {
-            _ = Client_UserJoin(User);
+            _ = Client_UserJoin(user);
         }
 
-        private async Task Client_UserJoin(SocketGuildUser User)
+        private async Task Client_UserJoin(SocketGuildUser user)
         {
-            RolePersist RolePersist = new RolePersist();
-            _ = RolePersist.UserJoin(User);
+            RolePersist rolePersist = new RolePersist();
+            _ = rolePersist.UserJoin(user);
 
-            JoinMessage JoinMessage = new JoinMessage();
-            _ = JoinMessage.JoinMessage_UserJoined(User);
+            JoinMessage joinMessage = new JoinMessage();
+            _ = joinMessage.JoinMessage_UserJoined(user);
 
-            DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
-            SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
+            DeleteData(user.Guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ignoreCache: true, table: "Utili_InactiveTimers");
+            SaveData(user.Guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ToSqlTime(DateTime.Now), ignoreCache: true, table: "Utili_InactiveTimers");
 
-            var Role = User.Guild.GetRole(ulong.Parse(GetFirstData(User.Guild.Id.ToString(), "JoinRole").Value));
-            await User.AddRoleAsync(Role);
+            SocketRole role = user.Guild.GetRole(ulong.Parse(GetFirstData(user.Guild.Id.ToString(), "JoinRole").Value));
+            await user.AddRoleAsync(role);
         }
 
         #endregion User Join
 
         #region Client Join
 
-        private async Task Commence_ClientJoin(SocketGuild Guild)
+        private async Task Commence_ClientJoin(SocketGuild guild)
         {
-            _ = Client_ClientJoin(Guild);
+            _ = Client_ClientJoin(guild);
         }
 
-        private async Task Client_ClientJoin(SocketGuild Guild)
+        private async Task Client_ClientJoin(SocketGuild guild)
         {
-            DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
-            DateTime StartTime = DateTime.Now;
-            foreach (var User in Guild.Users)
+            DeleteData(guild.Id.ToString(), ignoreCache: true, table: "Utili_InactiveTimers");
+            DateTime startTime = DateTime.Now;
+            foreach (SocketGuildUser user in guild.Users)
             {
-                SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(StartTime), IgnoreCache: true, Table: "Utili_InactiveTimers");
+                SaveData(user.Guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ToSqlTime(startTime), ignoreCache: true, table: "Utili_InactiveTimers");
                 await Task.Delay(100);
             }
         }
@@ -663,56 +668,56 @@ namespace Utili
 
         #region User Leave
 
-        private async Task Commence_UserLeft(SocketGuildUser User)
+        private async Task Commence_UserLeft(SocketGuildUser user)
         {
-            _ = Client_UserLeft(User);
+            _ = Client_UserLeft(user);
         }
 
-        private async Task Client_UserLeft(SocketGuildUser User)
+        private async Task Client_UserLeft(SocketGuildUser user)
         {
-            DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
+            DeleteData(user.Guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ignoreCache: true, table: "Utili_InactiveTimers");
 
-            RolePersist RolePersist = new RolePersist();
-            _ = RolePersist.UserLeft(User);
+            RolePersist rolePersist = new RolePersist();
+            _ = rolePersist.UserLeft(user);
         }
 
         #endregion User Leave
 
         #region Client Leave
 
-        private async Task Commence_ClientLeave(SocketGuild Guild)
+        private async Task Commence_ClientLeave(SocketGuild guild)
         {
-            _ = Client_ClientLeave(Guild);
+            _ = Client_ClientLeave(guild);
         }
 
-        private async Task Client_ClientLeave(SocketGuild Guild)
+        private async Task Client_ClientLeave(SocketGuild guild)
         {
-            DeleteData(Guild.Id.ToString(), IgnoreCache: true, Table: "Utili_InactiveTimers");
-            RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE GuildID = '{Guild.Id}'");
-            DeleteData(Guild.Id.ToString());
+            DeleteData(guild.Id.ToString(), ignoreCache: true, table: "Utili_InactiveTimers");
+            RunNonQuery($"DELETE FROM Utili_MessageLogs WHERE GuildID = '{guild.Id}'");
+            DeleteData(guild.Id.ToString());
         }
 
         #endregion Client Leave
 
         #region Voice Updated
 
-        private async Task Commence_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
+        private async Task Commence_UserVoiceStateUpdated(SocketUser userParam, SocketVoiceState before, SocketVoiceState after)
         {
-            _ = Client_UserVoiceStateUpdated(UserParam, Before, After);
+            _ = Client_UserVoiceStateUpdated(userParam, before, after);
         }
 
-        private async Task Client_UserVoiceStateUpdated(SocketUser UserParam, SocketVoiceState Before, SocketVoiceState After)
+        private async Task Client_UserVoiceStateUpdated(SocketUser userParam, SocketVoiceState before, SocketVoiceState after)
         {
-            SocketGuildUser User = UserParam as SocketGuildUser;
-            VCLink VCLink = new VCLink();
-            _ = VCLink.Client_UserVoiceStateUpdated(User, Before, After);
-            VCRoles VCRoles = new VCRoles();
-            _ = VCRoles.Client_UserVoiceStateUpdated(User, Before, After);
+            SocketGuildUser user = userParam as SocketGuildUser;
+            VcLink vcLink = new VcLink();
+            _ = vcLink.Client_UserVoiceStateUpdated(user, before, after);
+            VcRoles vcRoles = new VcRoles();
+            _ = vcRoles.Client_UserVoiceStateUpdated(user, before, after);
 
-            if (After.VoiceChannel != null)
+            if (after.VoiceChannel != null)
             {
-                DeleteData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", IgnoreCache: true, Table: "Utili_InactiveTimers");
-                SaveData(User.Guild.Id.ToString(), $"InactiveRole-Timer-{User.Id}", ToSQLTime(DateTime.Now), IgnoreCache: true, Table: "Utili_InactiveTimers");
+                DeleteData(user.Guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ignoreCache: true, table: "Utili_InactiveTimers");
+                SaveData(user.Guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ToSqlTime(DateTime.Now), ignoreCache: true, table: "Utili_InactiveTimers");
             }
         }
 
@@ -720,41 +725,41 @@ namespace Utili
 
         #region Channel Created
 
-        private async Task Commence_ChannelCreated(SocketChannel Channel)
+        private async Task Commence_ChannelCreated(SocketChannel channel)
         {
-            _ = Client_ChannelCreated(Channel);
+            _ = Client_ChannelCreated(channel);
         }
 
-        private async Task Client_ChannelCreated(SocketChannel Channel)
+        private async Task Client_ChannelCreated(SocketChannel channel)
         {
-            MessageLogs MessageLogs = new MessageLogs();
-            _ = MessageLogs.MessageLogs_ChannelCreated(Channel);
+            MessageLogs messageLogs = new MessageLogs();
+            _ = messageLogs.MessageLogs_ChannelCreated(channel);
         }
 
         #endregion Channel Created
 
         #region Messages
 
-        public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> PartialMessage, ISocketMessageChannel Channel)
+        public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> partialMessage, ISocketMessageChannel channel)
         {
-            MessageLogs MessageLogs = new MessageLogs();
-            _ = MessageLogs.MessageLogs_MessageDeleted(PartialMessage, Channel);
+            MessageLogs messageLogs = new MessageLogs();
+            _ = messageLogs.MessageLogs_MessageDeleted(partialMessage, channel);
         }
 
-        public async Task Commence_MessageUpdated(Cacheable<IMessage, ulong> PartialMessage, SocketMessage NewMessage, ISocketMessageChannel Channel)
+        public async Task Commence_MessageUpdated(Cacheable<IMessage, ulong> partialMessage, SocketMessage newMessage, ISocketMessageChannel channel)
         {
-            MessageLogs MessageLogs = new MessageLogs();
-            _ = MessageLogs.MessageLogs_MessageEdited(PartialMessage, NewMessage, Channel);
+            MessageLogs messageLogs = new MessageLogs();
+            _ = messageLogs.MessageLogs_MessageEdited(partialMessage, newMessage, channel);
         }
 
-        public async Task Commence_ReactionAdded(Cacheable<IUserMessage, ulong> Message, ISocketMessageChannel Channel, SocketReaction Reaction)
+        public async Task Commence_ReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {
             ReactionsAltered += 1;
-            Votes Votes = new Votes();
-            _ = Votes.Votes_ReactionAdded(Message, Channel, Reaction);
+            Votes votes = new Votes();
+            _ = votes.Votes_ReactionAdded(message, channel, reaction);
         }
 
-        public async Task Commence_ReactionRemoved(Cacheable<IUserMessage, ulong> Message, ISocketMessageChannel Channel, SocketReaction Reaction)
+        public async Task Commence_ReactionRemoved(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {
             ReactionsAltered += 1;
         }

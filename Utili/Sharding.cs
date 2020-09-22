@@ -1,8 +1,8 @@
-﻿using MySql.Data.MySqlClient;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MySql.Data.MySqlClient;
 using static Utili.Data;
 using static Utili.Json;
 using static Utili.SendMessage;
@@ -11,9 +11,9 @@ namespace Utili
 {
     internal class Sharding
     {
-        public static bool GettingShard = false;
+        public static bool GettingShard;
 
-        public static async Task<int> GetShardID()
+        public static async Task<int> GetShardId()
         {
             GettingShard = true;
 
@@ -21,29 +21,30 @@ namespace Utili
             {
                 try
                 {
-                    Random Random = new Random();
+                    Random random = new Random();
 
-                    int Shards = await GetTotalShards();
+                    int shards = await GetTotalShards();
 
                     while (true)
                     {
-                        int Target = Random.Next(0, Shards);
+                        int target = random.Next(0, shards);
 
-                        if (GetShardData(Target, "Online").Count == 0 && GetShardData(Target, "Reserved").Count == 0)
+                        if (GetShardData(target, "Online").Count == 0 && GetShardData(target, "Reserved").Count == 0)
                         {
-                            SaveData(Target, "Reserved", DateTime.Now);
+                            SaveData(target, "Reserved", DateTime.Now);
                             await Task.Delay(2500);
 
-                            if (GetShardData(Target, "Reserved").Count == 1 && GetShardData(Target, "Online").Count == 0)
+                            if (GetShardData(target, "Reserved").Count == 1 && GetShardData(target, "Online").Count == 0)
                             {
-                                SaveData(Target, "Online", DateTime.Now);
-                                DeleteData(Target, "Reserved");
+                                SaveData(target, "Online", DateTime.Now);
+                                DeleteData(target, "Reserved");
 
                                 GettingShard = false;
 
-                                return Target;
+                                return target;
                             }
-                            else DeleteData(Target, "Reserved");
+
+                            DeleteData(target, "Reserved");
                         }
 
                         await FlushDisconnected(false);
@@ -55,7 +56,7 @@ namespace Utili
 
         public static async Task<int> GetTotalShards()
         {
-            return GetShardData(Type: "ShardCount").First().ShardID;
+            return GetShardData(type: "ShardCount").First().ShardId;
         }
 
         public static async Task KeepConnection()
@@ -66,21 +67,21 @@ namespace Utili
                 {
                     SaveData(Program.Client.ShardId, "Online", DateTime.Now);
 
-                    var ShardData = GetShardData(Program.Client.ShardId, "Online");
-                    ShardData = ShardData.OrderBy(x => x.Heartbeat).ToList();
-                    ShardData.Reverse();
-                    ShardData.RemoveAt(0);
+                    List<ShardData> shardData = GetShardData(Program.Client.ShardId, "Online");
+                    shardData = shardData.OrderBy(x => x.Heartbeat).ToList();
+                    shardData.Reverse();
+                    shardData.RemoveAt(0);
 
                     await Task.Delay(500);
 
-                    foreach (var OldData in ShardData)
+                    foreach (ShardData oldData in shardData)
                     {
-                        DeleteData(OldData.ID);
+                        DeleteData(oldData.Id);
                     }
 
                     await Task.Delay(1000);
                 }
-                catch { await Task.Delay(1000); };
+                catch { await Task.Delay(1000); }
             }
         }
 
@@ -94,41 +95,41 @@ namespace Utili
                 {
                     try
                     {
-                        bool AllowOnlineNotification = true;
+                        bool allowOnlineNotification = true;
 
-                        var ShardData = GetShardData(-1, "Online");
-                        ShardData.AddRange(GetShardData(-1, "Reserved"));
+                        List<ShardData> shardData = GetShardData(-1, "Online");
+                        shardData.AddRange(GetShardData(-1, "Reserved"));
 
-                        var OldShardData = ShardData.Where(x => DateTime.Now - x.Heartbeat > TimeSpan.FromSeconds(10)).ToList();
-                        OldShardData.AddRange(ShardData.Where(x => DateTime.Now - x.Heartbeat < TimeSpan.FromMinutes(-1)));
+                        List<ShardData> oldShardData = shardData.Where(x => DateTime.Now - x.Heartbeat > TimeSpan.FromSeconds(10)).ToList();
+                        oldShardData.AddRange(shardData.Where(x => DateTime.Now - x.Heartbeat < TimeSpan.FromMinutes(-1)));
                         // ShardData is now all shards which were active but are now not sending a heartbeat.
 
-                        foreach (var OldData in ShardData.Where(x => x.ShardID != Program.ShardID))
+                        foreach (ShardData oldData in shardData.Where(x => x.ShardId != Program.ShardId))
                         {
-                            AllowOnlineNotification = false;
-                            DeleteData(OldData.ID);
+                            allowOnlineNotification = false;
+                            DeleteData(oldData.Id);
 
-                            if (!OfflineShardIDs.Contains(OldData.ShardID))
+                            if (!OfflineShardIDs.Contains(oldData.ShardId))
                             {
-                                OfflineShardIDs.Add(OldData.ShardID);
-                                SendEmail(Config.EmailInfo.Username, $"Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nSent by shard {Program.Client.ShardId}");
-                                await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("No", "Shard offline", $"Shard {OldData.ShardID} has stopped sending a heartbeat.\nSent by shard {Program.Client.ShardId}."));
+                                OfflineShardIDs.Add(oldData.ShardId);
+                                SendEmail(Config.EmailInfo.Username, "Shard offline", $"Shard {oldData.ShardId} has stopped sending a heartbeat.\nSent by shard {Program.Client.ShardId}");
+                                await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("No", "Shard offline", $"Shard {oldData.ShardId} has stopped sending a heartbeat.\nSent by shard {Program.Client.ShardId}."));
                             }
                         }
 
-                        if (AllowOnlineNotification && Program.Ready)
+                        if (allowOnlineNotification && Program.Ready)
                         {
-                            foreach (int OfflineShardID in OfflineShardIDs)
+                            foreach (int offlineShardId in OfflineShardIDs)
                             {
-                                if (GetShardData(OfflineShardID, "Online").Count > 0)
+                                if (GetShardData(offlineShardId, "Online").Count > 0)
                                 {
-                                    await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("Yes", "Shard online", $"Shard {OfflineShardID} has sent a heartbeat.\nSent by shard {Program.Client.ShardId}."));
-                                    OfflineShardIDs.Remove(OfflineShardID);
+                                    await Program.Shards.GetGuild(682882628168450079).GetTextChannel(731790673728241665).SendMessageAsync("<@!218613903653863427>", embed: GetEmbed("Yes", "Shard online", $"Shard {offlineShardId} has sent a heartbeat.\nSent by shard {Program.Client.ShardId}."));
+                                    OfflineShardIDs.Remove(offlineShardId);
                                 }
                             }
                         }
                     }
-                    catch { };
+                    catch { }
 
                     await Task.Delay(3000);
                 }
@@ -137,121 +138,121 @@ namespace Utili
             {
                 try
                 {
-                    var ShardData = GetShardData(-1, "Online");
-                    ShardData.AddRange(GetShardData(-1, "Reserved"));
+                    List<ShardData> shardData = GetShardData(-1, "Online");
+                    shardData.AddRange(GetShardData(-1, "Reserved"));
 
-                    ShardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(10));
+                    shardData.RemoveAll(x => DateTime.Now - x.Heartbeat < TimeSpan.FromSeconds(10));
 
-                    foreach (var OldData in ShardData)
+                    foreach (ShardData oldData in shardData)
                     {
-                        DeleteData(OldData.ID);
+                        DeleteData(oldData.Id);
                     }
                 }
-                catch { };
+                catch { }
             }
         }
 
-        public static List<ShardData> GetShardData(int ShardID = -1, string Type = null, DateTime? Heartbeat = null)
+        public static List<ShardData> GetShardData(int shardId = -1, string type = null, DateTime? heartbeat = null)
         {
-            List<ShardData> Data = new List<ShardData>();
+            List<ShardData> data = new List<ShardData>();
 
-            using (var connection = new MySqlConnection(ConnectionString))
+            using (MySqlConnection connection = new MySqlConnection(ConnectionString))
             {
-                using (var command = connection.CreateCommand())
+                using (MySqlCommand command = connection.CreateCommand())
                 {
                     connection.Open();
 
-                    if (ShardID == -1 & Type == null & Heartbeat == null) throw new Exception();
-                    string Command = "SELECT * FROM Utili_Shards WHERE(";
-                    if (ShardID != -1)
+                    if (shardId == -1 & type == null & heartbeat == null) throw new Exception();
+                    string commandText = "SELECT * FROM Utili_Shards WHERE(";
+                    if (shardId != -1)
                     {
-                        Command += $"ShardID = @ShardID AND ";
-                        command.Parameters.Add(new MySqlParameter("ShardID", ShardID));
+                        commandText += "ShardID = @ShardID AND ";
+                        command.Parameters.Add(new MySqlParameter("ShardID", shardId));
                     }
-                    if (Type != null)
+                    if (type != null)
                     {
-                        Command += $"Type = @Type AND ";
-                        command.Parameters.Add(new MySqlParameter("Type", Type));
+                        commandText += "Type = @Type AND ";
+                        command.Parameters.Add(new MySqlParameter("Type", type));
                     }
-                    if (Heartbeat.HasValue)
+                    if (heartbeat.HasValue)
                     {
-                        Command += $"DataValue = @Value";
-                        command.Parameters.Add(new MySqlParameter("Heartbeat", ToSQLTime(Heartbeat.Value)));
+                        commandText += "DataValue = @Value";
+                        command.Parameters.Add(new MySqlParameter("Heartbeat", ToSqlTime(heartbeat.Value)));
                     }
-                    if (Command.Substring(Command.Length - 5) == " AND ") Command = Command.Substring(0, Command.Length - 5);
-                    Command += ");";
+                    if (commandText.Substring(commandText.Length - 5) == " AND ") commandText = commandText.Substring(0, commandText.Length - 5);
+                    commandText += ");";
 
-                    command.CommandText = Command;
-                    MySqlDataReader DataReader = null;
+                    command.CommandText = commandText;
+                    MySqlDataReader dataReader = null;
                     try
                     {
-                        DataReader = command.ExecuteReader();
+                        dataReader = command.ExecuteReader();
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e.Message);
                     }
 
-                    while (DataReader.Read())
+                    while (dataReader.Read())
                     {
-                        ShardData New;
-                        try { New = new ShardData(DataReader.GetInt32(0), DataReader.GetInt32(1), DataReader.GetString(2), DataReader.GetDateTime(3)); }
-                        catch { New = new ShardData(DataReader.GetInt32(0), DataReader.GetInt32(1), DataReader.GetString(2), DateTime.MaxValue); }
+                        ShardData @new;
+                        try { @new = new ShardData(dataReader.GetInt32(0), dataReader.GetInt32(1), dataReader.GetString(2), dataReader.GetDateTime(3)); }
+                        catch { @new = new ShardData(dataReader.GetInt32(0), dataReader.GetInt32(1), dataReader.GetString(2), DateTime.MaxValue); }
 
-                        Data.Add(New);
+                        data.Add(@new);
                     }
                 }
             }
 
-            return Data;
+            return data;
         }
 
-        public static void SaveData(int ShardID, string Type, DateTime? Heartbeat = null)
+        public static void SaveData(int shardId, string type, DateTime? heartbeat = null)
         {
-            if (Heartbeat.HasValue) RunNonQuery($"INSERT INTO Utili_Shards(ShardID, Type, Heartbeat) VALUES(@ShardID, @Type, @Heartbeat);", new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type), ("Heartbeat", ToSQLTime(Heartbeat.Value)) });
-            else RunNonQuery($"INSERT INTO Utili_Shards(ShardID, Type) VALUES(@ShardID, @Type);", new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type) });
+            if (heartbeat.HasValue) RunNonQuery("INSERT INTO Utili_Shards(ShardID, Type, Heartbeat) VALUES(@ShardID, @Type, @Heartbeat);", new[] { ("ShardID", shardId.ToString()), ("Type", type), ("Heartbeat", ToSqlTime(heartbeat.Value)) });
+            else RunNonQuery("INSERT INTO Utili_Shards(ShardID, Type) VALUES(@ShardID, @Type);", new[] { ("ShardID", shardId.ToString()), ("Type", type) });
         }
 
-        public static void DeleteData(int ShardID = -1, string Type = null, DateTime? Heartbeat = null)
+        public static void DeleteData(int shardId = -1, string type = null, DateTime? heartbeat = null)
         {
-            if (ShardID == -1 & Type == null & !Heartbeat.HasValue) throw new Exception();
-            string Command = "DELETE FROM Utili_Shards WHERE(";
-            if (ShardID != -1)
+            if (shardId == -1 & type == null & !heartbeat.HasValue) throw new Exception();
+            string command = "DELETE FROM Utili_Shards WHERE(";
+            if (shardId != -1)
             {
-                Command += $"ShardID = @ShardID AND ";
+                command += "ShardID = @ShardID AND ";
             }
-            if (Type != null)
+            if (type != null)
             {
-                Command += $"Type = @Type AND ";
+                command += "Type = @Type AND ";
             }
-            if (Heartbeat.HasValue)
+            if (heartbeat.HasValue)
             {
-                Command += $"Heatbeat = @Heartbeat";
+                command += "Heatbeat = @Heartbeat";
             }
-            if (Command.Substring(Command.Length - 5) == " AND ") Command = Command.Substring(0, Command.Length - 5);
-            Command += ");";
+            if (command.Substring(command.Length - 5) == " AND ") command = command.Substring(0, command.Length - 5);
+            command += ");";
 
-            if (Heartbeat.HasValue) RunNonQuery(Command, new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type), ("Heartbeat", ToSQLTime(Heartbeat.Value)) });
-            else RunNonQuery(Command, new (string, string)[] { ("ShardID", ShardID.ToString()), ("Type", Type) });
+            if (heartbeat.HasValue) RunNonQuery(command, new[] { ("ShardID", shardId.ToString()), ("Type", type), ("Heartbeat", ToSqlTime(heartbeat.Value)) });
+            else RunNonQuery(command, new[] { ("ShardID", shardId.ToString()), ("Type", type) });
         }
 
-        public static void DeleteData(int ID)
+        public static void DeleteData(int id)
         {
-            RunNonQuery($"DELETE FROM Utili_Shards WHERE ID = {ID}");
+            RunNonQuery($"DELETE FROM Utili_Shards WHERE ID = {id}");
         }
     }
 
     internal class ShardData
     {
-        public int ID { get; }
-        public int ShardID { get; }
+        public int Id { get; }
+        public int ShardId { get; }
         public string Type { get; }
         public DateTime Heartbeat { get; }
 
         public ShardData(int id, int shardid, string type, DateTime heartbeat)
         {
-            ID = id;
-            ShardID = shardid;
+            Id = id;
+            ShardId = shardid;
             Type = type;
             Heartbeat = heartbeat;
         }

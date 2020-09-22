@@ -1,43 +1,43 @@
-﻿using Discord.Commands;
-using System;
+﻿using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Discord.Commands;
 
 namespace Utili
 {
     internal class TimespanTypeReader : TypeReader
     {
         private static Regex TimeSpanRegex { get; } = new Regex(@"^(?<days>\d+d)?(?<hours>\d{1,2}h)?(?<minutes>\d{1,2}m)?(?<seconds>\d{1,2}s)?$", RegexOptions.Compiled);
-        private static string[] RegexGroups { get; } = new string[] { "days", "hours", "minutes", "seconds" };
+        private static string[] RegexGroups { get; } = { "days", "hours", "minutes", "seconds" };
 
-        public override async Task<TypeReaderResult> ReadAsync(ICommandContext Context, string input, IServiceProvider Services)
+        public override async Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
         {
             await Task.Yield();
 
-            var result = TimeSpan.Zero;
+            TimeSpan result = TimeSpan.Zero;
             if (input == "0")
                 return TypeReaderResult.FromSuccess((TimeSpan?)null);
 
             if (TimeSpan.TryParse(input, out result))
-                return TypeReaderResult.FromSuccess(new TimeSpan?(result));
+                return TypeReaderResult.FromSuccess(result);
 
-            var mtc = TimeSpanRegex.Match(input);
+            Match mtc = TimeSpanRegex.Match(input);
             if (!mtc.Success)
                 return TypeReaderResult.FromError(CommandError.ParseFailed, "Invalid TimeSpan string");
 
-            var d = 0;
-            var h = 0;
-            var m = 0;
-            var s = 0;
-            foreach (var gp in RegexGroups)
+            int d = 0;
+            int h = 0;
+            int m = 0;
+            int s = 0;
+            foreach (string gp in RegexGroups)
             {
-                var gpc = mtc.Groups[gp].Value;
+                string gpc = mtc.Groups[gp].Value;
                 if (string.IsNullOrWhiteSpace(gpc))
                     continue;
 
-                var gpt = gpc.Last();
-                int.TryParse(gpc.Substring(0, gpc.Length - 1), out var val);
+                char gpt = gpc.Last();
+                int.TryParse(gpc.Substring(0, gpc.Length - 1), out int val);
                 switch (gpt)
                 {
                     case 'd':
@@ -58,7 +58,7 @@ namespace Utili
                 }
             }
             result = new TimeSpan(d, h, m, s);
-            return TypeReaderResult.FromSuccess(new TimeSpan?(result));
+            return TypeReaderResult.FromSuccess(result);
         }
     }
 }
