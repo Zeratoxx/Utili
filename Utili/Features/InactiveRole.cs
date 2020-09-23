@@ -80,7 +80,7 @@ namespace Utili
                 try
                 {
                     ulong roleId = ulong.Parse(GetFirstData(guildId.ToString(), "InactiveRole-Role").Value);
-                    await ProcessGuild(guildId, roleId, true);
+                    await ProcessGuild(guildId, roleId, false);
 
                     await Task.Delay(1000);
                 }
