@@ -17,6 +17,7 @@ namespace Utili
             SocketUserMessage message = messageParam as SocketUserMessage;
             SocketCommandContext context = new SocketCommandContext(Program._client, message);
 
+            if (!GetPerms(context.Channel).AddReactions) return;
             if (context.User.Id == Program._client.CurrentUser.Id) return;
 
             if (DataExists(context.Guild.Id.ToString(), "Votes-Channel", context.Channel.Id.ToString()))

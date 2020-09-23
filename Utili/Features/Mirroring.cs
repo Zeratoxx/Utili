@@ -60,6 +60,8 @@ namespace Utili
 
                         if (retry)
                         {
+                            if(!GetPerms(toChannel).ManageWebhooks) return;
+
                             FileStream avatar = File.OpenRead("Avatar.png");
                             web = await toChannel.CreateWebhookAsync("Utili Mirroring", avatar);
                             avatar.Close();

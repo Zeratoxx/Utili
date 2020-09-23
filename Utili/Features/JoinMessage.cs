@@ -22,6 +22,7 @@ namespace Utili
                 if (ulong.TryParse(channelData, out ulong channelId))
                 {
                     ITextChannel channel = user.Guild.GetTextChannel(channelId);
+                    if(!GetPerms(channel).SendMessages) return;
                     await channel.SendMessageAsync(joinMessage.Item1, embed: joinMessage.Item2);
                 }
                 else

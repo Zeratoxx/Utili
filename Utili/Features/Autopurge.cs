@@ -59,6 +59,8 @@ namespace Utili
                             SocketTextChannel channel = guild.GetTextChannel(ulong.Parse(data.Value));
                             List<IMessage> messagesToDelete = new List<IMessage>();
 
+                            if(!GetPerms(channel).ManageMessages) return;
+
                             TimeSpan timeSpan = TimeSpan.Parse("00:15:00");
                             try { timeSpan = TimeSpan.Parse(GetFirstData(guildId.ToString(), $"Autopurge-Timespan-{channel.Id}").Value); } catch { }
 

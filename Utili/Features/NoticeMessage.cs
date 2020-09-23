@@ -54,6 +54,8 @@ namespace Utili
 
         public async Task Update(ITextChannel channel, bool save = true, bool knownOn = false)
         {
+            if(!GetPerms(channel).SendMessages || !GetPerms(channel).ManageMessages) return;
+
             if (!knownOn) knownOn = DataExists($"{channel.Guild.Id}", "Notices-Channel", $"{channel.Id}");
             if (knownOn || !save)
             {

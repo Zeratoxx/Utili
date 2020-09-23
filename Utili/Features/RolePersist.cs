@@ -13,6 +13,8 @@ namespace Utili
     {
         public async Task UserJoin(SocketGuildUser user)
         {
+            if(!GetPerms(user.Guild).ManageRoles) return;
+
             if (DataExists(user.Guild.Id.ToString(), "RolePersist-Enabled", "True"))
             {
                 foreach (Data data in GetData(user.Guild.Id.ToString(), $"RolePersist-Role-{user.Id}", ignoreCache: true))

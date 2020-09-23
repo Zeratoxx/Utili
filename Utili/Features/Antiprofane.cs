@@ -29,6 +29,8 @@ namespace Utili
             {
                 if (await IsProfaneAsync(context.Message.Content))
                 {
+                    if (!GetPerms(context.Channel).ManageMessages) return;
+
                     await context.Message.DeleteAsync();
                     if (context.User.Id != _client.CurrentUser.Id)
                     {

@@ -29,6 +29,8 @@ namespace Utili
 
             SocketGuildUser usr = context.User as SocketGuildUser;
 
+            if(!GetPerms(context.Guild).ManageRoles) return;
+
             Data inactiveRole = GetFirstData(context.Guild.Id.ToString(), "InactiveRole-Role");
             if (inactiveRole != null)
             {
@@ -90,6 +92,8 @@ namespace Utili
         {
             SocketGuild guild = _client.GetGuild(guildId);
             SocketRole role = guild.GetRole(roleId);
+
+            if(!GetPerms(guild).ManageRoles) return;
 
             SocketRole immuneRole = null;
             try { immuneRole = guild.GetRole(ulong.Parse(GetFirstData(guild.Id.ToString(), "InactiveRole-ImmuneRole").Value)); }

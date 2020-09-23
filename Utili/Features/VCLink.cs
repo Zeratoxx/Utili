@@ -40,7 +40,7 @@ namespace Utili
                     await channel.RemovePermissionOverwriteAsync(user);
                     if (user.Guild.Users.Where(x => x.VoiceChannel != null && !x.IsBot).Where(x => x.VoiceChannel.Id == before.VoiceChannel.Id).Count() == 0)
                     {
-                        await channel.DeleteAsync();
+                        if(GetPerms(channel).ManageChannel) await channel.DeleteAsync();
                         DeleteData(user.Guild.Id.ToString(), $"VCLink-Channel-{before.VoiceChannel.Id}");
                     }
                 }
@@ -70,6 +70,7 @@ namespace Utili
                     {
                         DeleteData(user.Guild.Id.ToString(), $"VCLink-Channel-{after.VoiceChannel.Id}");
 
+                        if(!GetPerms(user.Guild).ManageChannels) return;
                         RestTextChannel temp = await user.Guild.CreateTextChannelAsync($"vc-{after.VoiceChannel.Name}");
                         SaveData(user.Guild.Id.ToString(), $"VCLink-Channel-{after.VoiceChannel.Id}", temp.Id.ToString());
 
@@ -81,10 +82,12 @@ namespace Utili
                             i++;
                         }
 
+                        if(!GetPerms(channel).ManageChannel || !GetPerms(channel).ManageRoles) return;
                         if (after.VoiceChannel.CategoryId.HasValue) await channel.ModifyAsync(x => { x.CategoryId = after.VoiceChannel.CategoryId.Value; x.Topic = "Automatically made by Utili"; });
                         await channel.AddPermissionOverwriteAsync(user.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
                     }
 
+                    if(!GetPerms(channel).ManageRoles) return;
                     await channel.AddPermissionOverwriteAsync(user, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
                 }
 

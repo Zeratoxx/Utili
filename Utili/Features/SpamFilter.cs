@@ -20,6 +20,8 @@ namespace Utili
             SocketUserMessage message = messageParam as SocketUserMessage;
             SocketCommandContext context = new SocketCommandContext(_client, message);
 
+            if(!GetPerms(context.Channel).ManageMessages) return;
+
             if (context.User.IsBot || context.User.IsWebhook) return;
 
             if (DataExists(context.Guild.Id.ToString(), "SpamFilter-Enabled", "True"))

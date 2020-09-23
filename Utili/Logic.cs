@@ -174,6 +174,18 @@ namespace Utili
             return false;
         }
 
+        public static ChannelPermissions GetPerms(IChannel channel)
+        {
+            SocketGuildUser user = (channel as SocketGuildChannel).Guild.GetUser(Program._client.CurrentUser.Id);
+            return user.GetPermissions(channel as IGuildChannel);
+        }
+
+        public static GuildPermissions GetPerms(SocketGuild guild)
+        {
+            SocketGuildUser user = guild.GetUser(Program._client.CurrentUser.Id);
+            return user.GuildPermissions;
+        }
+
         public static Emote GetGuildEmote(string input, SocketGuild guild)
         {
             try { return guild.Emotes.First(x => x.Name == input); } catch { }

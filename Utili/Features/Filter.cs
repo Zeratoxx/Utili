@@ -25,6 +25,8 @@ namespace Utili
             SocketUserMessage message = messageParam as SocketUserMessage;
             SocketCommandContext context = new SocketCommandContext(_client, message);
 
+            if(!GetPerms(context.Channel).ManageMessages) return;
+
             if (context.User.Id == _client.CurrentUser.Id & context.Message.Embeds.Count > 0)
             {
                 if (context.Message.Embeds.First().Author.Value.Name == "Message deleted") return;

@@ -44,8 +44,8 @@ namespace Utili
         public static bool FirstStart = true;
         public static int Restarts = -1;
 
-        public static bool Debug = true;
-        public static bool UseTest = true;
+        public static bool Debug = false;
+        public static bool UseTest = false;
 
         private DateTime _lastStatsUpdate = DateTime.Now;
 
@@ -53,13 +53,6 @@ namespace Utili
 
         private static void Main()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) & UseTest == false)
-            {
-                Console.WriteLine("WARNING:\nRunning Utili on a non-linux machine!\n\nUse the test bot if you've changed code.\nPress Y to continue...");
-                if (Console.ReadKey().Key != ConsoleKey.Y) Environment.Exit(0);
-                Console.Clear();
-            }
-
             if (!Debug)
             {
                 Console.WriteLine("See Output.txt for console.");

@@ -13,6 +13,7 @@ namespace Utili
         {
             if (before.VoiceChannel == after.VoiceChannel) return;
 
+            if(!GetPerms(user.Guild).ManageRoles) return;
             #region Remove Before Role
 
             if (before.VoiceChannel != null)
