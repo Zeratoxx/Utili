@@ -352,7 +352,7 @@ namespace Utili
 
         private async Task Client_Log(LogMessage message)
         {
-            if (message.Source != "Rest" && !message.Message.Contains("PRESENCE_UPDATE") && !message.Message.Contains("Unknown dispatch"))
+            if (!message.Message.Contains("PRESENCE_UPDATE") && !message.Message.Contains("Unknown dispatch"))
             {
                 Console.WriteLine($"[{DateTime.Now}] [{message.Source}] {message.Message}");
             }
