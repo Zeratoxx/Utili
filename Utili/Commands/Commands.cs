@@ -113,6 +113,10 @@ namespace Utili
                         await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("VC Link", VcLinkCommands.HelpContent, $"Prefix these commands with {prefix}vclink"));
                         break;
 
+                    case "vcroles":
+                        await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("VC Roles", VcRoleCommands.HelpContent, $"Prefix these commands with {prefix}roles"));
+                        break;
+
                     case "mirroring":
                         await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Channel Mirroring", MirroringCommands.HelpContent, $"Prefix these commands with {prefix}mirroring"));
                         break;
@@ -184,7 +188,7 @@ namespace Utili
 
             if (details.ToLower() == "reactions" && OwnerPermission(Context.User, null))
             {
-                embed.Description = $"**Reactions added/removed:** {ReactionsAlteredPerSecond}/s\n**Max:** {MaxReactionsAlteredPerSecond}";
+                embed.Description = $"**Reactions added/removed:** {ReactionsAlteredPerSecond}/s\n**Max:** {MaxReactionsAlteredPerSecond}/s";
             }
 
             await Context.Channel.SendMessageAsync(embed: embed.Build());

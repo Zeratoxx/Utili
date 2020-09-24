@@ -36,7 +36,7 @@ namespace Utili
             {
                 SocketRole role = context.Guild.GetRole(ulong.Parse(inactiveRole.Value));
 
-                if (usr.Roles.Contains(role))
+                if (usr.Roles.Select(x => x.Id).Contains(role.Id))
                 {
                     await usr.RemoveRoleAsync(role);
                 }

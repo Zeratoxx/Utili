@@ -66,7 +66,7 @@ namespace Utili
 
                                 bool botsOnly = DataExists(guild.Id.ToString(), $"Autopurge-Mode-{channel.Id}", "Bots");
 
-                                IEnumerable<IMessage> messages = await channel.GetMessagesAsync(1000).FlattenAsync();
+                                IEnumerable<IMessage> messages = await channel.GetMessagesAsync().FlattenAsync();
 
                                 foreach (IMessage message in messages)
                                 {
@@ -149,7 +149,7 @@ namespace Utili
 
                 DeleteData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{channel.Id}");
                 SaveData(Context.Guild.Id.ToString(), $"Autopurge-Timespan-{channel.Id}", time.ToString());
-                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge time", $"Messages older than {DisplayTimespan(time)} will be deleted.\nThis setting is only for {channel.Mention}.\nNote that messages are only purged every so often so this timer may not be completely accurate."));
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Set autopurge time", $"Messages older than {DisplayTimespan(time)} will be deleted.\nIf more than **100** messages are in this channel at once, the bot will not fetch older messages to delete them. If this becomes an issue, please decrease this time period.\nNote that messages are only purged every so often so this timer may not be completely accurate."));
             }
         }
 
