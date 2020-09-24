@@ -106,7 +106,7 @@ namespace Utili
 
                             Ready = false;
 
-                            Thread.Sleep(5000);
+                            Thread.Sleep(30000);
 
                             retry = true;
                         }
@@ -116,7 +116,7 @@ namespace Utili
                     {
                         Console.WriteLine($"[{DateTime.Now}] [Crash] {e.Message}\n\nRestarting...\n");
                         retry = true;
-                        Thread.Sleep(5000);
+                        Thread.Sleep(30000);
                     }
                 }
             }
@@ -168,7 +168,8 @@ namespace Utili
                 MessageCacheSize = 5,
                 TotalShards = TotalShards,
                 ConnectionTimeout = 30000,
-                AlwaysDownloadUsers = false
+                AlwaysDownloadUsers = false,
+                ExclusiveBulkDelete = true
             });
 
             _client = _shards.GetShard(ShardId);
@@ -336,12 +337,12 @@ namespace Utili
 
         private async void CheckReliability(object sender, ElapsedEventArgs e)
         {
-            if (_client.ConnectionState != ConnectionState.Connected || _client.Latency > 10000)
+            if (_client.ConnectionState != ConnectionState.Connected || _client.Latency > 45000)
             {
                 for (int i = 0; i < 30; i++)
                 {
                     try { await Task.Delay(1000, ForceStop.Token); } catch { }
-                    if ((_client.ConnectionState == ConnectionState.Connected && _client.Latency < 10000) || ForceStop.IsCancellationRequested || !Ready) return;
+                    if ((_client.ConnectionState == ConnectionState.Connected && _client.Latency < 45000) || ForceStop.IsCancellationRequested || !Ready) return;
                 }
 
                 Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{_client.ConnectionState} @ {_client.Latency}ms]");

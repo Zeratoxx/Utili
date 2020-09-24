@@ -203,7 +203,7 @@ namespace Utili
 
         public static int GetMaxWorkers()
         {
-            int amount = (int)Math.Round(Program._client.Guilds.Count / 40d);
+            int amount = (int)Math.Round(Program._client.Guilds.Count / 80d);
             if (amount == 0) return 1;
             return amount;
         }

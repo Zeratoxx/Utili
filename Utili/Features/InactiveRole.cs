@@ -94,6 +94,7 @@ namespace Utili
             SocketRole role = guild.GetRole(roleId);
 
             if(!GetPerms(guild).ManageRoles) return;
+            if(role.Position >= guild.GetUser(_client.CurrentUser.Id).Roles.OrderBy(x => x.Position).Last().Position) return;
 
             SocketRole immuneRole = null;
             try { immuneRole = guild.GetRole(ulong.Parse(GetFirstData(guild.Id.ToString(), "InactiveRole-ImmuneRole").Value)); }
@@ -125,8 +126,6 @@ namespace Utili
                         try { lastThing = DateTime.Parse(activityData.First(x => x.Type == $"InactiveRole-Timer-{user.Id}").Value); CacheQueries += 1; }
                         catch { changeRoles = false; }
 
-                        await Task.Delay(100);
-
                         if (changeRoles)
                         {
                             if (!hasRole) //Inversed if other mode selected
@@ -137,6 +136,8 @@ namespace Utili
 
                                 if (inactive && mode == "Give") await user.AddRoleAsync(role);
                                 if (inactive && mode == "Take") await user.RemoveRoleAsync(role);
+
+                                await Task.Delay(300);
                             }
                             else
                             {
@@ -149,6 +150,8 @@ namespace Utili
 
                                     if (!inactive && mode == "Give") await user.RemoveRoleAsync(role);
                                     if (!inactive && mode == "Take") await user.AddRoleAsync(role);
+
+                                    await Task.Delay(300);
                                 }
                             }
                         }
