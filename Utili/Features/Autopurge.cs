@@ -54,48 +54,51 @@ namespace Utili
 
                     foreach (Data data in guildChannels)
                     {
-                        try
+                        if (DataExists(data.GuildId, data.Type, data.Value))
                         {
-                            SocketTextChannel channel = guild.GetTextChannel(ulong.Parse(data.Value));
-                            List<IMessage> messagesToDelete = new List<IMessage>();
-
-                            if(GetPerms(channel).ManageMessages)
+                            try
                             {
-                                TimeSpan timeSpan = TimeSpan.Parse("00:15:00");
-                                try { timeSpan = TimeSpan.Parse(GetFirstData(guildId.ToString(), $"Autopurge-Timespan-{channel.Id}").Value); } catch { }
+                                SocketTextChannel channel = guild.GetTextChannel(ulong.Parse(data.Value));
+                                List<IMessage> messagesToDelete = new List<IMessage>();
 
-                                bool botsOnly = DataExists(guild.Id.ToString(), $"Autopurge-Mode-{channel.Id}", "Bots");
-
-                                IEnumerable<IMessage> messages = await channel.GetMessagesAsync().FlattenAsync();
-
-                                foreach (IMessage message in messages)
+                                if(GetPerms(channel).ManageMessages)
                                 {
-                                    bool delete = true;
+                                    TimeSpan timeSpan = TimeSpan.Parse("00:15:00");
+                                    try { timeSpan = TimeSpan.Parse(GetFirstData(guildId.ToString(), $"Autopurge-Timespan-{channel.Id}").Value); } catch { }
 
-                                    TimeSpan messageAge = DateTime.Now - message.Timestamp.LocalDateTime;
+                                    bool botsOnly = DataExists(guild.Id.ToString(), $"Autopurge-Mode-{channel.Id}", "Bots");
 
-                                    // Don't delete if the message is younger than the desired timespan
-                                    if (messageAge < timeSpan) delete = false;
+                                    IEnumerable<IMessage> messages = await channel.GetMessagesAsync().FlattenAsync();
 
-                                    // Don't delete if the message can't be deleted (too old)
-                                    if (messageAge > TimeSpan.FromHours(335.75)) delete = false;
-
-                                    // Don't delete if the message is pinned
-                                    if (message.IsPinned) delete = false;
-
-                                    if (botsOnly)
+                                    foreach (IMessage message in messages)
                                     {
-                                        // Don't delete if the message was sent by a human
-                                        if (!message.Author.IsBot) delete = false;
+                                        bool delete = true;
+
+                                        TimeSpan messageAge = DateTime.Now - message.Timestamp.LocalDateTime;
+
+                                        // Don't delete if the message is younger than the desired timespan
+                                        if (messageAge < timeSpan) delete = false;
+
+                                        // Don't delete if the message can't be deleted (too old)
+                                        if (messageAge > TimeSpan.FromHours(335.75)) delete = false;
+
+                                        // Don't delete if the message is pinned
+                                        if (message.IsPinned) delete = false;
+
+                                        if (botsOnly)
+                                        {
+                                            // Don't delete if the message was sent by a human
+                                            if (!message.Author.IsBot) delete = false;
+                                        }
+
+                                        if (delete) messagesToDelete.Add(message);
                                     }
 
-                                    if (delete) messagesToDelete.Add(message);
+                                    await channel.DeleteMessagesAsync(messagesToDelete);
                                 }
-
-                                await channel.DeleteMessagesAsync(messagesToDelete);
                             }
+                            catch { }
                         }
-                        catch { }
                     }
                 }
                 catch { }

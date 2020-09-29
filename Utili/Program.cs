@@ -26,7 +26,7 @@ namespace Utili
 {
     internal class Program
     {
-        public static string VersionNumber = "1.11.8";
+        public static string VersionNumber = "1.11.9";
 
         // ReSharper disable InconsistentNaming
         public static DiscordSocketClient _client;
@@ -337,15 +337,15 @@ namespace Utili
 
         private async void CheckReliability(object sender, ElapsedEventArgs e)
         {
-            if (_client.ConnectionState != ConnectionState.Connected || _client.Latency > 45000)
+            if (_client.ConnectionState != ConnectionState.Connected)
             {
                 for (int i = 0; i < 30; i++)
                 {
                     try { await Task.Delay(1000, ForceStop.Token); } catch { }
-                    if ((_client.ConnectionState == ConnectionState.Connected && _client.Latency < 45000) || ForceStop.IsCancellationRequested || !Ready) return;
+                    if ((_client.ConnectionState == ConnectionState.Connected) || ForceStop.IsCancellationRequested || !Ready) return;
                 }
 
-                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{_client.ConnectionState} @ {_client.Latency}ms]");
+                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect [{_client.ConnectionState} @ {_client.Latency}ms]");
                 Ready = false;
                 ForceStop.Cancel();
             }
@@ -429,7 +429,10 @@ namespace Utili
 
         private async Task Commence_MessageReceived(SocketMessage messageParam)
         {
-            _ = Client_MessageReceived(messageParam);
+            Task.Run(() =>
+            {
+                Client_MessageReceived(messageParam);
+            });
         }
 
         private async Task Client_MessageReceived(SocketMessage messageParam)
@@ -630,7 +633,10 @@ namespace Utili
 
         private async Task Commence_UserJoin(SocketGuildUser user)
         {
-            _ = Client_UserJoin(user);
+            Task.Run(() =>
+            {
+                Client_UserJoin(user);
+            });
         }
 
         private async Task Client_UserJoin(SocketGuildUser user)
@@ -654,7 +660,10 @@ namespace Utili
 
         private async Task Commence_ClientJoin(SocketGuild guild)
         {
-            _ = Client_ClientJoin(guild);
+            Task.Run(() =>
+            {
+                Client_ClientJoin(guild);
+            });
         }
 
         private async Task Client_ClientJoin(SocketGuild guild)
@@ -674,7 +683,10 @@ namespace Utili
 
         private async Task Commence_UserLeft(SocketGuildUser user)
         {
-            _ = Client_UserLeft(user);
+            Task.Run(() =>
+            {
+                Client_UserLeft(user);
+            });
         }
 
         private async Task Client_UserLeft(SocketGuildUser user)
@@ -691,7 +703,10 @@ namespace Utili
 
         private async Task Commence_ClientLeave(SocketGuild guild)
         {
-            _ = Client_ClientLeave(guild);
+            Task.Run(() =>
+            {
+                Client_ClientLeave(guild);
+            });
         }
 
         private async Task Client_ClientLeave(SocketGuild guild)
@@ -707,7 +722,10 @@ namespace Utili
 
         private async Task Commence_UserVoiceStateUpdated(SocketUser userParam, SocketVoiceState before, SocketVoiceState after)
         {
-            _ = Client_UserVoiceStateUpdated(userParam, before, after);
+            Task.Run(() =>
+            {
+                Client_UserVoiceStateUpdated(userParam, before, after);
+            });
         }
 
         private async Task Client_UserVoiceStateUpdated(SocketUser userParam, SocketVoiceState before, SocketVoiceState after)
@@ -731,13 +749,19 @@ namespace Utili
 
         private async Task Commence_ChannelCreated(SocketChannel channel)
         {
-            _ = Client_ChannelCreated(channel);
+            Task.Run(() =>
+            {
+                Client_ChannelCreated(channel);
+            });
         }
 
         private async Task Client_ChannelCreated(SocketChannel channel)
         {
             MessageLogs messageLogs = new MessageLogs();
-            _ = messageLogs.MessageLogs_ChannelCreated(channel);
+            Task.Run(() =>
+            {
+                messageLogs.MessageLogs_ChannelCreated(channel);
+            });
         }
 
         #endregion Channel Created
@@ -747,20 +771,29 @@ namespace Utili
         public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> partialMessage, ISocketMessageChannel channel)
         {
             MessageLogs messageLogs = new MessageLogs();
-            _ = messageLogs.MessageLogs_MessageDeleted(partialMessage, channel);
+            Task.Run(() =>
+            {
+                messageLogs.MessageLogs_MessageDeleted(partialMessage, channel);
+            });
         }
 
         public async Task Commence_MessageUpdated(Cacheable<IMessage, ulong> partialMessage, SocketMessage newMessage, ISocketMessageChannel channel)
         {
             MessageLogs messageLogs = new MessageLogs();
-            _ = messageLogs.MessageLogs_MessageEdited(partialMessage, newMessage, channel);
+            Task.Run(() =>
+            {
+                messageLogs.MessageLogs_MessageEdited(partialMessage, newMessage, channel);
+            });
         }
 
         public async Task Commence_ReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {
             ReactionsAltered += 1;
             Votes votes = new Votes();
-            _ = votes.Votes_ReactionAdded(message, channel, reaction);
+            Task.Run(() =>
+            {
+                votes.Votes_ReactionAdded(message, channel, reaction);
+            });
         }
 
         public async Task Commence_ReactionRemoved(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
