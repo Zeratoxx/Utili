@@ -736,10 +736,26 @@ namespace Utili
             VcRoles vcRoles = new VcRoles();
             _ = vcRoles.Client_UserVoiceStateUpdated(user, before, after);
 
-            if (after.VoiceChannel != null)
+            SocketGuild guild = user.Guild;
+
+            if (after.VoiceChannel != null && before.VoiceChannel == null)
             {
-                DeleteData(user.Guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ignoreCache: true, table: "Utili_InactiveTimers");
-                SaveData(user.Guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ToSqlTime(DateTime.Now), ignoreCache: true, table: "Utili_InactiveTimers");
+                Data inactiveRole = GetFirstData(guild.Id.ToString(), "InactiveRole-Role");
+                if (inactiveRole != null)
+                {
+                    SocketRole role = guild.GetRole(ulong.Parse(inactiveRole.Value));
+
+                    if (user.Roles.Select(x => x.Id).Contains(role.Id))
+                    {
+                        await user.RemoveRoleAsync(role);
+                    }
+
+                    int rowsAffected = RunNonQuery("UPDATE Utili_InactiveTimers SET DataValue = @Value WHERE GuildID = @GuildID AND DataType = @Type", new[] { ("GuildID", guild.Id.ToString()), ("Type", $"InactiveRole-Timer-{user.Id}"), ("Value", ToSqlTime(DateTime.Now)) });
+                    if (rowsAffected == 0)
+                    {
+                        SaveData(guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ToSqlTime(DateTime.Now), ignoreCache: true, table: "Utili_InactiveTimers");
+                    }
+                }
             }
         }
 
