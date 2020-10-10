@@ -26,7 +26,7 @@ namespace Utili
 {
     internal class Program
     {
-        public static string VersionNumber = "1.11.9";
+        public static string VersionNumber = "1.11.10";
 
         // ReSharper disable InconsistentNaming
         public static DiscordSocketClient _client;

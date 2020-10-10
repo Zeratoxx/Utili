@@ -108,6 +108,8 @@ namespace Utili
             try { mode = GetFirstData(guild.Id.ToString(), "InactiveRole-Mode").Value; }
             catch { }
 
+            DateTime defaultTime = guild.GetUser(_client.CurrentUser.Id).JoinedAt.Value.LocalDateTime;
+
             List<Data> activityData = GetDataList(guild.Id.ToString(), ignoreCache: true, table: "Utili_InactiveTimers");
 
             foreach (SocketGuildUser user in guild.Users)
@@ -119,40 +121,36 @@ namespace Utili
                         bool hasRole = user.Roles.Contains(role);
                         if (mode == "Take") hasRole = !hasRole;
 
-                        bool changeRoles = true;
                         bool inactive = false;
-                        DateTime lastThing = DateTime.MinValue;
+                        DateTime lastThing = defaultTime;
 
                         try { lastThing = DateTime.Parse(activityData.First(x => x.Type == $"InactiveRole-Timer-{user.Id}").Value); CacheQueries += 1; }
-                        catch { changeRoles = false; }
+                        catch { }
 
-                        if (changeRoles)
+                        if (!hasRole) //Inversed if other mode selected
                         {
-                            if (!hasRole) //Inversed if other mode selected
+                            if (DateTime.Now - lastThing > threshold) inactive = true;
+
+                            if (immuneRole != null) if (user.Roles.Contains(immuneRole)) inactive = false;
+
+                            if (inactive && mode == "Give") await user.AddRoleAsync(role);
+                            if (inactive && mode == "Take") await user.RemoveRoleAsync(role);
+
+                            await Task.Delay(500);
+                        }
+                        else
+                        {
+                            inactive = true;
+                            if (depth)
                             {
-                                if (DateTime.Now - lastThing > threshold) inactive = true;
+                                if (DateTime.Now - lastThing < threshold) inactive = false;
 
                                 if (immuneRole != null) if (user.Roles.Contains(immuneRole)) inactive = false;
 
-                                if (inactive && mode == "Give") await user.AddRoleAsync(role);
-                                if (inactive && mode == "Take") await user.RemoveRoleAsync(role);
+                                if (!inactive && mode == "Give") await user.RemoveRoleAsync(role);
+                                if (!inactive && mode == "Take") await user.AddRoleAsync(role);
 
-                                await Task.Delay(300);
-                            }
-                            else
-                            {
-                                inactive = true;
-                                if (depth)
-                                {
-                                    if (DateTime.Now - lastThing < threshold) inactive = false;
-
-                                    if (immuneRole != null) if (user.Roles.Contains(immuneRole)) inactive = false;
-
-                                    if (!inactive && mode == "Give") await user.RemoveRoleAsync(role);
-                                    if (!inactive && mode == "Take") await user.AddRoleAsync(role);
-
-                                    await Task.Delay(300);
-                                }
+                                await Task.Delay(500);
                             }
                         }
                     }
