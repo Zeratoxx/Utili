@@ -26,7 +26,7 @@ namespace Utili
 {
     internal class Program
     {
-        public static string VersionNumber = "1.11.10";
+        public static string VersionNumber = "1.11.11";
 
         // ReSharper disable InconsistentNaming
         public static DiscordSocketClient _client;
@@ -168,8 +168,18 @@ namespace Utili
                 MessageCacheSize = 5,
                 TotalShards = TotalShards,
                 ConnectionTimeout = 30000,
-                AlwaysDownloadUsers = false,
-                ExclusiveBulkDelete = true
+                AlwaysDownloadUsers = true,
+                ExclusiveBulkDelete = true,
+
+                GatewayIntents = 
+                    GatewayIntents.GuildEmojis |
+                    GatewayIntents.GuildIntegrations |
+                    GatewayIntents.GuildMembers |
+                    GatewayIntents.GuildMessageReactions |
+                    GatewayIntents.GuildMessages |
+                    GatewayIntents.Guilds |
+                    GatewayIntents.GuildVoiceStates |
+                    GatewayIntents.GuildWebhooks
             });
 
             _client = _shards.GetShard(ShardId);
@@ -198,6 +208,7 @@ namespace Utili
             await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: null);
 
             _client.Ready += Client_Ready;
+            _client.Connected += Client_Connected;
             _client.Log += Client_Log;
 
             Console.WriteLine($"[{DateTime.Now}] [Info] Starting bot on version {VersionNumber}");
@@ -212,6 +223,9 @@ namespace Utili
             CacheQueries = 0;
 
             await _shards.LoginAsync(TokenType.Bot, token);
+
+            await _client.SetGameAsync("Starting up...");
+
             await _shards.StartAsync();
 
             LatencyTimer = new Timer(10000);
@@ -252,6 +266,8 @@ namespace Utili
             await Task.Delay(5000);
             throw new Exception("MainAsync was terminated.");
         }
+
+        
 
         private async void UpdateLatency(object sender, ElapsedEventArgs e)
         {
@@ -380,8 +396,6 @@ namespace Utili
             }
             else Console.WriteLine($"[{DateTime.Now}] [Info] Skipped cache loading as this is not the first startup.");
 
-            await _client.SetGameAsync(".help", null, ActivityType.Watching);
-
             _youtube = new YouTubeService(new BaseClientService.Initializer
             {
                 ApplicationName = Config.Youtube.ApplicationName,
@@ -420,6 +434,19 @@ namespace Utili
                     }
                     catch { await Task.Delay(5000); }
                 }
+            });
+        }
+
+        private async Task Client_Connected()
+        {
+            _ = Task.Run(async () =>
+            {
+                foreach(SocketGuild guild in _client.Guilds)
+                {
+                    await guild.DownloadUsersAsync();
+                }
+
+                await _client.SetGameAsync(".help", null, ActivityType.Watching);
             });
         }
 

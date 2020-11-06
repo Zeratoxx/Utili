@@ -22,7 +22,8 @@ namespace Utili
                     try
                     {
                         SocketRole role = user.Guild.Roles.First(x => x.Id.ToString() == data.Value);
-                        _ = user.AddRoleAsync(role);
+                        await user.AddRoleAsync(role);
+                        await Task.Delay(100);
                     }
                     catch { }
                 }
