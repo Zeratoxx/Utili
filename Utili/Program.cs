@@ -347,15 +347,22 @@ namespace Utili
             catch { }
         }
 
+        bool Downloading = false;
         private async void CheckReliability(object sender, ElapsedEventArgs e)
         {
-            if (Ready)
+            if (Ready && !Downloading)
             {
-                foreach(SocketGuild guild in _client.Guilds.Where(x => !x.HasAllMembers))
+                Downloading = true;
+                try
                 {
-                    _ = guild.DownloadUsersAsync();
-                    await Task.Delay(1000);
+                    foreach(SocketGuild guild in _client.Guilds.Where(x => !x.HasAllMembers))
+                    {
+                        _ = guild.DownloadUsersAsync();
+                        await Task.Delay(1000);
+                    }
                 }
+                catch { }
+                Downloading = false;
             }
 
             return;
