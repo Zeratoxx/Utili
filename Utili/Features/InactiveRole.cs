@@ -51,7 +51,7 @@ namespace Utili
 
         public async Task Run()
         {
-            StartRunthrough = new Timer(60000);
+            StartRunthrough = new Timer(120000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
         }

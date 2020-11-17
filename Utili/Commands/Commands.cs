@@ -171,6 +171,9 @@ namespace Utili
             embed.AddField("**Database**", $"Ping: {database}ms\nQueries: {QueriesPerSecond}/s", true);
             embed.AddField("**Cache**", $"\nItems: {CacheItems}\nQueries: {CacheQueriesPerSecond}/s", true);
 
+            embed.Description =
+                $"**Users downloaded for {Program._client.Guilds.Count(x => x.HasAllMembers)} of {Program._client.Guilds.Count} guilds**";
+
             if (details.ToLower() == "common" && OwnerPermission(Context.User, null))
             {
                 embed.Description = $"**Most commonly requested data items**\n{CommonItemsOutput}";

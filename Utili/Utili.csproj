@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="2.3.0-dev-20201014.8" />
+    <PackageReference Include="Discord.Net" Version="2.3.0-dev-20201115.2" />
     <PackageReference Include="DiscordBotsList.Api" Version="1.4.0" />
     <PackageReference Include="Google.Apis.YouTube.v3" Version="1.49.0.2084" />
     <PackageReference Include="Microsoft.AspNet.WebHooks.Receivers" Version="1.2.2" />

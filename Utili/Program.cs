@@ -125,6 +125,7 @@ namespace Utili
         private async Task MainAsync()
         {
             Ready = false;
+            First = true;
 
             if (!LoadConfig()) GenerateNewConfig();
             SetConnectionString();
@@ -165,15 +166,14 @@ namespace Utili
             _shards = new DiscordShardedClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info,
-                MessageCacheSize = 5,
+                MessageCacheSize = 0,
                 TotalShards = TotalShards,
-                ConnectionTimeout = 30000,
-                AlwaysDownloadUsers = true,
+                // ConnectionTimeout = 30000,
+                //AlwaysDownloadUsers = true,
                 ExclusiveBulkDelete = true,
 
                 GatewayIntents = 
                     GatewayIntents.GuildEmojis |
-                    GatewayIntents.GuildIntegrations |
                     GatewayIntents.GuildMembers |
                     GatewayIntents.GuildMessageReactions |
                     GatewayIntents.GuildMessages |
@@ -224,7 +224,7 @@ namespace Utili
 
             await _shards.LoginAsync(TokenType.Bot, token);
 
-            await _client.SetGameAsync("Starting up...");
+            await _shards.SetGameAsync("Starting up...");
 
             await _shards.StartAsync();
 
@@ -267,12 +267,8 @@ namespace Utili
             throw new Exception("MainAsync was terminated.");
         }
 
-        
-
         private async void UpdateLatency(object sender, ElapsedEventArgs e)
         {
-            if (!Ready) return;
-
             try
             {
                 TimeSpan uptime = DateTime.Now - QueryTimer;
@@ -353,6 +349,17 @@ namespace Utili
 
         private async void CheckReliability(object sender, ElapsedEventArgs e)
         {
+            if (Ready)
+            {
+                foreach(SocketGuild guild in _client.Guilds.Where(x => !x.HasAllMembers))
+                {
+                    _ = guild.DownloadUsersAsync();
+                    await Task.Delay(1000);
+                }
+            }
+
+            return;
+
             if (_client.ConnectionState != ConnectionState.Connected)
             {
                 for (int i = 0; i < 30; i++)
@@ -369,10 +376,7 @@ namespace Utili
 
         private async Task Client_Log(LogMessage message)
         {
-            if (!message.Message.Contains("PRESENCE_UPDATE") && !message.Message.Contains("Unknown dispatch"))
-            {
-                Console.WriteLine($"[{DateTime.Now}] [{message.Source}] {message.Message}");
-            }
+            Console.WriteLine($"[{DateTime.Now}] [{message.Source}] {message.Message}");
         }
 
         private async Task Client_Ready()
@@ -407,8 +411,6 @@ namespace Utili
             AntiProfane antiProfane = new AntiProfane();
             _ = antiProfane.AntiProfane_Ready();
 
-            Ready = true;
-
             _ = Task.Run(async () =>
             {
                 await Task.Delay(10000);
@@ -437,14 +439,21 @@ namespace Utili
             });
         }
 
+        bool First = true;
         private async Task Client_Connected()
         {
             _ = Task.Run(async () =>
             {
+                if(!First) return;
+                First = false;
+
                 foreach(SocketGuild guild in _client.Guilds)
                 {
-                    await guild.DownloadUsersAsync();
+                    _ = guild.DownloadUsersAsync();
+                    await Task.Delay(1000);
                 }
+
+                Ready = true;
 
                 await _client.SetGameAsync(".help", null, ActivityType.Watching);
             });
@@ -695,6 +704,7 @@ namespace Utili
 
         private async Task Client_ClientJoin(SocketGuild guild)
         {
+            _ = guild.DownloadUsersAsync();
             DeleteData(guild.Id.ToString(), ignoreCache: true, table: "Utili_InactiveTimers");
             DateTime startTime = DateTime.Now;
             foreach (SocketGuildUser user in guild.Users)
