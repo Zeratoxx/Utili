@@ -383,7 +383,14 @@ namespace Utili
 
         private async Task Client_Log(LogMessage message)
         {
-            Console.WriteLine($"[{DateTime.Now}] [{message.Source}] {message.Message}");
+            if (message.Exception == null)
+            {
+                Console.WriteLine($"[{DateTime.Now}] [{message.Source}] {message.Message}");
+            }
+            else
+            {
+                Console.WriteLine($"[{DateTime.Now}] [{message.Source}] {message.Exception.Message}\n{message.Exception.StackTrace}");
+            }
         }
 
         private async Task Client_Ready()
