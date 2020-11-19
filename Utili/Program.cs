@@ -166,7 +166,7 @@ namespace Utili
             _shards = new DiscordShardedClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info,
-                MessageCacheSize = 0,
+                MessageCacheSize = 5,
                 TotalShards = TotalShards,
                 // ConnectionTimeout = 30000,
                 //AlwaysDownloadUsers = true,
@@ -355,7 +355,7 @@ namespace Utili
                 Downloading = true;
                 try
                 {
-                    foreach(SocketGuild guild in _client.Guilds.Where(x => !x.HasAllMembers))
+                    foreach(SocketGuild guild in _client.Guilds.Where(x => x.Users.Count < x.MemberCount))
                     {
                         _ = guild.DownloadUsersAsync();
                         await Task.Delay(1000);

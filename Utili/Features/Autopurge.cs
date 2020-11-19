@@ -21,7 +21,7 @@ namespace Utili
 
         public async Task Run()
         {
-            StartRunthrough = new Timer(10000);
+            StartRunthrough = new Timer(60000);
             StartRunthrough.Elapsed += StartRunthrough_Elapsed;
             StartRunthrough.Start();
         }
@@ -68,7 +68,7 @@ namespace Utili
 
                                     bool botsOnly = DataExists(guild.Id.ToString(), $"Autopurge-Mode-{channel.Id}", "Bots");
 
-                                    IEnumerable<IMessage> messages = await channel.GetMessagesAsync().FlattenAsync();
+                                    IEnumerable<IMessage> messages = await channel.GetMessagesAsync(100).FlattenAsync();
 
                                     foreach (IMessage message in messages)
                                     {
@@ -95,6 +95,7 @@ namespace Utili
                                     }
 
                                     await channel.DeleteMessagesAsync(messagesToDelete);
+                                    await Task.Delay(2000);
                                 }
                             }
                             catch { }
