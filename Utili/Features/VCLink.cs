@@ -75,10 +75,11 @@ namespace Utili
                         SaveData(user.Guild.Id.ToString(), $"VCLink-Channel-{after.VoiceChannel.Id}", temp.Id.ToString());
 
                         if (after.VoiceChannel.CategoryId.HasValue) await temp.ModifyAsync(x => { x.CategoryId = after.VoiceChannel.CategoryId.Value; x.Topic = "Automatically made by Utili"; });
-                        await channel.AddPermissionOverwriteAsync(user.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
+                        await temp.AddPermissionOverwriteAsync(user.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
+                        await temp.AddPermissionOverwriteAsync(user, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
                     }
 
-                    await channel.AddPermissionOverwriteAsync(user, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
+                    if(channel != null) await channel.AddPermissionOverwriteAsync(user, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
                 }
 
                 #endregion Add After VC
