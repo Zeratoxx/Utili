@@ -74,20 +74,10 @@ namespace Utili
                         RestTextChannel temp = await user.Guild.CreateTextChannelAsync($"vc-{after.VoiceChannel.Name}");
                         SaveData(user.Guild.Id.ToString(), $"VCLink-Channel-{after.VoiceChannel.Id}", temp.Id.ToString());
 
-                        int i = 0;
-                        while (channel == null || i > 20)
-                        {
-                            await Task.Delay(500);
-                            channel = user.Guild.GetTextChannel(temp.Id);
-                            i++;
-                        }
-
-                        if(!GetPerms(channel).ManageChannel || !GetPerms(channel).ManageRoles) return;
-                        if (after.VoiceChannel.CategoryId.HasValue) await channel.ModifyAsync(x => { x.CategoryId = after.VoiceChannel.CategoryId.Value; x.Topic = "Automatically made by Utili"; });
+                        if (after.VoiceChannel.CategoryId.HasValue) await temp.ModifyAsync(x => { x.CategoryId = after.VoiceChannel.CategoryId.Value; x.Topic = "Automatically made by Utili"; });
                         await channel.AddPermissionOverwriteAsync(user.Guild.EveryoneRole, new OverwritePermissions(viewChannel: PermValue.Deny));
                     }
 
-                    if(!GetPerms(channel).ManageRoles) return;
                     await channel.AddPermissionOverwriteAsync(user, new OverwritePermissions(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow));
                 }
 
