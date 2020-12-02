@@ -108,7 +108,8 @@ namespace Utili
             try { mode = GetFirstData(guild.Id.ToString(), "InactiveRole-Mode").Value; }
             catch { }
 
-            DateTime defaultTime = guild.GetUser(_client.CurrentUser.Id).JoinedAt.Value.LocalDateTime;
+            DateTime defaultTime = DateTime.MinValue;
+            try { defaultTime = guild.GetUser(_client.CurrentUser.Id).JoinedAt.Value.LocalDateTime; } catch { }
 
             List<Data> activityData = GetDataList(guild.Id.ToString(), ignoreCache: true, table: "Utili_InactiveTimers");
 
@@ -136,7 +137,7 @@ namespace Utili
                             if (inactive && mode == "Give") await user.AddRoleAsync(role);
                             if (inactive && mode == "Take") await user.RemoveRoleAsync(role);
 
-                            await Task.Delay(500);
+                            await Task.Delay(1000);
                         }
                         else
                         {
@@ -150,7 +151,7 @@ namespace Utili
                                 if (!inactive && mode == "Give") await user.RemoveRoleAsync(role);
                                 if (!inactive && mode == "Take") await user.AddRoleAsync(role);
 
-                                await Task.Delay(500);
+                                await Task.Delay(1000);
                             }
                         }
                     }

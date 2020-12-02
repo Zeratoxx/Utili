@@ -125,7 +125,7 @@ namespace Utili
         private async Task MainAsync()
         {
             Ready = false;
-            First = true;
+            _first = true;
 
             if (!LoadConfig()) GenerateNewConfig();
             SetConnectionString();
@@ -228,7 +228,7 @@ namespace Utili
 
             await _shards.StartAsync();
 
-            LatencyTimer = new Timer(10000);
+            LatencyTimer = new Timer(15000);
             LatencyTimer.Elapsed += UpdateLatency;
             LatencyTimer.Start();
 
@@ -240,7 +240,7 @@ namespace Utili
 
             ForceStop = new CancellationTokenSource();
 
-            ReliabilityTimer = new Timer(5000);
+            ReliabilityTimer = new Timer(10000);
             ReliabilityTimer.Elapsed += CheckReliability;
             ReliabilityTimer.Start();
 
@@ -347,35 +347,37 @@ namespace Utili
             catch { }
         }
 
-        bool Downloading = false;
+        private bool _downloading;
         private async void CheckReliability(object sender, ElapsedEventArgs e)
         {
-            if (Ready && !Downloading)
+            if (Ready && !_downloading)
             {
-                Downloading = true;
+                _downloading = true;
                 try
                 {
                     foreach(SocketGuild guild in _client.Guilds.Where(x => x.Users.Count < x.MemberCount))
                     {
-                        _ = guild.DownloadUsersAsync();
-                        await Task.Delay(1000);
+                        try
+                        {
+                            _ = guild.DownloadUsersAsync();
+                        } catch { }
+                        
+                        await Task.Delay(2000);
                     }
                 }
                 catch { }
-                Downloading = false;
+                _downloading = false;
             }
 
-            return;
-
-            if (_client.ConnectionState != ConnectionState.Connected)
+            if (_client.ConnectionState != ConnectionState.Connected || _client.Latency >= 30000)
             {
                 for (int i = 0; i < 30; i++)
                 {
-                    try { await Task.Delay(1000, ForceStop.Token); } catch { }
-                    if ((_client.ConnectionState == ConnectionState.Connected) || ForceStop.IsCancellationRequested || !Ready) return;
+                    try { await Task.Delay(1000, ForceStop.Token); } catch { return; }
+                    if ((_client.ConnectionState == ConnectionState.Connected && _client.Latency < 15000) || ForceStop.IsCancellationRequested || !Ready) return;
                 }
 
-                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect [{_client.ConnectionState} @ {_client.Latency}ms]");
+                Console.WriteLine($"[{DateTime.Now}] [Info] Script terminated due to prolonged disconnect or high latency [{_client.ConnectionState} @ {_client.Latency}ms]");
                 Ready = false;
                 ForceStop.Cancel();
             }
@@ -390,6 +392,10 @@ namespace Utili
             else
             {
                 Console.WriteLine($"[{DateTime.Now}] [{message.Source}] {message.Exception.Message}\n{message.Exception.StackTrace}");
+                if (message.Exception.InnerException != null)
+                {
+                    Console.WriteLine($"Inner Exception: {message.Exception.Message}\n{message.Exception.StackTrace}");
+                }
             }
         }
 
@@ -453,13 +459,13 @@ namespace Utili
             });
         }
 
-        bool First = true;
+        private bool _first = true;
         private async Task Client_Connected()
         {
             _ = Task.Run(async () =>
             {
-                if(!First) return;
-                First = false;
+                if(!_first) return;
+                _first = false;
 
                 foreach(SocketGuild guild in _client.Guilds)
                 {
