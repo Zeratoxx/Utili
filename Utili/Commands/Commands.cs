@@ -172,7 +172,7 @@ namespace Utili
             embed.AddField("**Cache**", $"\nItems: {CacheItems}\nQueries: {CacheQueriesPerSecond}/s", true);
 
             embed.Description =
-                $"**Users downloaded for {Program._client.Guilds.Count(x => x.HasAllMembers)} of {Program._client.Guilds.Count} guilds**";
+                $"**Users downloaded:** {Program._client.Guilds.Count(x => x.DownloadedMemberCount >= x.MemberCount)}/{Program._client.Guilds.Count} guilds\n**CPU:** {Cpu}%\n**Memory:** {MemoryUsed}/{TotalMemory} GB";
 
             if (details.ToLower() == "common" && OwnerPermission(Context.User, null))
             {
@@ -218,7 +218,7 @@ namespace Utili
                 {
                     #region Discord Bots List (top.gg)
 
-                    AuthDiscordBotListApi api = new AuthDiscordBotListApi(655155797260501039, Config.DiscordBotListKey);
+                    AuthDiscordBotListApi api = new AuthDiscordBotListApi(655155797260501039, Config.Topgg);
                     IDblSelfBot me = await api.GetMeAsync();
                     List<IDblEntity> voters = await me.GetVotersAsync();
 
@@ -249,7 +249,7 @@ namespace Utili
                     string url = "https://botsfordiscord.com/api/bot/655155797260501039/votes";
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                     request.ContentType = "application/json; charset=utf-8";
-                    request.Headers["Authorization"] = Config.BotsForDiscordKey;
+                    request.Headers["Authorization"] = Config.BotsForDiscord;
                     request.Headers["Content-Type"] = "json";
                     request.PreAuthenticate = true;
                     HttpWebResponse response = request.GetResponse() as HttpWebResponse;

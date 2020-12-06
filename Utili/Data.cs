@@ -30,6 +30,9 @@ namespace Utili
         public static int CacheItems = 0;
         public static int SendLatency = 0;
         public static int EditLatency = 0;
+        public static double Cpu = 0;
+        public static double MemoryUsed = 0;
+        public static double TotalMemory = 0;
 
         public static List<Data> CommonItemsRegistry = new List<Data>();
         public static string CommonItemsOutput = "No data collected yet.";

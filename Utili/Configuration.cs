@@ -55,10 +55,13 @@ namespace Utili
         public DatabaseInfo Database { get; set; } = new DatabaseInfo();
         public EmailLogin EmailInfo { get; set; } = new EmailLogin();
         public YoutubeInfo Youtube { get; set; } = new YoutubeInfo();
-        public string DiscordBotListKey { get; set; } = "";
-        public string BotsForDiscordKey { get; set; } = "";
-        public string BotsOnDiscordKey { get; set; } = "";
-        public string DiscordBoatsKey { get; set; } = "";
+        public string Topgg { get; set; } = "";
+        public string DiscordBots { get; set; } = "";
+        public string BotsForDiscord { get; set; } = "";
+        public string BotsOnDiscord { get; set; } = "";
+        public string DiscordBoats { get; set; } = "";
+        public string DiscordBotList { get; set; } = "";
+        public string BotlistSpace { get; set; } = "";
     }
 
     internal class DatabaseInfo

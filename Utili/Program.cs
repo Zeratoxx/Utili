@@ -17,10 +17,12 @@ using DiscordBotsList.Api;
 using DiscordBotsList.Api.Objects;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
+using BotlistStatsPoster;
 using static Utili.Data;
 using static Utili.Json;
 using static Utili.SendMessage;
 using Timer = System.Timers.Timer;
+using LinuxSystemStats;
 
 namespace Utili
 {
@@ -125,7 +127,6 @@ namespace Utili
         private async Task MainAsync()
         {
             Ready = false;
-            _first = true;
 
             if (!LoadConfig()) GenerateNewConfig();
             SetConnectionString();
@@ -343,37 +344,25 @@ namespace Utili
                     await sent.DeleteAsync();
                 }
                 catch { SendLatency = 0; EditLatency = 0; }
+
+                try
+                {
+                    Cpu = await Stats.GetCurrentCpuUsagePercentageAsync(2);
+                    MemoryInformation mem = await Stats.GetMemoryInformationAsync(2);
+                    TotalMemory = mem.TotalGigabytes;
+                    MemoryUsed = mem.UsedGigabytes;
+                } catch { }
             }
             catch { }
         }
 
-        private bool _downloading;
         private async void CheckReliability(object sender, ElapsedEventArgs e)
         {
-            if (Ready && !_downloading)
-            {
-                _downloading = true;
-                try
-                {
-                    foreach(SocketGuild guild in _client.Guilds.Where(x => x.Users.Count < x.MemberCount))
-                    {
-                        try
-                        {
-                            _ = guild.DownloadUsersAsync();
-                        } catch { }
-                        
-                        await Task.Delay(2000);
-                    }
-                }
-                catch { }
-                _downloading = false;
-            }
-
             if (_client.ConnectionState != ConnectionState.Connected || _client.Latency >= 30000)
             {
-                for (int i = 0; i < 30; i++)
+                for (int i = 0; i < 15; i++)
                 {
-                    try { await Task.Delay(1000, ForceStop.Token); } catch { return; }
+                    try { await Task.Delay(2000, ForceStop.Token); } catch { return; }
                     if ((_client.ConnectionState == ConnectionState.Connected && _client.Latency < 15000) || ForceStop.IsCancellationRequested || !Ready) return;
                 }
 
@@ -459,18 +448,17 @@ namespace Utili
             });
         }
 
-        private bool _first = true;
         private async Task Client_Connected()
         {
             _ = Task.Run(async () =>
             {
-                if(!_first) return;
-                _first = false;
+                await _client.SetGameAsync("Starting up...");
 
-                foreach(SocketGuild guild in _client.Guilds)
+                foreach(SocketGuild guild in _client.Guilds.Where(x => x.MemberCount > x.DownloadedMemberCount))
                 {
                     _ = guild.DownloadUsersAsync();
                     await Task.Delay(1000);
+                    if(ForceStop.IsCancellationRequested || _client.ConnectionState != ConnectionState.Connected) return;
                 }
 
                 Ready = true;
@@ -485,9 +473,9 @@ namespace Utili
 
         private async Task Commence_MessageReceived(SocketMessage messageParam)
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                Client_MessageReceived(messageParam);
+                _ = Client_MessageReceived(messageParam);
             });
         }
 
@@ -626,72 +614,33 @@ namespace Utili
 
         #endregion Receive
 
-        #region Update Stats
-
         private async Task UpdateStats()
         {
             if (UseTest) return;
 
             _lastStatsUpdate = DateTime.Now;
 
-            #region top.gg
-
-            AuthDiscordBotListApi api = new AuthDiscordBotListApi(655155797260501039, Config.DiscordBotListKey);
-            IDblSelfBot me = await api.GetMeAsync();
-            try { await me.UpdateStatsAsync(_shards.Guilds.Count); } catch { }
-
-            #endregion top.gg
-
-            #region Bots For Discord
-
-            HttpClient httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.BotsForDiscordKey);
-
-            FormUrlEncodedContent content = new FormUrlEncodedContent(new[]
+            StatsPoster poster = new StatsPoster(_client.CurrentUser.Id, new TokenConfiguration
             {
-                new KeyValuePair<string, string>("server_count", _shards.Guilds.Count.ToString()),
+                Topgg = Config.Topgg,
+                DiscordBots = Config.DiscordBots,
+                BotsForDiscord = Config.BotsForDiscord,
+                BotsOnDiscord = Config.BotsOnDiscord,
+                DiscordBoats = Config.DiscordBoats,
+                DiscordBotList = Config.DiscordBotList,
+                BotlistSpace = Config.BotlistSpace
             });
 
-            try { await httpClient.PostAsync("https://botsfordiscord.com/api/bot/655155797260501039", content); } catch { }
-
-            #endregion Bots For Discord
-
-            #region Bots On Discord
-
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.BotsOnDiscordKey);
-
-            content = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("guildCount", _shards.Guilds.Count.ToString()),
-            });
-
-            try { await httpClient.PostAsync("https://bots.ondiscord.xyz/bot-api/bots/655155797260501039/guilds", content); } catch { }
-
-            #endregion Bots On Discord
-
-            #region Discord Boats
-
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Config.DiscordBoatsKey);
-
-            content = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("server_count", _shards.Guilds.Count.ToString()),
-            });
-
-            try { await httpClient.PostAsync("https://discord.boats/api/bot/655155797260501039", content); } catch { }
-
-            #endregion Discord Boats
+            await poster.PostGuildCountAsync(_client.Guilds.Count);
         }
-
-        #endregion Update Stats
 
         #region User Join
 
         private async Task Commence_UserJoin(SocketGuildUser user)
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                Client_UserJoin(user);
+                _ = Client_UserJoin(user);
             });
         }
 
@@ -716,22 +665,15 @@ namespace Utili
 
         private async Task Commence_ClientJoin(SocketGuild guild)
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                Client_ClientJoin(guild);
+                _ = Client_ClientJoin(guild);
             });
         }
 
         private async Task Client_ClientJoin(SocketGuild guild)
         {
             _ = guild.DownloadUsersAsync();
-            DeleteData(guild.Id.ToString(), ignoreCache: true, table: "Utili_InactiveTimers");
-            DateTime startTime = DateTime.Now;
-            foreach (SocketGuildUser user in guild.Users)
-            {
-                SaveData(user.Guild.Id.ToString(), $"InactiveRole-Timer-{user.Id}", ToSqlTime(startTime), ignoreCache: true, table: "Utili_InactiveTimers");
-                await Task.Delay(100);
-            }
         }
 
         #endregion _client Join
@@ -740,9 +682,9 @@ namespace Utili
 
         private async Task Commence_UserLeft(SocketGuildUser user)
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                Client_UserLeft(user);
+                _ = Client_UserLeft(user);
             });
         }
 
@@ -760,9 +702,9 @@ namespace Utili
 
         private async Task Commence_ClientLeave(SocketGuild guild)
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                Client_ClientLeave(guild);
+                _ = Client_ClientLeave(guild);
             });
         }
 
@@ -779,9 +721,9 @@ namespace Utili
 
         private async Task Commence_UserVoiceStateUpdated(SocketUser userParam, SocketVoiceState before, SocketVoiceState after)
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                Client_UserVoiceStateUpdated(userParam, before, after);
+                _ = Client_UserVoiceStateUpdated(userParam, before, after);
             });
         }
 
@@ -822,18 +764,18 @@ namespace Utili
 
         private async Task Commence_ChannelCreated(SocketChannel channel)
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                Client_ChannelCreated(channel);
+                _ = Client_ChannelCreated(channel);
             });
         }
 
         private async Task Client_ChannelCreated(SocketChannel channel)
         {
             MessageLogs messageLogs = new MessageLogs();
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                messageLogs.MessageLogs_ChannelCreated(channel);
+                _ = messageLogs.MessageLogs_ChannelCreated(channel);
             });
         }
 
@@ -844,18 +786,18 @@ namespace Utili
         public async Task Commence_MessageDelete(Cacheable<IMessage, ulong> partialMessage, ISocketMessageChannel channel)
         {
             MessageLogs messageLogs = new MessageLogs();
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                messageLogs.MessageLogs_MessageDeleted(partialMessage, channel);
+                _ = messageLogs.MessageLogs_MessageDeleted(partialMessage, channel);
             });
         }
 
         public async Task Commence_MessageUpdated(Cacheable<IMessage, ulong> partialMessage, SocketMessage newMessage, ISocketMessageChannel channel)
         {
             MessageLogs messageLogs = new MessageLogs();
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                messageLogs.MessageLogs_MessageEdited(partialMessage, newMessage, channel);
+                _ = messageLogs.MessageLogs_MessageEdited(partialMessage, newMessage, channel);
             });
         }
 
@@ -863,9 +805,9 @@ namespace Utili
         {
             ReactionsAltered += 1;
             Votes votes = new Votes();
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
-                votes.Votes_ReactionAdded(message, channel, reaction);
+                _ = votes.Votes_ReactionAdded(message, channel, reaction);
             });
         }
 
