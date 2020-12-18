@@ -62,6 +62,7 @@ namespace Utili
         public string DiscordBoats { get; set; } = "";
         public string DiscordBotList { get; set; } = "";
         public string BotlistSpace { get; set; } = "";
+        public bool BetaStarted { get; set; } = false;
     }
 
     internal class DatabaseInfo

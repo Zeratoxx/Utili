@@ -60,13 +60,14 @@ namespace Utili
         {
             if (Ready)
             {
-                Tasks.RemoveAll(x => x.IsCompleted);
+                Tasks.RemoveAll(x => x.IsCompleted || x.IsCanceled || x.IsFaulted);
                 if (Tasks.Count == 0) Tasks.Add(ProcessAll());
             }
         }
 
         public async Task ProcessAll()
         {
+            Console.WriteLine($"{DateTime.Now} [Debug] Started inactive role timer");
             List<Data> all = GetData(type: "InactiveRole-Role");
             List<ulong> allGuilds = new List<ulong>();
 
@@ -132,7 +133,7 @@ namespace Utili
                         {
                             if (DateTime.Now - lastThing > threshold) inactive = true;
 
-                            if (immuneRole != null) if (user.Roles.Contains(immuneRole)) inactive = false;
+                            if (immuneRole != null && user.Roles.Any(x => x.Id == immuneRole.Id)) inactive = false;
 
                             if (inactive && mode == "Give") await user.AddRoleAsync(role);
                             if (inactive && mode == "Take") await user.RemoveRoleAsync(role);
@@ -146,7 +147,7 @@ namespace Utili
                             {
                                 if (DateTime.Now - lastThing < threshold) inactive = false;
 
-                                if (immuneRole != null) if (user.Roles.Contains(immuneRole)) inactive = false;
+                                if (immuneRole != null && user.Roles.Any(x => x.Id == immuneRole.Id)) inactive = false;
 
                                 if (!inactive && mode == "Give") await user.RemoveRoleAsync(role);
                                 if (!inactive && mode == "Take") await user.AddRoleAsync(role);

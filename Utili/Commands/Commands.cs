@@ -355,5 +355,17 @@ namespace Utili
             }
             else await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Permission denied", "You need to be the owner of the guild to use that command"));
         }
+
+        [Command("Beta")]
+        public async Task Beta([Remainder] string args = "")
+        {
+            if (Config.BetaStarted || OwnerPermission(Context.User, Context.Channel))
+            {
+                await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Utili Version 2 Beta", 
+                    "Hey there! In a few weeks time, yours truly will be replaced with a newer improved version. But first, thorough testing must be done!\n" + 
+                    "Utili v2 is configured from an online dashboard and this is the main target of the testing. Any feedback on it will be valued greatly.\n\n" +
+                    "If you'd like to help out, join Utili's discord server [here](https://discord.gg/wGTrDhCaEH) and go to the V2 Beta category. Thank you!\n\nPS With the full release, the transition from v1 to v2 will be automatically done for all servers."));
+            }
+        }
     }
 }

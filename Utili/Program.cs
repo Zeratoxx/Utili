@@ -46,8 +46,8 @@ namespace Utili
         public static bool FirstStart = true;
         public static int Restarts = -1;
 
-        public static bool Debug = false;
-        public static bool UseTest = false;
+        public static bool Debug = true;
+        public static bool UseTest = true;
 
         private DateTime _lastStatsUpdate = DateTime.Now;
 
@@ -463,7 +463,9 @@ namespace Utili
 
                 Ready = true;
 
-                await _client.SetGameAsync(".help", null, ActivityType.Watching);
+                if(Config.BetaStarted) await _client.SetGameAsync(".beta - Testers needed for Utili v2!");
+                else await _client.SetGameAsync(".help", null, ActivityType.Watching);
+                
             });
         }
 

@@ -187,5 +187,20 @@ namespace Utili
                 Program.ForceStop.Cancel();
             }
         }
+
+        [Command("StartBeta")]
+        public async Task StartBeta()
+        {
+            if (OwnerPermission(Context.User, Context.Channel))
+            {
+                Json.Config.BetaStarted = true;
+                Json.SaveConfig();
+
+                await Program._client.SetGameAsync(".beta - Testers needed for Utili v2!");
+
+                await Context.Channel.SendMessageAsync(embed: GetEmbed("yes", "Beta started", "**My end is nigh!**\n--> .beta"));
+            }
+            
+        }
     }
 }
