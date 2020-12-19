@@ -313,23 +313,26 @@ namespace Utili
         [Command("Commands")]
         public async Task CmdCommands(string onoff, ITextChannel channel)
         {
-            switch (onoff.ToLower())
+            if (Permission(Context.User, Context.Channel))
             {
-                case "on":
-                    DeleteData(Context.Guild.Id.ToString(), "Commands-Disabled", channel.Id.ToString());
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Commands enabled", $"Utili will now process commands sent in {channel.Mention}"));
-                    break;
+                switch (onoff.ToLower())
+                {
+                    case "on":
+                        DeleteData(Context.Guild.Id.ToString(), "Commands-Disabled", channel.Id.ToString());
+                        await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Commands enabled", $"Utili will now process commands sent in {channel.Mention}"));
+                        break;
 
-                case "off":
-                    SaveData(Context.Guild.Id.ToString(), "Commands-Disabled", channel.Id.ToString());
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Commands disabled", $"Utili will no longer process commands sent in {channel.Mention}"));
-                    break;
+                    case "off":
+                        SaveData(Context.Guild.Id.ToString(), "Commands-Disabled", channel.Id.ToString());
+                        await Context.Channel.SendMessageAsync(embed: GetEmbed("Yes", "Commands disabled", $"Utili will no longer process commands sent in {channel.Mention}"));
+                        break;
 
-                default:
-                    string prefix = ".";
-                    try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
-                    await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
-                    break;
+                    default:
+                        string prefix = ".";
+                        try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
+                        await Context.Channel.SendMessageAsync(embed: GetEmbed("No", "Invalid command syntax", $"Try {prefix}help\n[Support Discord](https://discord.gg/WsxqABZ)"));
+                        break;
+                }
             }
         }
 

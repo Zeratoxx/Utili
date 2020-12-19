@@ -46,8 +46,8 @@ namespace Utili
         public static bool FirstStart = true;
         public static int Restarts = -1;
 
-        public static bool Debug = true;
-        public static bool UseTest = true;
+        public static bool Debug = false;
+        public static bool UseTest = false;
 
         private DateTime _lastStatsUpdate = DateTime.Now;
 
