@@ -51,7 +51,7 @@ namespace Utili
             string prefix = ".";
             try { prefix = GetFirstData(Context.Guild.Id.ToString(), "Prefix").Value; } catch { }
 
-            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Utili", content, $"Guild Prefix: {prefix}"));
+            await Context.Channel.SendMessageAsync(embed: GetLargeEmbed("Utili", content, $"Guild Prefix: {prefix}\n\nGenerally try \"{prefix}[command] help\" for more informations."));
         }
 
         [Command("Help")]
